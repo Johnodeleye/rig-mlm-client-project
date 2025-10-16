@@ -1,0 +1,22 @@
+{
+  "name": "RIG GLOBAL MLM",
+  "short_name": "RIG-GLOBAL",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0660D3",
+  "background_color": "#0660D3",
+  "description": "Multi Level Marketing Platform",
+  "version": "1.0.0",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
