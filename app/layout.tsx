@@ -6,6 +6,7 @@ import NavigationProgress from "./components/NavigationProgress";
 import { Toaster } from "react-hot-toast";
 import { TopLoader } from "next-top-loader";
 import ClientComponents from "./components/ClientComponents";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 
 const font = Outfit({ subsets: ["latin"] });
 
@@ -54,6 +55,7 @@ export default function RootLayout({
       </head>
 
       <body className={font.className}>
+         <CurrencyProvider>
         <NavigationProgress />
         <Toaster
           position="top-center"
@@ -84,6 +86,7 @@ export default function RootLayout({
             {/* <Footer /> */}
           </div>
         </div>
+         </CurrencyProvider>
       </body>  
     </html>
   );

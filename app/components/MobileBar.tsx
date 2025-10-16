@@ -14,14 +14,14 @@ const MobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveM
   const [copied, setCopied] = useState(false);
   
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'referrals', label: 'My Referrals', icon: Users },
-    { id: 'my teams', label: 'My Teams', icon: PersonStanding  },
-    { id: 'earnings', label: 'Earnings & Wallet', icon: DollarSign },
-    { id: 'products', label: 'Products', icon: Package },
-    { id: 'upgrade', label: 'Upgrade Plan', icon: TrendingUp },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'dashboard', label: 'Home', icon: Home, href: '/home' },
+    { id: 'referrals', label: 'My Referrals', icon: Users, href: '/referrals' },
+    { id: 'my teams', label: 'My Teams', icon: PersonStanding, href: '/teams' },
+    { id: 'earnings', label: 'Earnings & Wallet', icon: DollarSign, href: '/wallet' },
+    { id: 'products', label: 'Products', icon: Package, href: '/products' },
+    { id: 'upgrade', label: 'Upgrade Plan', icon: TrendingUp, href: '/upgrade' },
+    { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },
+    { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
     { id: 'logout', label: 'Logout', icon: LogOut }
   ];
   
@@ -63,7 +63,7 @@ const MobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveM
             initial={{ x: -300 }}
             animate={{ x: 0 }}
             exit={{ x: -300 }}
-            transition={{ type: 'spring', damping: 30 }}
+            transition={{ type: 'spring', damping: 10 }}
             className="fixed left-0 top-0 h-full w-80 bg-white z-50 lg:hidden"
           >
             <div className="p-4 border-b border-gray-200">
@@ -98,7 +98,8 @@ const MobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveM
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button
+                  <a
+                  href={item.href}
                     key={item.id}
                     onClick={() => handleMenuClick(item.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -111,7 +112,7 @@ const MobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveM
                   >
                     <Icon className="w-5 h-5" />
                     {item.label}
-                  </button>
+                  </a>
                 );
               })}
             </nav>

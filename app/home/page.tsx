@@ -1,3 +1,4 @@
+// app/home/page.tsx (Updated)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ import {
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+import PointsSystem from '../components/PointsSystem';
 
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -18,12 +20,21 @@ const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [copied, setCopied] = useState(false);
 
+  // Points data with state management
+  const [pointsData, setPointsData] = useState({
+    monthlyPV: { personal: 20, team: 0 },
+    cumulativePV: { personal: 20, team: 0 },
+    monthlyTP: { personal: 10, team: 0 },
+    cumulativeTP: { personal: 10, team: 0 }
+  });
+
   // Mock user data
   const userData = {
     name: 'John Ayomide',
     username: '@johnayomide',
     plan: 'Beginner Plan',
-    pv: 5,
+    pv: 20,
+    tp: 10,
     status: 'Active',
     totalEarnings: '₦45,670',
     availableBalance: '₦23,450',
@@ -74,15 +85,32 @@ const Dashboard = () => {
     }
   };
 
+  // Simulate points update when team grows
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsSidebarOpen(false);
-      }
-    };
+    const interval = setInterval(() => {
+      // Randomly update team points to simulate growth
+      setPointsData(prev => ({
+        ...prev,
+        monthlyPV: {
+          ...prev.monthlyPV,
+          team: Math.min(prev.monthlyPV.team + Math.floor(Math.random() * 5), 100)
+        },
+        cumulativePV: {
+          ...prev.cumulativePV,
+          team: prev.cumulativePV.team + Math.floor(Math.random() * 3)
+        },
+        monthlyTP: {
+          ...prev.monthlyTP,
+          team: Math.min(prev.monthlyTP.team + Math.floor(Math.random() * 2), 50)
+        },
+        cumulativeTP: {
+          ...prev.cumulativeTP,
+          team: prev.cumulativeTP.team + Math.floor(Math.random() * 1)
+        }
+      }));
+    }, 10000); // Update every 10 seconds
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -133,6 +161,10 @@ const Dashboard = () => {
                     <span>PV: {userData.pv}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-yellow-500" />
+                    <span>TP: {userData.tp}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4" />
                     <span className="text-green-600 font-medium">{userData.status}</span>
                   </div>
@@ -143,6 +175,9 @@ const Dashboard = () => {
               </button>
             </div>
           </motion.div>
+
+          {/* Points System */}
+          <PointsSystem pointsData={pointsData} />
 
           {/* Earnings Cards */}
           <div className="grid grid-cols-1 gap-4 lg:gap-6 mb-4 lg:mb-6">

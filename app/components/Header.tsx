@@ -48,10 +48,10 @@ const Header = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDropdownO
           </div>
 
           {/* Notifications */}
-          <button className="relative p-2 text-gray-600 hover:text-[#0660D3] transition-colors">
+          <a href='/notifications' className="relative p-2 text-gray-600 hover:text-[#0660D3] transition-colors">
             <Bell className="w-6 h-6" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          </a>
 
           {/* Profile Dropdown */}
           <div className="relative">
@@ -74,14 +74,14 @@ const Header = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDropdownO
                   exit={{ opacity: 0, y: 10 }}
                   className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2"
                 >
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <a href='/profile' className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                     <User className="w-4 h-4" />
                     Profile
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  </a>
+                  <a href='/wallet' className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                     <DollarSign className="w-4 h-4" />
                     Wallet
-                  </button>
+                  </a>
                   <hr className="my-2" />
                   <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <LogOut className="w-4 h-4" />
@@ -96,10 +96,10 @@ const Header = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDropdownO
         {/* Mobile Menu Button with Notification Bell */}
         <div className="flex items-center gap-2 lg:hidden">
           {/* Notifications Bell for Mobile */}
-          <button className="relative p-2 text-gray-600 hover:text-[#0660D3] transition-colors">
+          <a href='/notifications' className="relative p-2 text-gray-600 hover:text-[#0660D3] transition-colors">
             <Bell className="w-6 h-6" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          </a>
 
           {/* Mobile Menu Button */}
           <button

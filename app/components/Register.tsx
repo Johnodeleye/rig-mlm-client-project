@@ -1,19 +1,21 @@
-// components/Register.tsx
+// components/Register.tsx (Updated)
 'use client';
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, User, Mail, Phone, MapPin, Shield, ArrowRight, UserPlus, Lock } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, MapPin, Shield, ArrowRight, UserPlus, Lock, CreditCard } from 'lucide-react';
 import Link from 'next/link';
+import { useCurrency } from '@/context/CurrencyContext';
+import { useRouter } from 'next/navigation';
 
 interface MembershipPackage {
   id: string;
   name: string;
   level: number;
-  price: string;
-  usdPrice: string;
+  price: number;
   pv: number;
-  productContents: string;
+  tp: number;
+  productContents: string[];
 }
 
 const Register = () => {
@@ -21,7 +23,8 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [detectedLocation, setDetectedLocation] = useState('');
+  const { currency, convertAmount, detectedCountry, isDetecting, userType } = useCurrency();
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -30,7 +33,7 @@ const Register = () => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    referralId: 'REF123456', // This would come from URL params in real app
+    referralId: 'REF123456',
     membershipPackage: ''
   });
 
@@ -39,73 +42,30 @@ const Register = () => {
       id: 'beginner', 
       name: 'Beginner Plan', 
       level: 1,
-      price: '₦9,000', 
-      usdPrice: '$13.99',
-      pv: 5, 
-      productContents: '1x Baobab (250g)'
+      price: 9000, 
+      pv: 5,
+      tp: 0,
+      productContents: ['1x Baobab (250g)']
     },
     { 
       id: 'junior', 
       name: 'Junior Pack', 
       level: 3,
-      price: '₦32,000', 
-      usdPrice: '$46.46',
-      pv: 20, 
-      productContents: '2x Baobab (250g), 1x Dates powder(600g), 1x Dates Powder (200g)'
+      price: 32000, 
+      pv: 20,
+      tp: 10,
+      productContents: ['2x Baobab (250g)', '1x Dates Powder (600g)', '1x Dates Powder (200g)']
     },
     { 
       id: 'senior', 
       name: 'Senior Pack', 
       level: 5,
-      price: '₦76,500', 
-      usdPrice: '$109.00',
-      pv: 50, 
-      productContents: '4x Baobab (250g), 1x Dates Seed Coffee(200g), 1x Potato Powder(1kg), 2x Dates Syrup (300ml), 1x Dates Powder(600g), 1x Dates Powder (200g)'
-    },
-    { 
-      id: 'business', 
-      name: 'Business Pack', 
-      level: 7,
-      price: '₦184,000', 
-      usdPrice: '$265.00',
-      pv: 125, 
-      productContents: '6x Baobab (250g), 2x Baobab (500g), 2x Dates Seed Coffee(200g), 2x Potato Powder(1kg), 5x Dates Syrup (300ml), 7x Dates Powder(200g), 2x Dates Powder (600g)'
-    },
-    { 
-      id: 'executive', 
-      name: 'Executive Pack', 
-      level: 10,
-      price: '₦368,000', 
-      usdPrice: '$525.00',
-      pv: 250, 
-      productContents: '12x Baobab (250g), 4x Baobab (500g), 4x Dates Seed Coffee(200g), 4x Potato Powder(1kg), 10x Dates Syrup (300ml), 14x Dates Powder(200g), 4x Dates Powder (600g)'
-    },
-    { 
-      id: 'chief-executive', 
-      name: 'Chief Executive Pack', 
-      level: 12,
-      price: '₦736,000', 
-      usdPrice: '$1,050.00',
-      pv: 500, 
-      productContents: '24x Baobab (250g), 8x Baobab (500g), 8x Dates Seed Coffee(200g), 8x Potato Powder(1kg), 20x Dates Syrup (300ml), 28x Dates Powder(200g), 8x Dates Powder (600g)'
-    },
-    { 
-      id: 'ambassador', 
-      name: 'Ambassador Pack', 
-      level: 15,
-      price: '₦1,671,000', 
-      usdPrice: '$2,375.00',
-      pv: 1125, 
-      productContents: '54x Baobab (250g), 18x Baobab (500g), 18x Dates Seed Coffee(200g), 18x Potato Powder(1kg), 45x Dates Syrup (300ml), 63x Dates Powder(200g), 18x Dates Powder (600g)'
+      price: 76500, 
+      pv: 50,
+      tp: 25,
+      productContents: ['4x Baobab (250g)', '1x Dates Seed Coffee (200g)', '1x Potato Powder (1kg)', '2x Dates Syrup (300ml)']
     }
   ];
-
-  useEffect(() => {
-    // Simulate location detection
-    setTimeout(() => {
-      setDetectedLocation('Nigeria 🇳🇬');
-    }, 1000);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +75,11 @@ const Register = () => {
     setTimeout(() => {
       setIsLoading(false);
       setSuccess(true);
+      
+      // Redirect to payment page after 2 seconds
+      setTimeout(() => {
+        router.push(`/payment/new-user-123`);
+      }, 2000);
     }, 2000);
   };
 
@@ -143,16 +108,13 @@ const Register = () => {
             <Shield className="w-8 h-8 text-green-600" />
           </motion.div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Successful!</h2>
-          <p className="text-gray-600 mb-6">
-            Please contact your upline to activate your account.
+          <p className="text-gray-600 mb-4">
+            Your account has been created successfully.
           </p>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 text-[#0660D3] hover:text-blue-700 font-semibold transition-colors"
-          >
-            Proceed to Login
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <p className="text-sm text-gray-500 mb-6">
+            Redirecting to payment page...
+          </p>
+          <div className="w-8 h-8 border-2 border-[#0660D3] border-t-transparent rounded-full animate-spin mx-auto"></div>
         </motion.div>
       </div>
     );
@@ -164,7 +126,7 @@ const Register = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-lg"
+        className="w-full max-w-2xl"
       >
         {/* Logo */}
         <motion.div
@@ -176,7 +138,7 @@ const Register = () => {
             <div className="w-10 h-10 bg-[#0660D3] rounded-xl flex items-center justify-center">
               <UserPlus className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Join RIG Global</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Join RIG Global as {userType === 'user' ? 'User' : 'Stockist'}</h1>
           </div>
           <p className="text-gray-600">Create your account and start your journey</p>
         </motion.div>
@@ -199,7 +161,7 @@ const Register = () => {
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    value={detectedLocation || 'Detecting...'}
+                    value={isDetecting ? 'Detecting your location...' : 'detectedLocation'}
                     disabled
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                   />
@@ -370,12 +332,38 @@ const Register = () => {
                   <option value="">Select a package</option>
                   {membershipPackages.map((pkg) => (
                     <option key={pkg.id} value={pkg.id}>
-                      {pkg.name} — {pkg.price} | {pkg.pv} PV
+                      {pkg.name} — {convertAmount(pkg.price)} | +{pkg.pv}PV +{pkg.tp}TP
                     </option>
                   ))}
                 </select>
               </div>
             </div>
+
+            {/* Selected Package Details */}
+            {formData.membershipPackage && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                  <h4 className="font-semibold text-blue-900">Selected Package</h4>
+                </div>
+                {(() => {
+                  const selectedPackage = membershipPackages.find(pkg => pkg.id === formData.membershipPackage);
+                  if (!selectedPackage) return null;
+                  
+                  return (
+                    <div className="text-sm text-blue-800">
+                      <p><strong>{selectedPackage.name}</strong> - {convertAmount(selectedPackage.price)}</p>
+                      <p>Points: +{selectedPackage.pv} PV +{selectedPackage.tp} TP</p>
+                      <p className="mt-1">Includes: {selectedPackage.productContents.join(', ')}</p>
+                    </div>
+                  );
+                })()}
+              </motion.div>
+            )}
 
             {/* Register Button */}
             <motion.button
@@ -389,7 +377,7 @@ const Register = () => {
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  Register Account
+                  Register & Proceed to Payment
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
