@@ -9,9 +9,11 @@ import Link from 'next/link';
 interface MembershipPackage {
   id: string;
   name: string;
+  level: number;
   price: string;
+  usdPrice: string;
   pv: number;
-  tp: number;
+  productContents: string;
 }
 
 const Register = () => {
@@ -33,10 +35,69 @@ const Register = () => {
   });
 
   const membershipPackages: MembershipPackage[] = [
-    { id: 'starter', name: 'Starter', price: '₦10,000', pv: 50, tp: 5 },
-    { id: 'basic', name: 'Basic', price: '₦25,000', pv: 125, tp: 12 },
-    { id: 'premium', name: 'Premium', price: '₦50,000', pv: 250, tp: 25 },
-    { id: 'executive', name: 'Executive', price: '₦100,000', pv: 500, tp: 50 },
+    { 
+      id: 'beginner', 
+      name: 'Beginner Plan', 
+      level: 1,
+      price: '₦9,000', 
+      usdPrice: '$13.99',
+      pv: 5, 
+      productContents: '1x Baobab (250g)'
+    },
+    { 
+      id: 'junior', 
+      name: 'Junior Pack', 
+      level: 3,
+      price: '₦32,000', 
+      usdPrice: '$46.46',
+      pv: 20, 
+      productContents: '2x Baobab (250g), 1x Dates powder(600g), 1x Dates Powder (200g)'
+    },
+    { 
+      id: 'senior', 
+      name: 'Senior Pack', 
+      level: 5,
+      price: '₦76,500', 
+      usdPrice: '$109.00',
+      pv: 50, 
+      productContents: '4x Baobab (250g), 1x Dates Seed Coffee(200g), 1x Potato Powder(1kg), 2x Dates Syrup (300ml), 1x Dates Powder(600g), 1x Dates Powder (200g)'
+    },
+    { 
+      id: 'business', 
+      name: 'Business Pack', 
+      level: 7,
+      price: '₦184,000', 
+      usdPrice: '$265.00',
+      pv: 125, 
+      productContents: '6x Baobab (250g), 2x Baobab (500g), 2x Dates Seed Coffee(200g), 2x Potato Powder(1kg), 5x Dates Syrup (300ml), 7x Dates Powder(200g), 2x Dates Powder (600g)'
+    },
+    { 
+      id: 'executive', 
+      name: 'Executive Pack', 
+      level: 10,
+      price: '₦368,000', 
+      usdPrice: '$525.00',
+      pv: 250, 
+      productContents: '12x Baobab (250g), 4x Baobab (500g), 4x Dates Seed Coffee(200g), 4x Potato Powder(1kg), 10x Dates Syrup (300ml), 14x Dates Powder(200g), 4x Dates Powder (600g)'
+    },
+    { 
+      id: 'chief-executive', 
+      name: 'Chief Executive Pack', 
+      level: 12,
+      price: '₦736,000', 
+      usdPrice: '$1,050.00',
+      pv: 500, 
+      productContents: '24x Baobab (250g), 8x Baobab (500g), 8x Dates Seed Coffee(200g), 8x Potato Powder(1kg), 20x Dates Syrup (300ml), 28x Dates Powder(200g), 8x Dates Powder (600g)'
+    },
+    { 
+      id: 'ambassador', 
+      name: 'Ambassador Pack', 
+      level: 15,
+      price: '₦1,671,000', 
+      usdPrice: '$2,375.00',
+      pv: 1125, 
+      productContents: '54x Baobab (250g), 18x Baobab (500g), 18x Dates Seed Coffee(200g), 18x Potato Powder(1kg), 45x Dates Syrup (300ml), 63x Dates Powder(200g), 18x Dates Powder (600g)'
+    }
   ];
 
   useEffect(() => {
@@ -309,7 +370,7 @@ const Register = () => {
                   <option value="">Select a package</option>
                   {membershipPackages.map((pkg) => (
                     <option key={pkg.id} value={pkg.id}>
-                      {pkg.name} — {pkg.price} | {pkg.pv} PV | {pkg.tp} TP
+                      {pkg.name} — {pkg.price} | {pkg.pv} PV
                     </option>
                   ))}
                 </select>
