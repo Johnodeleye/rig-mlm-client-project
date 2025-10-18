@@ -408,6 +408,18 @@ const Register = () => {
               </Link>
             </p>
           </div>
+          {/* Admin-Link */}
+          <div className="mt-1 text-center">
+            <p className="text-sm text-gray-600">
+              Not a user/member?{' '}
+              <Link 
+                href="/admin" 
+                className="text-[#0660D3] hover:text-blue-700 font-semibold transition-colors"
+              >
+                Login as Admin
+              </Link>
+            </p>
+          </div>
         </motion.div>
       </motion.div>
     </div>
