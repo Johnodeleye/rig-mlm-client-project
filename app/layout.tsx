@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { TopLoader } from "next-top-loader";
 import ClientComponents from "./components/ClientComponents";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const font = Outfit({ subsets: ["latin"] });
 
@@ -55,38 +56,40 @@ export default function RootLayout({
       </head>
 
       <body className={font.className}>
-         <CurrencyProvider>
-        <NavigationProgress />
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            style: {
-              background: '#0660D3',
-              color: '#fff',
-              borderRadius: '8px',
-              fontWeight: 500,
-            },
-            success: {
-              duration: 3000,
-              style: { background: '#0660D3', color: '#fff' },
-            },
-            error: {
-              duration: 4000,
-              style: { background: '#ef4444', color: '#fff' },
-            },
-          }}
-        />
+        <AuthProvider>
+          <CurrencyProvider>
+            <NavigationProgress />
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                style: {
+                  background: '#0660D3',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  fontWeight: 500,
+                },
+                success: {
+                  duration: 3000,
+                  style: { background: '#0660D3', color: '#fff' },
+                },
+                error: {
+                  duration: 4000,
+                  style: { background: '#ef4444', color: '#fff' },
+                },
+              }}
+            />
 
-        {children}
-        <TopLoader color="#0660D3" height={4} />
-        <ClientComponents />
+            {children}
+            <TopLoader color="#0660D3" height={4} />
+            <ClientComponents />
 
-        <div className="mx-auto md:pb-0 pb-26">
-          <div className="md:ml-64 lg:mr-80 lg:mb-0 md:mb-0 hidden lg:block">
-            {/* <Footer /> */}
-          </div>
-        </div>
-         </CurrencyProvider>
+            <div className="mx-auto md:pb-0 pb-26">
+              <div className="md:ml-64 lg:mr-80 lg:mb-0 md:mb-0 hidden lg:block">
+                {/* <Footer /> */}
+              </div>
+            </div>
+          </CurrencyProvider>
+        </AuthProvider>
       </body>  
     </html>
   );

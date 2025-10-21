@@ -1,10 +1,12 @@
 // components/Register.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, User, Mail, Phone, MapPin, Shield, ArrowRight, UserPlus, Lock } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, MapPin, Shield, ArrowRight, UserPlus, Lock, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
+import AuthRedirect from './AuthRedirect';
 
 interface MembershipPackage {
   id: string;
@@ -16,12 +18,20 @@ interface MembershipPackage {
   productContents: string;
 }
 
+interface LocationData {
+  country: string;
+  countryCode: string;
+  currency: string;
+}
+
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [detectedLocation, setDetectedLocation] = useState('');
+  const [detectedLocation, setDetectedLocation] = useState<LocationData | null>(null);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(true);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -30,92 +40,145 @@ const Register = () => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    referralId: 'REF123456', // This would come from URL params in real app
+    referralId: 'REF123456',
     membershipPackage: ''
   });
 
-  const membershipPackages: MembershipPackage[] = [
-    { 
-      id: 'beginner', 
-      name: 'Beginner Plan', 
-      level: 1,
-      price: '₦9,000', 
-      usdPrice: '$13.99',
-      pv: 5, 
-      productContents: '1x Baobab (250g)'
-    },
-    { 
-      id: 'junior', 
-      name: 'Junior Pack', 
-      level: 3,
-      price: '₦32,000', 
-      usdPrice: '$46.46',
-      pv: 20, 
-      productContents: '2x Baobab (250g), 1x Dates powder(600g), 1x Dates Powder (200g)'
-    },
-    { 
-      id: 'senior', 
-      name: 'Senior Pack', 
-      level: 5,
-      price: '₦76,500', 
-      usdPrice: '$109.00',
-      pv: 50, 
-      productContents: '4x Baobab (250g), 1x Dates Seed Coffee(200g), 1x Potato Powder(1kg), 2x Dates Syrup (300ml), 1x Dates Powder(600g), 1x Dates Powder (200g)'
-    },
-    { 
-      id: 'business', 
-      name: 'Business Pack', 
-      level: 7,
-      price: '₦184,000', 
-      usdPrice: '$265.00',
-      pv: 125, 
-      productContents: '6x Baobab (250g), 2x Baobab (500g), 2x Dates Seed Coffee(200g), 2x Potato Powder(1kg), 5x Dates Syrup (300ml), 7x Dates Powder(200g), 2x Dates Powder (600g)'
-    },
-    { 
-      id: 'executive', 
-      name: 'Executive Pack', 
-      level: 10,
-      price: '₦368,000', 
-      usdPrice: '$525.00',
-      pv: 250, 
-      productContents: '12x Baobab (250g), 4x Baobab (500g), 4x Dates Seed Coffee(200g), 4x Potato Powder(1kg), 10x Dates Syrup (300ml), 14x Dates Powder(200g), 4x Dates Powder (600g)'
-    },
-    { 
-      id: 'chief-executive', 
-      name: 'Chief Executive Pack', 
-      level: 12,
-      price: '₦736,000', 
-      usdPrice: '$1,050.00',
-      pv: 500, 
-      productContents: '24x Baobab (250g), 8x Baobab (500g), 8x Dates Seed Coffee(200g), 8x Potato Powder(1kg), 20x Dates Syrup (300ml), 28x Dates Powder(200g), 8x Dates Powder (600g)'
-    },
-    { 
-      id: 'ambassador', 
-      name: 'Ambassador Pack', 
-      level: 15,
-      price: '₦1,671,000', 
-      usdPrice: '$2,375.00',
-      pv: 1125, 
-      productContents: '54x Baobab (250g), 18x Baobab (500g), 18x Dates Seed Coffee(200g), 18x Potato Powder(1kg), 45x Dates Syrup (300ml), 63x Dates Powder(200g), 18x Dates Powder (600g)'
-    }
-  ];
+  const [membershipPackages, setMembershipPackages] = useState<MembershipPackage[]>([]);
 
+  // Fetch membership packages
   useEffect(() => {
-    // Simulate location detection
-    setTimeout(() => {
-      setDetectedLocation('Nigeria 🇳🇬');
-    }, 1000);
+    const fetchPackages = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/packages`);
+        const data = await response.json();
+        if (data.success) {
+          // Transform the data to match frontend format
+          const transformedPackages = data.packages.map((pkg: any) => ({
+            id: pkg.packageId,
+            name: pkg.name,
+            level: pkg.level,
+            price: `₦${pkg.priceNGN.toLocaleString()}`,
+            usdPrice: `$${pkg.priceUSD.toFixed(2)}`,
+            pv: pkg.pv,
+            productContents: pkg.productContents
+          }));
+          setMembershipPackages(transformedPackages);
+        }
+      } catch (error) {
+        console.error('Error fetching packages:', error);
+        toast.error('Failed to load membership packages');
+      }
+    };
+
+    fetchPackages();
   }, []);
+
+  // Detect user location
+  useEffect(() => {
+    const detectLocation = async () => {
+      try {
+        setIsDetectingLocation(true);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/detect-location`);
+        const locationData: LocationData = await response.json();
+        setDetectedLocation(locationData);
+      } catch (error) {
+        console.error('Error detecting location:', error);
+        // Fallback to Nigeria
+        setDetectedLocation({
+          country: 'Nigeria',
+          countryCode: 'NG',
+          currency: 'NGN'
+        });
+      } finally {
+        setIsDetectingLocation(false);
+      }
+    };
+
+    detectLocation();
+  }, []);
+
+  // Generate username when fullName changes
+  const generateUsername = useCallback(async (fullName: string) => {
+    if (fullName.trim().length < 2) return;
+
+    try {
+      setIsGeneratingUsername(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/generate-username?fullName=${encodeURIComponent(fullName)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setFormData(prev => ({
+          ...prev,
+          username: data.username
+        }));
+      }
+    } catch (error) {
+      console.error('Error generating username:', error);
+      toast.error('Failed to generate username');
+    } finally {
+      setIsGeneratingUsername(false);
+    }
+  }, []);
+
+  // Debounced username generation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.fullName.trim()) {
+        generateUsername(formData.fullName);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [formData.fullName, generateUsername]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (!formData.membershipPackage) {
+      toast.error('Please select a membership package');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          country: detectedLocation?.country || 'Nigeria'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(true);
+        toast.success('Registration successful!');
+      } else {
+        toast.error(data.error || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
+    } finally {
       setIsLoading(false);
-      setSuccess(true);
-    }, 2000);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -159,6 +222,8 @@ const Register = () => {
   }
 
   return (
+      <>
+      <AuthRedirect requireAuth={false} />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -199,10 +264,17 @@ const Register = () => {
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    value={detectedLocation || 'Detecting...'}
+                    value={
+                      isDetectingLocation 
+                        ? 'Detecting location...' 
+                        : `${detectedLocation?.country} ${detectedLocation?.countryCode ? getFlagEmoji(detectedLocation.countryCode) : ''}`
+                    }
                     disabled
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                   />
+                  {isDetectingLocation && (
+                    <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+                  )}
                 </div>
               </div>
 
@@ -215,8 +287,9 @@ const Register = () => {
                   type="text"
                   name="referralId"
                   value={formData.referralId}
-                  readOnly
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
+                  placeholder="Enter referral ID"
                 />
               </div>
 
@@ -241,7 +314,7 @@ const Register = () => {
               </div>
 
               {/* Username */}
-              <div>
+              <div className="md:col-span-2">
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                   Username
                 </label>
@@ -254,10 +327,17 @@ const Register = () => {
                     required
                     value={formData.username}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
-                    placeholder="Choose username"
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
+                    placeholder="Generating username..."
+                    readOnly={isGeneratingUsername}
                   />
+                  {isGeneratingUsername && (
+                    <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+                  )}
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Username is automatically generated from your full name
+                </p>
               </div>
 
               {/* Email */}
@@ -316,6 +396,7 @@ const Register = () => {
                     onChange={handleChange}
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
                     placeholder="Create password"
+                    minLength={6}
                   />
                   <button
                     type="button"
@@ -343,6 +424,7 @@ const Register = () => {
                     onChange={handleChange}
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
                     placeholder="Confirm password"
+                    minLength={6}
                   />
                   <button
                     type="button"
@@ -365,65 +447,75 @@ const Register = () => {
                   required
                   value={formData.membershipPackage}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200 bg-white"
                 >
                   <option value="">Select a package</option>
                   {membershipPackages.map((pkg) => (
                     <option key={pkg.id} value={pkg.id}>
-                      {pkg.name} — {pkg.price} | {pkg.pv} PV
+                      {pkg.name} - {pkg.price} ({pkg.usdPrice})
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {/* Register Button */}
+            {/* Submit Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#0660D3] text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-[#0660D3] text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Creating Account...
+                </>
               ) : (
                 <>
-                  Register Account
+                  Create Account
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </motion.button>
-          </form>
 
-          {/* Login-Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link 
-                href="/login" 
-                className="text-[#0660D3] hover:text-blue-700 font-semibold transition-colors"
-              >
-                Sign in here
-              </Link>
-            </p>
-          </div>
-          {/* Admin-Link */}
-          <div className="mt-1 text-center">
-            <p className="text-sm text-gray-600">
-              Not a user/member?{' '}
-              <Link 
-                href="/admin" 
-                className="text-[#0660D3] hover:text-blue-700 font-semibold transition-colors"
-              >
-                Login as Admin
-              </Link>
-            </p>
-          </div>
+            {/* Login Link */}
+            <div className="text-center">
+              <p className="text-gray-600">
+                Already have an account?{' '}
+                <Link href="/login" className="text-[#0660D3] hover:text-blue-700 font-semibold transition-colors">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+
+                        <div className="mt-1 text-center">
+                          <p className="text-sm text-gray-600">
+                            Not a user/member?{' '}
+                            <Link 
+                              href="/admin" 
+                              className="text-[#0660D3] hover:text-blue-700 font-semibold transition-colors"
+                            >
+                              Login as Admin
+                            </Link>
+                          </p>
+                        </div>
+          </form>
         </motion.div>
       </motion.div>
     </div>
+    </>
   );
 };
+
+// Helper function to get flag emoji from country code
+function getFlagEmoji(countryCode: string) {
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
 
 export default Register;

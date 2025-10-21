@@ -8,20 +8,38 @@ import { useRouter } from 'next/navigation';
 import AdminHeader from '../../components/admin/AdminHeader';
 import AdminDesktopSidebar from '../../components/admin/AdminDesktopSidebar';
 import AdminMobileSidebar from '../../components/admin/AdminMobileSidebar';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('home');
-  const router = useRouter();
+    const router = useRouter();
+  const { user, accountType, isAuthenticated, isLoading } = useAuth();
 
-  // Check authentication
+  // Check authentication and admin role
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth');
-    if (!isAuthenticated) {
-      router.push('/admin');
+    if (!isLoading) {
+      if (!isAuthenticated || accountType !== 'admin') {
+        router.push('/login');
+      }
     }
-  }, [router]);
+  }, [isAuthenticated, accountType, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || accountType !== 'admin') {
+    return null; // Will redirect due to useEffect
+  }
 
   const statsData = {
     totalUsers: 1250,
