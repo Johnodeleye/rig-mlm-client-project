@@ -23,6 +23,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [detectedCountry, setDetectedCountry] = useState('');
   const [isDetecting, setIsDetecting] = useState(true);
 
+  //
   useEffect(() => {
     const detectLocation = async () => {
       try {
