@@ -1,24 +1,70 @@
 // app/wallet/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, Wallet, TrendingUp, Download, Calendar, CreditCard, Clock, CheckCircle, XCircle, Send } from 'lucide-react';
+import { DollarSign, Wallet, TrendingUp, Download, Calendar, CreditCard, Clock, CheckCircle, XCircle, Send, Users, History } from 'lucide-react';
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+
+interface CommissionSummary {
+  totalEarnings: number;
+  pendingEarnings: number;
+  commissionHistory: Array<{
+    id: string;
+    commissionAmount: number;
+    level: number;
+    type: string;
+    package: string;
+    status: string;
+    createdAt: string;
+    referredUser: {
+      username: string;
+      fullName: string;
+      membershipPackage: string;
+    };
+  }>;
+}
 
 const WalletPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('earnings');
+  const [commissionData, setCommissionData] = useState<CommissionSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Commission data fetching
+  useEffect(() => {
+    fetchCommissionData();
+  }, []);
+
+  const fetchCommissionData = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/commissions/my-commissions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCommissionData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching commission data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const walletData = {
-    totalEarnings: '₦45,670',
+    totalEarnings: `₦${(commissionData?.totalEarnings || 0).toLocaleString()}`,
     totalEarningsUSD: '$89.34',
     availableBalance: '₦23,450',
     availableBalanceUSD: '$45.78',
-    pendingWithdrawals: '₦12,220'
+    pendingWithdrawals: `₦${(commissionData?.pendingEarnings || 0).toLocaleString()}`
   };
 
   const transactions = [
@@ -32,9 +78,9 @@ const WalletPage = () => {
 
   // Rewards Data
   const rewardsData = {
-    monthlyPV: { current: 320, target: 600 }, // Example current PV
-    cumulativePV: { current: 2800, target: 3500 }, // Example current cumulative PV
-    cumulativeTP: { current: 12500, target: 30000 } // Example current TP
+    monthlyPV: { current: 320, target: 600 },
+    cumulativePV: { current: 2800, target: 3500 },
+    cumulativeTP: { current: 12500, target: 30000 }
   };
 
   // Monthly Salary Bonuses
@@ -114,6 +160,36 @@ const WalletPage = () => {
     );
   };
 
+  // Loading state for commission data
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header 
+          setIsSidebarOpen={setIsSidebarOpen}
+          isProfileDropdownOpen={isProfileDropdownOpen}
+          setIsProfileDropdownOpen={setIsProfileDropdownOpen}
+        />
+        <div className="flex pt-16">
+          <DesktopSidebar 
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+          />
+          <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -147,6 +223,118 @@ const WalletPage = () => {
             </h1>
             <p className="text-gray-600">Manage your earnings and withdrawals</p>
           </motion.div>
+
+          {/* Commission Summary Cards */}
+          <div className="space-y-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      ₦{(commissionData?.totalEarnings || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Pending Earnings</p>
+                    <p className="text-2xl font-bold text-yellow-600">
+                      ₦{(commissionData?.pendingEarnings || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-yellow-600" />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Commission History */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            >
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <History className="w-5 h-5" />
+                Commission History
+              </h2>
+
+              {commissionData?.commissionHistory && commissionData.commissionHistory.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 text-sm font-medium text-gray-600">Date</th>
+                        <th className="text-left py-3 text-sm font-medium text-gray-600">From</th>
+                        <th className="text-left py-3 text-sm font-medium text-gray-600">Level</th>
+                        <th className="text-left py-3 text-sm font-medium text-gray-600">Package</th>
+                        <th className="text-left py-3 text-sm font-medium text-gray-600">Amount</th>
+                        <th className="text-left py-3 text-sm font-medium text-gray-600">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {commissionData.commissionHistory.map((commission) => (
+                        <tr key={commission.id} className="border-b border-gray-100 last:border-0">
+                          <td className="py-3 text-sm text-gray-600">
+                            {new Date(commission.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 text-sm text-gray-900">
+                            {commission.referredUser.fullName}
+                          </td>
+                          <td className="py-3 text-sm text-gray-600">
+                            Level {commission.level}
+                          </td>
+                          <td className="py-3 text-sm text-gray-600 capitalize">
+                            {commission.package}
+                          </td>
+                          <td className="py-3 text-sm font-medium text-gray-900">
+                            ₦{commission.commissionAmount.toLocaleString()}
+                          </td>
+                          <td className="py-3">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                commission.status === 'Paid'
+                                  ? 'bg-green-100 text-green-800'
+                                  : commission.status === 'Pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {commission.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No commission history yet</p>
+                  <p className="text-sm">Commissions will appear here when your referrals join and get activated</p>
+                </div>
+              )}
+            </motion.div>
+          </div>
 
           {/* Wallet Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-4 lg:mb-6">

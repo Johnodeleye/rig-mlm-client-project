@@ -1,6 +1,10 @@
-import { AnimatePresence, motion } from "framer-motion"
-import { Shield, Search, Bell, User, ChevronDown, Settings, LogOut, Menu, DollarSign } from "lucide-react"
-import { useState } from "react";
+// app/components/Header.tsx
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bell, User, Settings, LogOut, Menu, Search } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeaderProps {
   setIsSidebarOpen: (open: boolean) => void;
@@ -8,82 +12,120 @@ interface HeaderProps {
   setIsProfileDropdownOpen: (open: boolean) => void;
 }
 
-const Header = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDropdownOpen }: HeaderProps) => {
-  const userData = {
-    name: 'John Ayomide',
-    username: '@johnayomide',
-    plan: 'Beginner Plan',
-    pv: 5,
-    status: 'Active',
-    totalEarnings: '₦45,670',
-    availableBalance: '₦23,450',
-    pendingEarnings: '₦12,220',
-    totalReferrals: 15,
-    activeReferrals: 8,
-    inactiveReferrals: 7,
-    referralLink: 'https://rigglobal.com/ref/johnayomide'
+const Header = ({ 
+  setIsSidebarOpen, 
+  isProfileDropdownOpen, 
+  setIsProfileDropdownOpen 
+}: HeaderProps) => {
+  const { userProfile, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-50">
-      <div className="flex items-center justify-between px-4 py-3 lg:px-6">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#065fd340] rounded-lg flex items-center justify-center">
-           <img src="/logo.png" alt="" width={500} height={200}/>
+    <header className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
+      <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+        {/* Left Section */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Menu className="w-5 h-5 text-gray-600" />
+          </button>
+          
+          <div className="hidden lg:block">
+            <h1 className="text-xl font-bold text-gray-900">RIG GLOBAL</h1>
           </div>
-          <span className="text-xl font-bold text-gray-900">RIG Global</span>
         </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6">
-          {/* Search Bar */}
+        {/* Search Bar - Hidden on mobile */}
+        <div className="hidden lg:block flex-1 max-w-md mx-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-transparent"
             />
           </div>
+        </div>
 
+        {/* Right Section */}
+        <div className="flex items-center gap-3">
           {/* Notifications */}
-          <a href='/notifications' className="relative p-2 text-gray-600 hover:text-[#0660D3] transition-colors">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </a>
+          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
+            <Bell className="w-5 h-5 text-gray-600" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
 
           {/* Profile Dropdown */}
           <div className="relative">
             <button
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <div className="w-8 h-8 bg-[#0660D3] rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-700">{userData.name}</span>
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <div className="hidden lg:block text-left">
+                <p className="text-sm font-medium text-gray-900">
+                  {userProfile?.name || 'Loading...'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {userProfile?.plan || 'Plan'}
+                </p>
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">
+                    PV: {userProfile?.pv || 0}
+                  </span>
+                  <span className="text-xs bg-green-100 text-green-800 px-1 rounded">
+                    TP: {userProfile?.tp || 0}
+                  </span>
+                </div>
+              </div>
             </button>
 
             <AnimatePresence>
               {isProfileDropdownOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2"
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="absolute right-0 top-full mt-2 w-48 lg:w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
                 >
-                  <a href='/profile' className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {userProfile?.name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {userProfile?.email}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">
+                        PV: {userProfile?.pv || 0}
+                      </span>
+                      <span className="text-xs bg-green-100 text-green-800 px-1 rounded">
+                        TP: {userProfile?.tp || 0}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <a href="/profile" className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Profile
                   </a>
-                  <a href='/wallet' className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                    <DollarSign className="w-4 h-4" />
-                    Wallet
+                  
+                  <a href="/profile" className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
+                    Settings
                   </a>
-                  <hr className="my-2" />
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-100"
+                  >
                     <LogOut className="w-4 h-4" />
                     Logout
                   </button>
@@ -92,26 +134,9 @@ const Header = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDropdownO
             </AnimatePresence>
           </div>
         </div>
-
-        {/* Mobile Menu Button with Notification Bell */}
-        <div className="flex items-center gap-2 lg:hidden">
-          {/* Notifications Bell for Mobile */}
-          <a href='/notifications' className="relative p-2 text-gray-600 hover:text-[#0660D3] transition-colors">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </a>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-gray-600 hover:text-[#0660D3] transition-colors"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-        </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

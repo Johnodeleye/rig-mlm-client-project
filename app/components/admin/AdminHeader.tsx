@@ -2,6 +2,7 @@
 import { AnimatePresence, motion } from "framer-motion"
 import { Shield, Search, Bell, User, ChevronDown, LogOut, Menu } from "lucide-react"
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 interface AdminHeaderProps {
   setIsSidebarOpen: (open: boolean) => void;
@@ -10,14 +11,10 @@ interface AdminHeaderProps {
 }
 
 const AdminHeader = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDropdownOpen }: AdminHeaderProps) => {
-  const adminData = {
-    name: 'Admin Michael',
-    role: 'Super Admin'
-  };
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
-    window.location.href = '/admin';
+    logout();
   };
 
   return (
@@ -59,8 +56,8 @@ const AdminHeader = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDrop
                 <User className="w-4 h-4 text-white" />
               </div>
               <div className="text-left">
-                <span className="text-sm font-medium text-gray-700 block">{adminData.name}</span>
-                <span className="text-xs text-gray-500 block">{adminData.role}</span>
+                <span className="text-sm font-medium text-gray-700 block">{user?.username || 'Admin'}</span>
+                <span className="text-xs text-gray-500 block">Super Admin</span>
               </div>
               <ChevronDown className="w-4 h-4 text-gray-500" />
             </button>
@@ -88,7 +85,6 @@ const AdminHeader = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDrop
 
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 lg:hidden">
-          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 text-gray-600 hover:text-red-600 transition-colors"

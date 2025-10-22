@@ -14,8 +14,10 @@ import {
   X,
   ShoppingCart,
   Gift,
-  BarChart3
+  BarChart3,
+  LogOut
 } from "lucide-react"
+import { useAuth } from "@/context/AuthContext";
 
 interface AdminMobileSidebarProps {
   isSidebarOpen: boolean;
@@ -25,24 +27,25 @@ interface AdminMobileSidebarProps {
 }
 
 const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveMenu }: AdminMobileSidebarProps) => {
+  const { user, logout } = useAuth();
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/admin/dashboard' },
     { id: 'users', label: 'Users', icon: Users, href: '/admin/users' },
     { id: 'products', label: 'Products', icon: Package, href: '/admin/products' },
     { id: 'packages', label: 'Packages', icon: Gift, href: '/admin/packages' },
-    // { id: 'orders', label: 'Orders', icon: ShoppingCart, href: '/admin/orders' },
     { id: 'wallet', label: 'Wallet & Points', icon: Wallet, href: '/admin/wallet' },
     { id: 'withdrawals', label: 'Withdrawals', icon: BarChart3, href: '/admin/withdrawals' },
     { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
   ];
 
-  const adminData = {
-    name: 'Admin Michael',
-    role: 'Super Admin'
-  };
-
   const handleMenuClick = (menuId: string) => {
     setActiveMenu(menuId);
+    setIsSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
     setIsSidebarOpen(false);
   };
 
@@ -86,8 +89,8 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{adminData.name}</p>
-                  <p className="text-sm text-gray-500">{adminData.role}</p>
+                  <p className="font-medium text-gray-900">{user?.username || 'Admin'}</p>
+                  <p className="text-sm text-gray-500">Super Admin</p>
                 </div>
               </div>
             </div>
@@ -112,6 +115,17 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
                 );
               })}
             </nav>
+
+            {/* Logout Button */}
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">Logout</span>
+              </button>
+            </div>
           </motion.aside>
         </>
       )}

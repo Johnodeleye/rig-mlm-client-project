@@ -15,6 +15,11 @@ interface User {
   membershipPackage: string;
   country: string;
   isActive: boolean;
+  pv: number;
+  tp: number;
+  walletBalance: number;
+  totalEarnings: number;
+  totalReferrals: number;
   createdAt: string;
 }
 
@@ -37,6 +42,19 @@ interface AuthContextType {
   logout: () => void;
   checkAuth: () => Promise<void>;
   isAuthenticated: boolean;
+  userProfile: {
+    name: string;
+    email: string;
+    username: string;
+    plan: string;
+    pv: number;
+    tp: number;
+    walletBalance: number;
+    totalEarnings: number;
+    totalReferrals: number;
+    isActive: boolean;
+  } | null;
+  fetchUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,12 +64,57 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<{
+    name: string;
+    email: string;
+    username: string;
+    plan: string;
+    pv: number;
+    tp: number;
+    walletBalance: number;
+    totalEarnings: number;
+    totalReferrals: number;
+    isActive: boolean;
+  } | null>(null);
+  
   const router = useRouter();
 
   // Check authentication on mount
   useEffect(() => {
     checkAuth();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      if (!storedToken) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${storedToken}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.account) {
+          const userData = data.account;
+          setUserProfile({
+            name: userData.fullName || userData.username,
+            email: userData.email || 'user@example.com',
+            username: userData.username,
+            plan: userData.membershipPackage || 'No Plan',
+            pv: userData.pv || 0,
+            tp: userData.tp || 0,
+            walletBalance: userData.walletBalance || 0,
+            totalEarnings: userData.totalEarnings || 0,
+            totalReferrals: userData.totalReferrals || 0,
+            isActive: userData.isActive || false
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const checkAuth = async () => {
     try {
@@ -75,6 +138,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(data.account);
           setAccountType(data.accountType);
           setToken(storedToken);
+          // Fetch user profile data after successful auth
+          await fetchUserProfile();
         } else {
           // Token is invalid
           clearAuthData();
@@ -97,6 +162,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setAccountType(null);
     setToken(null);
+    setUserProfile(null);
   };
 
   const login = async (username: string, password: string, rememberMe: boolean = false) => {
@@ -127,6 +193,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAccountType(accountType);
         setToken(authToken);
         
+        // Fetch user profile data after login
+        await fetchUserProfile();
+        
         toast.success(`Login successful! Welcome ${accountType === 'admin' ? 'Admin' : ''}${account.username}`);
         
         // Redirect based on account type and status
@@ -152,7 +221,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-
+    // Call logout endpoint
     fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/logout`, {
       method: 'POST',
       headers: {
@@ -160,7 +229,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }).catch(console.error);
 
- 
+    // Clear all auth data
     clearAuthData();
     
     toast.success('Logged out successfully');
@@ -182,6 +251,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     logout,
     checkAuth,
     isAuthenticated: !!user && !!token,
+    userProfile,
+    fetchUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

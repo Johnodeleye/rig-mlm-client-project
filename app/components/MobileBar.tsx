@@ -1,6 +1,14 @@
-import { AnimatePresence, motion } from "framer-motion"
-import { Home, Users, DollarSign, CreditCard, TrendingUp, Bell, Settings, LogOut, Package, PersonStanding, Shield, User, X } from "lucide-react"
-import { useState } from "react";
+// app/components/MobileBar.tsx
+'use client';
+
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Home, Users, DollarSign, CreditCard, TrendingUp, 
+  Package, MessageCircle, Settings, LogOut, X,
+  User, Shield, Bell, PersonStanding
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
 
 interface MobileSidebarProps {
   isSidebarOpen: boolean;
@@ -9,12 +17,16 @@ interface MobileSidebarProps {
   setActiveMenu: (menu: string) => void;
 }
 
-const MobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveMenu }: MobileSidebarProps) => {
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  
+const MobileSidebar = ({ 
+  isSidebarOpen, 
+  setIsSidebarOpen, 
+  activeMenu, 
+  setActiveMenu 
+}: MobileSidebarProps) => {
+  const { user, userProfile, logout, accountType } = useAuth();
+
   const menuItems = [
-    { id: 'dashboard', label: 'Home', icon: Home, href: '/home' },
+    { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/home' },
     { id: 'referrals', label: 'My Referrals', icon: Users, href: '/referrals' },
     { id: 'my teams', label: 'My Teams', icon: PersonStanding, href: '/teams' },
     { id: 'earnings', label: 'Earnings & Wallet', icon: DollarSign, href: '/wallet' },
@@ -22,29 +34,15 @@ const MobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveM
     { id: 'upgrade', label: 'Upgrade Plan', icon: TrendingUp, href: '/upgrade' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },
     { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
-    { id: 'logout', label: 'Logout', icon: LogOut }
   ];
-  
-  const userData = {
-    name: 'John Ayomide',
-    username: '@johnayomide',
-    plan: 'Beginner Plan',
-    pv: 5,
-    status: 'Active',
-    totalEarnings: '₦45,670',
-    availableBalance: '₦23,450',
-    totalReferrals: 15,
-    referralLink: 'https://rigglobal.com/ref/johnayomide'
-  };
 
   const handleMenuClick = (menuId: string) => {
-    if (menuId === 'logout') {
-      // Handle logout logic here
-      console.log('Logging out...');
-      // Add your logout logic
-    } else {
-      setActiveMenu(menuId);
-    }
+    setActiveMenu(menuId);
+    setIsSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
     setIsSidebarOpen(false);
   };
 
@@ -52,75 +50,119 @@ const MobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setActiveM
     <AnimatePresence>
       {isSidebarOpen && (
         <>
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-transparent backdrop-blur-md bg-opacity-50 z-40 lg:hidden"
+            className="lg:hidden fixed inset-0 backdrop-blur-sm z-40"
             onClick={() => setIsSidebarOpen(false)}
           />
-          <motion.aside
-            initial={{ x: -300 }}
+          
+          {/* Sidebar */}
+          <motion.div
+            initial={{ x: '-100%' }}
             animate={{ x: 0 }}
-            exit={{ x: -300 }}
-            transition={{ type: 'spring', damping: 10 }}
-            className="fixed left-0 top-0 h-full w-80 bg-white z-50 lg:hidden"
+            exit={{ x: '-100%' }}
+            transition={{ type: 'tween', duration: 0.3 }}
+            className="lg:hidden fixed left-0 top-0 h-full w-80 bg-white shadow-xl z-50 flex flex-col"
           >
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-  <div className="w-8 h-8 bg-[#065fd340] rounded-lg flex items-center justify-center">
-           <img src="/logo.png" alt="" width={500} height={200}/>
-          </div>
-                  <span className="text-xl font-bold text-gray-900">RIG Global</span>
-                </div>
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 text-red-600 hover:text-[#0660D3] transition-colors bg-blue-600/30 rounded-lg"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* User Info */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-10 h-10 bg-[#0660D3] rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
+            {/* Header with Logo */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                  <Image 
+                    src="/logo.png" 
+                    alt="RIG Global Logo" 
+                    width={48} 
+                    height={48}
+                    className="object-contain"
+                  />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{userData.name}</p>
-                  <p className="text-sm text-gray-500">{userData.plan}</p>
+                  <h3 className="font-bold text-gray-900 text-lg">RIG Global</h3>
+                  <p className="text-sm text-gray-500">MLM Platform</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            {/* User Info */}
+            <div className="p-6 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-[#0660D3] to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-gray-900 truncate text-base">
+                    {userProfile?.name || user?.username || 'Loading...'}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Shield className="w-4 h-4 text-gray-400" />
+                    <p className="text-sm text-gray-500 truncate">
+                      {userProfile?.plan ? `${userProfile.plan} Plan` : 'Loading Plan'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1.5 rounded-lg font-medium">
+                      PV: {userProfile?.pv || 0}
+                    </span>
+                    <span className="text-sm bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-medium">
+                      TP: {userProfile?.tp || 0}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <nav className="p-4 space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <a
-                  href={item.href}
-                    key={item.id}
-                    onClick={() => handleMenuClick(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeMenu === item.id && item.id !== 'logout'
-                        ? 'bg-[#0660D3] text-white'
-                        : item.id === 'logout' 
-                        ? 'text-red-600 hover:bg-red-50'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {item.label}
-                  </a>
-                );
-              })}
+            {/* Navigation Menu */}
+            <nav className="flex-1 p-6 overflow-y-auto">
+              <ul className="space-y-3">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeMenu === item.id;
+                  
+                  return (
+                    <li key={item.id}>
+                      <a href={item.href}>
+                        <button
+                          onClick={() => handleMenuClick(item.id)}
+                          className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left transition-all duration-200 ${
+                            isActive
+                              ? 'bg-[#0660D3] text-white shadow-lg shadow-blue-100'
+                              : 'text-gray-700 hover:bg-gray-100 hover:shadow-md'
+                          }`}
+                        >
+                          <Icon className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                          <span className="font-semibold text-base">{item.label}</span>
+                        </button>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
             </nav>
-          </motion.aside>
+
+            {/* Logout Button */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-4 px-4 py-4 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 border border-red-200 hover:border-red-300"
+              >
+                <LogOut className="w-6 h-6 flex-shrink-0" />
+                <span className="font-semibold text-base">Logout</span>
+              </button>
+            </div>
+          </motion.div>
         </>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};
 
-export default MobileSidebar
+export default MobileSidebar;

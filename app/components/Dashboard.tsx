@@ -1,4 +1,4 @@
-// app/home/page.tsx (Updated)
+// app/components/Dashboard.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,126 +14,206 @@ import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import PointsSystem from '../components/PointsSystem';
 
+interface UserData {
+  name: string;
+  username: string;
+  plan: string;
+  pv: number;
+  tp: number;
+  status: string;
+  totalEarnings: string;
+  availableBalance: string;
+  totalReferrals: number;
+  referralLink: string;
+}
+
+interface PointsData {
+  monthlyPV: { personal: number; team: number };
+  cumulativePV: { personal: number; team: number };
+  monthlyTP: { personal: number; team: number };
+  cumulativeTP: { personal: number; team: number };
+}
+
+interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  amount: string;
+  status: string;
+  type: string;
+}
+
+interface Notification {
+  id: string;
+  message: string;
+  time: string;
+  read: boolean;
+}
+
+interface ReferralData {
+  totalReferrals: number;
+  activeReferrals: number;
+  inactiveReferrals: number;
+  referralLink: string;
+  referralId: string;
+}
+
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [copied, setCopied] = useState(false);
+  
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [pointsData, setPointsData] = useState<PointsData | null>(null);
+  const [referralData, setReferralData] = useState<ReferralData | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Points data with state management
-  const [pointsData, setPointsData] = useState({
-    monthlyPV: { personal: 20, team: 0 },
-    cumulativePV: { personal: 20, team: 0 },
-    monthlyTP: { personal: 10, team: 0 },
-    cumulativeTP: { personal: 10, team: 0 }
-  });
+  // Fetch all data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        
+        // Fetch all data in parallel
+        const [pointsRes, walletRes, referralsRes, transactionsRes, notificationsRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/points/my-points`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/wallet/my-wallet`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/referrals/my-referrals`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/transactions/my-transactions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/notifications/my-notifications`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
 
-  // Mock user data
-  const userData = {
-    name: 'John Ayomide',
-    username: '@johnayomide',
-    plan: 'Beginner Plan',
-    pv: 20,
-    tp: 10,
-    status: 'Active',
-    totalEarnings: '₦45,670',
-    availableBalance: '₦23,450',
-    totalReferrals: 15,
-    referralLink: 'https://rigglobal.com/ref/johnayomide'
-  };
+        if (pointsRes.ok) {
+          const pointsData = await pointsRes.json();
+          setPointsData(pointsData.pointsData);
+        }
 
-const commissionData = [
-  { level: 1, totalMembers: 1, commission: '48%', commissionableAmount: '₦2,500' }, 
-  { level: 3, totalMembers: 3, commission: '48%',  commissionableAmount: '₦5,000' }, 
-  { level: 5, totalMembers: 5, commission: '48%',  commissionableAmount: '₦10,000' }, 
-  { level: 7, totalMembers: 7, commission: '48%',  commissionableAmount: '₦15,000' }, 
-  { level: 10, totalMembers: 10, commission: '48%',  commissionableAmount: '₦30,000' }, 
-  { level: 12, totalMembers: 12, commission: '48%',  commissionableAmount: '₦60,000' }, 
-  { level: 15, totalMembers: 15, commission: '48%',  commissionableAmount: '₦150,0000' } 
-];
+        if (walletRes.ok) {
+          const walletData = await walletRes.json();
+          setUserData(walletData.userData);
+        }
 
+        if (referralsRes.ok) {
+          const referralData = await referralsRes.json();
+          setReferralData(referralData.referralData);
+        }
 
-  const transactions = [
-    { date: '2024-01-15', description: 'Level 1 Commission', amount: '₦1,200', status: 'Paid' },
-    { date: '2024-01-14', description: 'Direct Referral Bonus', amount: '₦500', status: 'Paid' },
-    { date: '2024-01-13', description: 'Level 2 Commission', amount: '₦250', status: 'Pending' },
-    { date: '2024-01-12', description: 'Product Purchase', amount: '₦9,000', status: 'Paid' }
-  ];
+        if (transactionsRes.ok) {
+          const transactionsData = await transactionsRes.json();
+          setTransactions(transactionsData.transactions);
+        }
 
-  const notifications = [
-    { id: 1, message: 'New referral joined your network', time: '2 hours ago', read: false },
-    { id: 2, message: 'Commission payment processed', time: '1 day ago', read: true },
-    { id: 3, message: 'Your account has been upgraded', time: '2 days ago', read: true }
+        if (notificationsRes.ok) {
+          const notificationsData = await notificationsRes.json();
+          setNotifications(notificationsData.notifications);
+        }
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const commissionData = [
+    { level: 1, totalMembers: 1, commission: '48%', commissionableAmount: '₦2,500' },
+    { level: 3, totalMembers: 3, commission: '48%', commissionableAmount: '₦5,000' },
+    { level: 5, totalMembers: 5, commission: '48%', commissionableAmount: '₦10,000' },
+    { level: 7, totalMembers: 7, commission: '48%', commissionableAmount: '₦15,000' },
+    { level: 10, totalMembers: 10, commission: '48%', commissionableAmount: '₦30,000' },
+    { level: 12, totalMembers: 12, commission: '48%', commissionableAmount: '₦60,000' },
+    { level: 15, totalMembers: 15, commission: '48%', commissionableAmount: '₦150,000' }
   ];
 
   const copyReferralLink = () => {
-    navigator.clipboard.writeText(userData.referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const shareReferralLink = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join RIG Global',
-          text: 'Join me on RIG Global and start earning!',
-          url: userData.referralLink,
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-      }
-    } else {
-      copyReferralLink();
+    if (referralData?.referralLink) {
+      navigator.clipboard.writeText(referralData.referralLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  // Simulate points update when team grows
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Randomly update team points to simulate growth
-      setPointsData(prev => ({
-        ...prev,
-        monthlyPV: {
-          ...prev.monthlyPV,
-          team: Math.min(prev.monthlyPV.team + Math.floor(Math.random() * 5), 100)
-        },
-        cumulativePV: {
-          ...prev.cumulativePV,
-          team: prev.cumulativePV.team + Math.floor(Math.random() * 3)
-        },
-        monthlyTP: {
-          ...prev.monthlyTP,
-          team: Math.min(prev.monthlyTP.team + Math.floor(Math.random() * 2), 50)
-        },
-        cumulativeTP: {
-          ...prev.cumulativeTP,
-          team: prev.cumulativeTP.team + Math.floor(Math.random() * 1)
+  const shareReferralLink = async () => {
+    if (referralData?.referralLink) {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Join RIG Global',
+            text: 'Join me on RIG Global and start earning!',
+            url: referralData.referralLink,
+          });
+        } catch (error) {
+          console.log('Error sharing:', error);
         }
-      }));
-    }, 10000); // Update every 10 seconds
+      } else {
+        copyReferralLink();
+      }
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header 
+          setIsSidebarOpen={setIsSidebarOpen}
+          isProfileDropdownOpen={isProfileDropdownOpen}
+          setIsProfileDropdownOpen={setIsProfileDropdownOpen}
+        />
+        <div className="flex pt-16">
+          <DesktopSidebar 
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+          />
+          <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
+            <div className="animate-pulse space-y-6">
+              <div className="bg-white rounded-xl p-6 h-32"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl p-6 h-40"></div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl p-6 h-64"></div>
+                <div className="bg-white rounded-xl p-6 h-64"></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Header 
         setIsSidebarOpen={setIsSidebarOpen}
         isProfileDropdownOpen={isProfileDropdownOpen}
         setIsProfileDropdownOpen={setIsProfileDropdownOpen}
       />
 
-      {/* Sidebar */}
       <div className="flex pt-16">
-        {/* Desktop Sidebar */}
         <DesktopSidebar 
           activeMenu={activeMenu}
           setActiveMenu={setActiveMenu}
         />
 
-        {/* Mobile Sidebar */}
         <MobileSidebar 
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
@@ -141,7 +221,6 @@ const commissionData = [
           setActiveMenu={setActiveMenu}
         />
 
-        {/* Main Content */}
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
           {/* Welcome Card */}
           <motion.div
@@ -152,24 +231,26 @@ const commissionData = [
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div className="mb-3 lg:mb-0">
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
-                  Welcome back, {userData.name}!
+                  Welcome back, {userData?.name}!
                 </h1>
                 <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2 lg:gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <Package className="w-4 h-4" />
-                    <span>Plan: {userData.plan}</span>
+                    <span>Plan: {userData?.plan}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
-                    <span>PV: {userData.pv}</span>
+                    <span>PV: {userData?.pv}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-yellow-500" />
-                    <span>TP: {userData.tp}</span>
+                    <span>TP: {userData?.tp}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4" />
-                    <span className="text-green-600 font-medium">{userData.status}</span>
+                    <span className={`font-medium ${userData?.status === 'Active' ? 'text-green-600' : 'text-red-600'}`}>
+                      {userData?.status}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -180,7 +261,7 @@ const commissionData = [
           </motion.div>
 
           {/* Points System */}
-          <PointsSystem pointsData={pointsData} />
+          {pointsData && <PointsSystem pointsData={pointsData} />}
 
           {/* Earnings Cards */}
           <div className="grid grid-cols-1 gap-4 lg:gap-6 mb-4 lg:mb-6">
@@ -193,7 +274,9 @@ const commissionData = [
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
-                  <p className="text-xl lg:text-2xl font-bold text-gray-900">{userData.totalEarnings}</p>
+                  <p className="text-xl lg:text-2xl font-bold text-gray-900">
+                    {userData?.totalEarnings}
+                  </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-full flex items-center justify-center">
                   <DollarSign className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
@@ -210,7 +293,9 @@ const commissionData = [
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Available Balance</p>
-                  <p className="text-xl lg:text-2xl font-bold text-gray-900">{userData.availableBalance}</p>
+                  <p className="text-xl lg:text-2xl font-bold text-gray-900">
+                    {userData?.availableBalance}
+                  </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center">
                   <Wallet className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
@@ -234,7 +319,7 @@ const commissionData = [
                 <div className="flex flex-col gap-2">
                   <input
                     type="text"
-                    value={userData.referralLink}
+                    value={referralData?.referralLink || ''}
                     readOnly
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
                   />
@@ -261,7 +346,9 @@ const commissionData = [
               <div className="grid grid-cols-1 gap-3">
                 <div className="text-center p-3 lg:p-4 bg-blue-50 rounded-lg">
                   <Users className="w-6 h-6 lg:w-8 lg:h-8 text-[#0660D3] mx-auto mb-2" />
-                  <p className="text-xl lg:text-2xl font-bold text-gray-900">{userData.totalReferrals}</p>
+                  <p className="text-xl lg:text-2xl font-bold text-gray-900">
+                    {referralData?.totalReferrals || 0}
+                  </p>
                   <p className="text-xs lg:text-sm text-gray-600">Total Referrals</p>
                 </div>
               </div>
@@ -319,7 +406,7 @@ const commissionData = [
                 </thead>
                 <tbody>
                   {transactions.map((transaction, index) => (
-                    <tr key={index} className="border-b border-gray-100 last:border-0">
+                    <tr key={transaction.id} className="border-b border-gray-100 last:border-0">
                       <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
                         <div className="flex items-center gap-1 lg:gap-2">
                           <Calendar className="w-3 h-3 lg:w-4 lg:h-4" />
@@ -327,11 +414,15 @@ const commissionData = [
                         </div>
                       </td>
                       <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-900">{transaction.description}</td>
-                      <td className="py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-900">{transaction.amount}</td>
+                      <td className={`py-2 lg:py-3 text-xs lg:text-sm font-medium ${
+                        transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.amount}
+                      </td>
                       <td className="py-2 lg:py-3">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            transaction.status === 'Paid'
+                            transaction.status === 'Paid' || transaction.status === 'Completed'
                               ? 'bg-green-100 text-green-800'
                               : transaction.status === 'Pending'
                               ? 'bg-yellow-100 text-yellow-800'
@@ -346,6 +437,12 @@ const commissionData = [
                 </tbody>
               </table>
             </div>
+            {transactions.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <Wallet className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No transactions yet</p>
+              </div>
+            )}
           </motion.div>
 
           {/* Notifications */}
@@ -377,6 +474,12 @@ const commissionData = [
                 </div>
               ))}
             </div>
+            {notifications.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No notifications</p>
+              </div>
+            )}
           </motion.div>
         </main>
       </div>
