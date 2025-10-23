@@ -224,7 +224,7 @@ const WalletPage = () => {
             <p className="text-gray-600">Manage your earnings and withdrawals</p>
           </motion.div>
 
-          {/* Commission Summary Cards */}
+          {/* Commission Summary Cardsg */}
           <div className="space-y-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <motion.div
