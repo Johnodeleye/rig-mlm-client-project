@@ -22,6 +22,8 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
     { id: 'referrals', label: 'My Referrals', icon: Users, href: '/referrals' },
     { id: 'my teams', label: 'My Teams', icon: PersonStanding, href: '/teams' },
     { id: 'earnings', label: 'Earnings & Wallet', icon: DollarSign, href: '/wallet' },
+    { id: 'send', label: 'Send Money', icon: DollarSign, href: '/send' },
+    { id: 'withdraw', label: 'Withdraw', icon: CreditCard, href: '/withdraw' },
     { id: 'products', label: 'Products', icon: Package, href: '/products' },
     { id: 'upgrade', label: 'Upgrade Plan', icon: TrendingUp, href: '/upgrade' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },

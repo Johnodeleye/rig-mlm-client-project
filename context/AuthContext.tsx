@@ -1,7 +1,7 @@
-// contexts/AuthContext.tsx
+// context/AuthContext.tsx
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
@@ -20,6 +20,7 @@ interface User {
   walletBalance: number;
   totalEarnings: number;
   totalReferrals: number;
+  profilePicture?: string;
   createdAt: string;
 }
 
@@ -28,6 +29,8 @@ interface Admin {
   username: string;
   email: string;
   isActive: boolean;
+  phoneNumber: string;
+  referralId: string;
   createdAt: string;
 }
 
@@ -53,8 +56,10 @@ interface AuthContextType {
     totalEarnings: number;
     totalReferrals: number;
     isActive: boolean;
+    profilePicture?: string;
   } | null;
   fetchUserProfile: () => Promise<void>;
+  updateProfilePicture: (profilePicture: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,16 +80,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     totalEarnings: number;
     totalReferrals: number;
     isActive: boolean;
+    profilePicture?: string;
   } | null>(null);
   
   const router = useRouter();
 
-  // Check authentication on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       if (!storedToken) return;
@@ -107,16 +108,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             walletBalance: userData.walletBalance || 0,
             totalEarnings: userData.totalEarnings || 0,
             totalReferrals: userData.totalReferrals || 0,
-            isActive: userData.isActive || false
+            isActive: userData.isActive || false,
+            profilePicture: userData.profilePicture || null
           });
         }
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
+  }, []);
+
+  const updateProfilePicture = async (profilePicture: string) => {
+    try {
+      const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      if (!storedToken) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/upload-profile-picture`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${storedToken}`
+        },
+        body: JSON.stringify({ profilePicture })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUserProfile(prev => prev ? { ...prev, profilePicture } : null);
+          toast.success('Profile picture updated successfully');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      toast.error('Failed to update profile picture');
+    }
   };
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
       const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
@@ -138,14 +167,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(data.account);
           setAccountType(data.accountType);
           setToken(storedToken);
-          // Fetch user profile data after successful auth
-          await fetchUserProfile();
+          
+          if (data.account) {
+            const userData = data.account;
+            setUserProfile({
+              name: userData.fullName || userData.username,
+              email: userData.email || 'user@example.com',
+              username: userData.username,
+              plan: userData.membershipPackage || 'No Plan',
+              pv: userData.pv || 0,
+              tp: userData.tp || 0,
+              walletBalance: userData.walletBalance || 0,
+              totalEarnings: userData.totalEarnings || 0,
+              totalReferrals: userData.totalReferrals || 0,
+              isActive: userData.isActive || false,
+              profilePicture: userData.profilePicture || null
+            });
+          }
         } else {
-          // Token is invalid
           clearAuthData();
         }
       } else {
-        // Token is invalid
         clearAuthData();
       }
     } catch (error) {
@@ -154,7 +196,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const clearAuthData = () => {
     localStorage.removeItem('authToken');
@@ -182,7 +228,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data.success) {
         const { account, accountType, token: authToken } = data;
         
-        // Store token based on remember me preference
         if (rememberMe) {
           localStorage.setItem('authToken', authToken);
         } else {
@@ -193,21 +238,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAccountType(accountType);
         setToken(authToken);
         
-        // Fetch user profile data after login
-        await fetchUserProfile();
+        if (account && accountType === 'user') {
+          setUserProfile({
+            name: account.fullName || account.username,
+            email: account.email || 'user@example.com',
+            username: account.username,
+            plan: account.membershipPackage || 'No Plan',
+            pv: account.pv || 0,
+            tp: account.tp || 0,
+            walletBalance: account.walletBalance || 0,
+            totalEarnings: account.totalEarnings || 0,
+            totalReferrals: account.totalReferrals || 0,
+            isActive: account.isActive || false,
+            profilePicture: account.profilePicture || null
+          });
+        }
         
         toast.success(`Login successful! Welcome ${accountType === 'admin' ? 'Admin' : ''}${account.username}`);
         
-        // Redirect based on account type and status
         if (accountType === 'admin') {
           router.push('/admin/home');
-        } else if (accountType === 'user') {
-          if (account.isActive) {
-            router.push('/home');
-          } else {
-            // User is not active, they'll see the activation message
-            // We don't redirect, just let them stay on login page with the message
-          }
+        } else if (accountType === 'user' && account.isActive) {
+          router.push('/home');
         }
       } else {
         toast.error(data.error || 'Login failed');
@@ -221,7 +273,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    // Call logout endpoint
     fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/logout`, {
       method: 'POST',
       headers: {
@@ -229,12 +280,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }).catch(console.error);
 
-    // Clear all auth data
     clearAuthData();
-    
     toast.success('Logged out successfully');
     
-    // Redirect to login page
     if (accountType === 'admin') {
       router.push('/admin');
     } else {
@@ -253,6 +301,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticated: !!user && !!token,
     userProfile,
     fetchUserProfile,
+    updateProfilePicture,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
