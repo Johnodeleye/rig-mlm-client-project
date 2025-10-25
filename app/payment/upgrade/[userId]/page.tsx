@@ -63,7 +63,7 @@ const UpgradePaymentPage = () => {
       }
 
       const [userRes, packagesRes, walletRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/${userId}`, {
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/search?q=${userId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/packages`, {
