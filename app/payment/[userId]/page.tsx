@@ -1,4 +1,3 @@
-// app/payment/[userId]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -134,25 +133,6 @@ const PaymentPage = () => {
       if (!activateResponse.ok) {
         const errorData = await activateResponse.json();
         throw new Error(errorData.error || 'Failed to activate user');
-      }
-
-      const payoutResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND}/api/commissions/process-payouts`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userIds: [user?.id]
-          })
-        }
-      );
-
-      if (!payoutResponse.ok) {
-        const errorData = await payoutResponse.json();
-        throw new Error(errorData.error || 'Failed to process payout');
       }
 
       setPaymentSuccess(true);

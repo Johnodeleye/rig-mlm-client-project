@@ -45,23 +45,25 @@ interface PointsData {
   };
 }
 
+interface CommissionHistoryItem {
+  id: string;
+  userId: string;
+  referredUserId: string;
+  package: string;
+  level: number;
+  commissionAmount: number;
+  type: string;
+  status: string;
+  createdAt: string;
+  referredUser: {
+    username: string;
+    fullName?: string;
+  };
+}
+
 interface CommissionSummary {
-  totalEarnings: number;
-  pendingEarnings: number;
-  commissionHistory: Array<{
-    id: string;
-    commissionAmount: number;
-    level: number;
-    type: string;
-    package: string;
-    status: string;
-    createdAt: string;
-    referredUser: {
-      username: string;
-      fullName: string;
-      membershipPackage: string;
-    };
-  }>;
+  totalCommissions: number;
+  recentCommissions: CommissionHistoryItem[];
 }
 
 interface Transaction {
@@ -84,14 +86,12 @@ const WalletPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch all data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         
-        // Fetch all data in parallel
         const [walletRes, pointsRes, commissionRes, transactionsRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/wallet/my-wallet`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -138,7 +138,6 @@ const WalletPage = () => {
     fetchData();
   }, []);
 
-  // Monthly Salary Bonuses
   const monthlySalaryBonuses = [
     { level: 'SB1', requiredPV: 600, salaryNGN: '₦50,000', salaryUSD: '$100', maxCappedPV: 270 },
     { level: 'SB2', requiredPV: 1200, salaryNGN: '₦100,000', salaryUSD: '$200', maxCappedPV: 540 },
@@ -149,7 +148,6 @@ const WalletPage = () => {
     { level: 'SB7', requiredPV: 17000, salaryNGN: '₦1,000,000', salaryUSD: '$1,500', maxCappedPV: 7650 }
   ];
 
-  // Rank Awards
   const rankAwards = [
     { rank: 'Sapphire', cumulativePV: 3500, awardNGN: '₦100,000', awardUSD: '$250', maxCappedPV: 1575 },
     { rank: 'Pearl', cumulativePV: 9000, awardNGN: '₦250,000', awardUSD: '$600', maxCappedPV: 4050 },
@@ -163,7 +161,6 @@ const WalletPage = () => {
     { rank: 'Crown Ambassador', cumulativePV: 15000000, awardNGN: '₦300,000,000', awardUSD: '$500,000', maxCappedPV: 6750000 }
   ];
 
-  // Travel Awards
   const travelAwards = [
     { title: 'One (1) Person Trip', requiredTP: 30000, maxCappedTP: 13500 },
     { title: 'Two (2) Person Trip', requiredTP: 45000, maxCappedTP: 22500 }
@@ -174,7 +171,6 @@ const WalletPage = () => {
     return Math.min((current / target) * 100, 100);
   };
 
-  // Calculate rewards data from points data
   const getRewardsData = () => {
     if (!pointsData) {
       return {
@@ -244,7 +240,6 @@ const WalletPage = () => {
     );
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -296,7 +291,6 @@ const WalletPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -308,7 +302,6 @@ const WalletPage = () => {
             <p className="text-gray-600">Manage your earnings and withdrawals</p>
           </motion.div>
 
-          {/* Commission Summary Cards */}
           <div className="space-y-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <motion.div
@@ -318,9 +311,9 @@ const WalletPage = () => {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
+                    <p className="text-sm text-gray-600 mb-1">Total Commissions</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      ₦{(commissionData?.totalEarnings || 0).toLocaleString()}
+                      ₦{(commissionData?.totalCommissions || 0).toLocaleString()}
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -328,166 +321,134 @@ const WalletPage = () => {
                   </div>
                 </div>
               </motion.div>
+            </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Pending Earnings</p>
-                    <p className="text-2xl font-bold text-yellow-600">
-                      ₦{(commissionData?.pendingEarnings || 0).toLocaleString()}
-                    </p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6"
+            >
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <History className="w-5 h-5" />
+                Commission History
+              </h2>
+
+              {commissionData?.recentCommissions && commissionData.recentCommissions.length > 0 ? (
+                <>
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Date</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">From</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Level</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Package</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Amount</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {commissionData.recentCommissions.map((commission) => (
+                          <tr key={commission.id} className="border-b border-gray-100 last:border-0">
+                            <td className="py-3 px-2 text-sm text-gray-600">
+                              {new Date(commission.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 px-2 text-sm text-gray-900">
+                              {commission.referredUser.username}
+                            </td>
+                            <td className="py-3 px-2 text-sm text-gray-600">
+                              Level {commission.level}
+                            </td>
+                            <td className="py-3 px-2 text-sm text-gray-600 capitalize">
+                              {commission.package}
+                            </td>
+                            <td className="py-3 px-2 text-sm font-medium text-gray-900">
+                              ₦{commission.commissionAmount.toLocaleString()}
+                            </td>
+                            <td className="py-3 px-2">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  commission.status === 'Paid'
+                                    ? 'bg-green-100 text-green-800'
+                                    : commission.status === 'Pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}
+                              >
+                                {commission.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-yellow-600" />
+
+                  <div className="md:hidden space-y-3">
+                    {commissionData.recentCommissions.map((commission) => (
+                      <div 
+                        key={commission.id} 
+                        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="text-lg font-semibold text-gray-900">
+                              ₦{commission.commissionAmount.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(commission.createdAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              commission.status === 'Paid'
+                                ? 'bg-green-100 text-green-800'
+                                : commission.status === 'Pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {commission.status}
+                          </span>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">From:</span>
+                            <span className="text-gray-900 font-medium">
+                              {commission.referredUser.username}
+                            </span>
+                          </div>
+                          
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Level:</span>
+                            <span className="text-gray-900">Level {commission.level}</span>
+                          </div>
+                          
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Package:</span>
+                            <span className="text-gray-900 capitalize">{commission.package}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">No commission history yet</p>
+                  <p className="text-sm mt-1">Commissions will appear here when your referrals join and get activated</p>
                 </div>
-              </motion.div>
-            </div>
-
-{/* Commission History */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.2 }}
-  className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6"
->
-  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-    <History className="w-5 h-5" />
-    Commission History
-  </h2>
-
-  {commissionData?.commissionHistory && commissionData.commissionHistory.length > 0 ? (
-    <>
-      {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Date</th>
-              <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">From</th>
-              <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Level</th>
-              <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Package</th>
-              <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Amount</th>
-              <th className="text-left py-3 px-2 text-sm font-medium text-gray-600">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {commissionData.commissionHistory.map((commission) => (
-              <tr key={commission.id} className="border-b border-gray-100 last:border-0">
-                <td className="py-3 px-2 text-sm text-gray-600">
-                  {new Date(commission.createdAt).toLocaleDateString()}
-                </td>
-                <td className="py-3 px-2 text-sm text-gray-900">
-                  {commission.referredUser.fullName}
-                </td>
-                <td className="py-3 px-2 text-sm text-gray-600">
-                  Level {commission.level}
-                </td>
-                <td className="py-3 px-2 text-sm text-gray-600 capitalize">
-                  {commission.package}
-                </td>
-                <td className="py-3 px-2 text-sm font-medium text-gray-900">
-                  ₦{commission.commissionAmount.toLocaleString()}
-                </td>
-                <td className="py-3 px-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      commission.status === 'Paid'
-                        ? 'bg-green-100 text-green-800'
-                        : commission.status === 'Pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {commission.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
-        {commissionData.commissionHistory.map((commission) => (
-          <div 
-            key={commission.id} 
-            className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-          >
-            {/* Header with Amount and Status */}
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="text-lg font-semibold text-gray-900">
-                  ₦{commission.commissionAmount.toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {new Date(commission.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  commission.status === 'Paid'
-                    ? 'bg-green-100 text-green-800'
-                    : commission.status === 'Pending'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {commission.status}
-              </span>
-            </div>
-
-            {/* Details */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">From:</span>
-                <span className="text-gray-900 font-medium">
-                  {commission.referredUser.fullName}
-                </span>
-              </div>
-              
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Level:</span>
-                <span className="text-gray-900">Level {commission.level}</span>
-              </div>
-              
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Package:</span>
-                <span className="text-gray-900 capitalize">{commission.package}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* View More Button for Mobile */}
-      {/* <div className="md:hidden mt-4">
-        <button className="w-full py-2 text-sm text-blue-600 font-medium hover:text-blue-700">
-          View All Commissions →
-        </button>
-      </div> */}
-    </>
-  ) : (
-    <div className="text-center py-8 text-gray-500">
-      <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-      <p className="font-medium">No commission history yet</p>
-      <p className="text-sm mt-1">Commissions will appear here when your referrals join and get activated</p>
-    </div>
-  )}
-</motion.div>
+              )}
+            </motion.div>
           </div>
 
-          {/* Wallet Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-4 lg:mb-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -553,7 +514,6 @@ const WalletPage = () => {
             </motion.div>
           </div>
 
-          {/* Action Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -575,7 +535,6 @@ const WalletPage = () => {
             </div>
           </motion.div>
 
-          {/* Rewards Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -583,7 +542,6 @@ const WalletPage = () => {
           >
             <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-6">Rewards & Incentives</h2>
             
-            {/* Progress Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <div className="text-center">
                 <div className="flex justify-center mb-3">
@@ -622,7 +580,6 @@ const WalletPage = () => {
               </div>
             </div>
 
-            {/* Monthly Salary Bonuses */}
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Salary Bonuses</h3>
               <div className="overflow-x-auto">
@@ -664,7 +621,6 @@ const WalletPage = () => {
               </div>
             </div>
 
-            {/* Rank Awards */}
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Rank Award Incentives</h3>
               <div className="overflow-x-auto">
@@ -706,7 +662,6 @@ const WalletPage = () => {
               </div>
             </div>
 
-            {/* Travel Awards */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Travel Award Incentives</h3>
               <div className="overflow-x-auto">
@@ -745,69 +700,61 @@ const WalletPage = () => {
             </div>
           </motion.div>
 
-{/* Recent Transactions */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
-  id='txt'
->
-  <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
-  
-  <div className="overflow-x-auto">
-    <table className="w-full min-w-[600px]">
-      <thead>
-        <tr className="border-b border-gray-200">
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Date</th>
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Description</th>
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Amount</th>
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((transaction, index) => (
-          <tr key={transaction.id} className="border-b border-gray-100 last:border-0">
-            <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {transaction.date}
-              </div>
-            </td>
-            <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-900">{transaction.description}</td>
-            <td className={`py-2 lg:py-3 text-xs lg:text-sm font-medium ${
-              transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {transaction.type === 'credit' ? '+' : '-'}{transaction.amount}
-            </td>
-            <td className="py-2 lg:py-3">
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                  transaction.status === 'Paid' || transaction.status === 'Completed'
-                    ? 'bg-green-100 text-green-800'
-                    : transaction.status === 'Pending'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {transaction.status === 'Paid' || transaction.status === 'Completed' ? <CheckCircle className="w-3 h-3" /> : null}
-                {transaction.status === 'Pending' ? <Clock className="w-3 h-3" /> : null}
-                {transaction.status === 'Failed' ? <XCircle className="w-3 h-3" /> : null}
-                {transaction.status}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-
-  {transactions.length === 0 && (
-    <div className="text-center py-8">
-      <Wallet className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-      <p className="text-gray-500">No transactions yet</p>
-    </div>
-  )}
-</motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
+            id='txt'
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Date</th>
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Description</th>
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Amount</th>
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((transaction, index) => (
+                    <tr key={transaction.id} className="border-b border-gray-100 last:border-0">
+                      <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {transaction.date}
+                        </div>
+                      </td>
+                      <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-900">{transaction.description}</td>
+                      <td className={`py-2 lg:py-3 text-xs lg:text-sm font-medium ${
+                        transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.type === 'credit' ? '+' : '-'}{transaction.amount}
+                      </td>
+                      <td className="py-2 lg:py-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                            transaction.status === 'Paid' || transaction.status === 'Completed'
+                              ? 'bg-green-100 text-green-800'
+                              : transaction.status === 'Pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {transaction.status === 'Paid' || transaction.status === 'Completed' ? <CheckCircle className="w-3 h-3" /> : null}
+                          {transaction.status === 'Pending' ? <Clock className="w-3 h-3" /> : null}
+                          {transaction.status === 'Failed' ? <XCircle className="w-3 h-3" /> : null}
+                          {transaction.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
         </main>
       </div>
     </div>
