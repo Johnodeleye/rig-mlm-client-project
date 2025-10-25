@@ -9,6 +9,7 @@ import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'react-hot-toast';
+import AuthRedirect from '../components/AuthRedirect';
 
 interface Referral {
   id: string;
@@ -304,108 +305,129 @@ const ReferralsPage = () => {
             </motion.div>
 
             {/* Referrals List */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Recent Referrals</h2>
-                <span className="text-sm text-gray-500">
-                  {referralData?.referrals.length || 0} total
+<motion.div
+  initial={{ opacity: 0, x: 20 }}
+  animate={{ opacity: 1, x: 0 }}
+  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
+>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-lg font-semibold text-gray-900">Recent Referrals</h2>
+    <span className="text-sm text-gray-500">
+      {referralData?.referrals.length || 0} total
+    </span>
+  </div>
+  
+  {referralData?.referrals && referralData.referrals.length > 0 ? (
+    <>
+      {/* Cards Layout for Referrals */}
+      <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
+        {referralData.referrals.map((referral) => (
+          <motion.div
+            key={referral.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all duration-200 border border-gray-200 hover:shadow-md"
+          >
+            {/* Top Section - Name and Status */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 text-sm lg:text-base">
+                  {referral.name}
+                </h3>
+                <p className="text-xs text-gray-500">@{referral.username}</p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
+                    referral.status === 'Active'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {referral.status === 'Active' ? (
+                    <UserCheck className="w-3 h-3" />
+                  ) : (
+                    <UserX className="w-3 h-3" />
+                  )}
+                  {referral.status}
+                </span>
+              </div>
+            </div>
+
+            {/* Info Grid */}
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="bg-white rounded-md p-2">
+                <p className="text-xs text-gray-500 mb-1">Date</p>
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-gray-400" />
+                  <span className="text-xs font-medium text-gray-700">
+                    {new Date(referral.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-md p-2">
+                <p className="text-xs text-gray-500 mb-1">Level</p>
+                <span className="text-xs font-medium text-gray-700">
+                  Level {referral.level}
                 </span>
               </div>
               
-              <div className="overflow-x-auto">
-                {referralData?.referrals && referralData.referrals.length > 0 ? (
-                  <table className="w-full min-w-[400px]">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Name</th>
-                        <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Date</th>
-                        <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Level</th>
-                        <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Commission</th>
-                        <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {referralData.referrals.map((referral) => (
-                        <tr key={referral.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                          <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-900">
-                            <div>
-                              <div className="font-medium">{referral.name}</div>
-                              <div className="text-xs text-gray-500">@{referral.username}</div>
-                            </div>
-                          </td>
-                          <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(referral.date).toLocaleDateString()}
-                            </div>
-                          </td>
-                          <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
-                            Level {referral.level}
-                          </td>
-                          <td className="py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-900">
-                            {referral.commission}
-                          </td>
-                          <td className="py-2 lg:py-3">
-                            <div className="flex flex-col gap-2">
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                                  referral.status === 'Active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}
-                              >
-                                {referral.status === 'Active' ? (
-                                  <UserCheck className="w-3 h-3" />
-                                ) : (
-                                  <UserX className="w-3 h-3" />
-                                )}
-                                {referral.status}
-                              </span>
-                              {referral.status === 'Inactive' && (
-                                <a
-                                  href={`/activate?user=${referral.id}`}
-                                  className="px-2 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-1 text-xs font-medium w-fit"
-                                >
-                                  <Zap className="w-3 h-3" />
-                                  Click to Activate
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div className="text-center py-12">
-                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Referrals Yet</h3>
-                    <p className="text-gray-500 mb-4">Start sharing your referral link to earn commissions</p>
-                    <button
-                      onClick={shareReferralLink}
-                      className="px-4 py-2 bg-[#0660D3] text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Share Referral Link
-                    </button>
-                  </div>
-                )}
+              <div className="bg-white rounded-md p-2">
+                <p className="text-xs text-gray-500 mb-1">Commission</p>
+                <span className="text-xs font-bold text-green-600">
+                  {referral.commission}
+                </span>
               </div>
+            </div>
 
-              {/* Summary Footer */}
-              {referralData?.referrals && referralData.referrals.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Total Commission from Referrals:</span>
-                    <span className="font-bold text-green-600">{referralData.totalCommission}</span>
-                  </div>
-                </div>
-              )}
-            </motion.div>
+            {/* Action Button for Inactive Users */}
+            {referral.status === 'Inactive' && (
+              <a
+                href={`/payment/${referral.id}`}
+                className="w-full px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium shadow-sm hover:shadow-md"
+              >
+                <Zap className="w-4 h-4" />
+                Activate This Referral
+              </a>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Summary Footer */}
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600">Total Commission:</span>
+          <span className="text-lg font-bold text-green-600">
+            {referralData.totalCommission}
+          </span>
+        </div>
+      </div>
+    </>
+  ) : (
+    <div className="text-center py-12">
+      <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">No Referrals Yet</h3>
+      <p className="text-gray-500 mb-4 text-sm px-4">
+        Start sharing your referral link to earn commissions
+      </p>
+      <button
+        onClick={shareReferralLink}
+        className="px-6 py-2.5 bg-gradient-to-r from-[#0660D3] to-blue-600 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 mx-auto"
+      >
+        <Share2 className="w-4 h-4" />
+        Share Referral Link
+      </button>
+    </div>
+  )}
+</motion.div>
           </div>
+          <AuthRedirect requireAuth={true} requireActive={true} redirectTo="/login" />
         </main>
       </div>
     </div>

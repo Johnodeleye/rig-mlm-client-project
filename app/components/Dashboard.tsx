@@ -17,6 +17,7 @@ import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import PointsSystem from '../components/PointsSystem';
 import { useAuth } from '@/context/AuthContext';
+import AuthRedirect from './AuthRedirect';
 
 interface PointsData {
   monthlyPV: { personal: number; team: number };
@@ -65,7 +66,7 @@ const Dashboard = () => {
   const dataFetchedRef = useRef(false);
 
   // Use AuthContext to get user data
-  const { userProfile, user } = useAuth();
+  const { userProfile, user, token } = useAuth();
 
   // Format currency function
   const formatCurrency = (amount: number) => {
@@ -210,6 +211,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AuthRedirect requireAuth={true} requireActive={true} redirectTo="/login" />
       <Header 
         setIsSidebarOpen={setIsSidebarOpen}
         isProfileDropdownOpen={isProfileDropdownOpen}

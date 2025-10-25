@@ -12,7 +12,7 @@ interface User {
   email: string;
   phoneNumber: string;
   referralId: string;
-  membershipPackage: string;
+  membershipPackage?: string;
   country: string;
   isActive: boolean;
   pv: number;

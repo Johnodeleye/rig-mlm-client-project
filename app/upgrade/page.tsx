@@ -1,136 +1,130 @@
 // app/upgrade/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, ShoppingCart, Star, Check } from 'lucide-react';
+import { Package, ShoppingCart, Star, Check, Loader2 } from 'lucide-react';
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+import { useAuth } from '@/context/AuthContext';
+
+interface Package {
+  id: string;
+  packageId: string;
+  name: string;
+  level: number;
+  priceNGN: number;
+  priceUSD: number;
+  pv: number;
+  tp: number;
+  productContents: string;
+}
+
+interface UserData {
+  membershipPackage: string;
+  walletBalance: number;
+}
 
 const UpgradePage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('upgrade');
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Change the type of currentPlan to string for correct comparison
-  const currentPlan: string = 'Beginner Plan';
+  const { user, userProfile, accountType } = useAuth(); // Get userProfile and accountType
 
-  const products = [
-    {
-      id: 'beginner',
-      name: 'Beginner Plan',
-      level: 1,
-      price: '₦9,000',
-      usdPrice: '$13.99',
-      pv: 5,
-      productContents: ['1x Baobab (250g)'],
-      isCurrent: currentPlan === 'Beginner Plan'
-    },
-    {
-      id: 'junior',
-      name: 'Junior Pack',
-      level: 3,
-      price: '₦32,000',
-      usdPrice: '$46.46',
-      pv: 20,
-      productContents: [
-        '2x Baobab (250g)',
-        '1x Dates Powder (600g)',
-        '1x Dates Powder (200g)'
-      ],
-      isCurrent: currentPlan === 'Junior Pack'
-    },
-    {
-      id: 'senior',
-      name: 'Senior Pack',
-      level: 5,
-      price: '₦76,500',
-      usdPrice: '$109.00',
-      pv: 50,
-      productContents: [
-        '4x Baobab (250g)',
-        '1x Dates Seed Coffee (200g)',
-        '1x Potato Powder (1kg)',
-        '2x Dates Syrup (300ml)',
-        '1x Dates Powder (600g)',
-        '1x Dates Powder (200g)'
-      ],
-      isCurrent: currentPlan === 'Senior Pack'
-    },
-    {
-      id: 'business',
-      name: 'Business Pack',
-      level: 7,
-      price: '₦184,000',
-      usdPrice: '$265.00',
-      pv: 125,
-      productContents: [
-        '6x Baobab (250g)',
-        '2x Baobab (500g)',
-        '2x Dates Seed Coffee (200g)',
-        '2x Potato Powder (1kg)',
-        '5x Dates Syrup (300ml)',
-        '7x Dates Powder (200g)',
-        '2x Dates Powder (600g)'
-      ],
-      isCurrent: currentPlan === 'Business Pack'
-    },
-    {
-      id: 'executive',
-      name: 'Executive Pack',
-      level: 10,
-      price: '₦368,000',
-      usdPrice: '$525.00',
-      pv: 250,
-      productContents: [
-        '12x Baobab (250g)',
-        '4x Baobab (500g)',
-        '4x Dates Seed Coffee (200g)',
-        '4x Potato Powder (1kg)',
-        '10x Dates Syrup (300ml)',
-        '14x Dates Powder (200g)',
-        '4x Dates Powder (600g)'
-      ],
-      isCurrent: currentPlan === 'Executive Pack'
-    },
-    {
-      id: 'chief-executive',
-      name: 'Chief Executive Pack',
-      level: 12,
-      price: '₦736,000',
-      usdPrice: '$1,050.00',
-      pv: 500,
-      productContents: [
-        '24x Baobab (250g)',
-        '8x Baobab (500g)',
-        '8x Dates Seed Coffee (200g)',
-        '8x Potato Powder (1kg)',
-        '20x Dates Syrup (300ml)',
-        '28x Dates Powder (200g)',
-        '8x Dates Powder (600g)'
-      ],
-      isCurrent: currentPlan === 'Chief Executive Pack'
-    },
-    {
-      id: 'ambassador',
-      name: 'Ambassador Pack',
-      level: 15,
-      price: '₦1,671,000',
-      usdPrice: '$2,375.00',
-      pv: 1125,
-      productContents: [
-        '54x Baobab (250g)',
-        '18x Baobab (500g)',
-        '18x Dates Seed Coffee (200g)',
-        '18x Potato Powder (1kg)',
-        '45x Dates Syrup (300ml)',
-        '63x Dates Powder (200g)',
-        '18x Dates Powder (600g)'
-      ],
-      isCurrent: currentPlan === 'Ambassador Pack'
+  useEffect(() => {
+    fetchData();
+  }, [userProfile]); // Add userProfile as dependency
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      
+      const [packagesRes, walletRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/packages`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/wallet/my-wallet`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      if (packagesRes.ok && walletRes.ok) {
+        const packagesData = await packagesRes.json();
+        const walletData = await walletRes.json();
+
+        setPackages(packagesData.packages || []);
+        
+        // Use userProfile.plan which already has the membership package info
+        setUserData({
+          membershipPackage: userProfile?.plan || 'No Plan', // Use userProfile.plan
+          walletBalance: walletData.walletData?.availableBalance || 0
+        });
+      } else {
+        setError('Failed to load data');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Error loading upgrade options');
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  const getCurrentPlanName = () => {
+    // Handle case where userData.membershipPackage might be "No Plan"
+    if (userData?.membershipPackage === 'No Plan') {
+      return 'No Plan';
+    }
+    const currentPackage = packages.find(pkg => pkg.packageId === userData?.membershipPackage);
+    return currentPackage?.name || userData?.membershipPackage || 'No Plan';
+  };
+
+  const formatProductContents = (contents: string): string[] => {
+    return contents.split(',').map(item => item.trim());
+  };
+
+  // Redirect if admin tries to access this page
+  useEffect(() => {
+    if (accountType === 'admin') {
+      // Redirect admin to admin dashboard
+      window.location.href = '/admin/home';
+    }
+  }, [accountType]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header 
+          setIsSidebarOpen={setIsSidebarOpen}
+          isProfileDropdownOpen={isProfileDropdownOpen}
+          setIsProfileDropdownOpen={setIsProfileDropdownOpen}
+        />
+        <div className="flex pt-16">
+          <DesktopSidebar 
+            activeMenu={activeMenu}
+            setActiveMenu={setActiveMenu}
+          />
+          <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
+            <div className="animate-pulse space-y-6">
+              <div className="bg-white rounded-xl p-6 h-32"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl p-6 h-96"></div>
+                ))}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -170,99 +164,64 @@ const UpgradePage = () => {
               
               <div className="mt-3 lg:mt-0 px-4 lg:px-6 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-sm lg:text-base flex items-center gap-2">
                 <Star className="w-4 h-4" />
-                Current: {currentPlan}
+                Current: {getCurrentPlanName()}
               </div>
             </div>
+
+            {/* Wallet Balance */}
+            {userData && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-blue-600">Available Balance</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      ₦{userData.walletBalance.toLocaleString()}
+                    </p>
+                  </div>
+                  <Package className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            )}
           </motion.div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
 
           {/* Products Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {products.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`bg-white rounded-2xl shadow-md border p-6 hover:shadow-lg transition-all duration-200 ${
-                  product.isCurrent ? 'border-[#0660D3] ring-2 ring-[#0660D3] ring-opacity-20' : 'border-gray-200'
-                }`}
-              >
-                {/* Plan Header */}
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Package className="w-5 h-5 text-[#0660D3]" />
-                    <h3 className="text-lg font-bold text-gray-900">{product.name}</h3>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-3">
-                    <span>Level {product.level}</span>
-                    <span>•</span>
-                    <span>{product.pv} PV</span>
-                  </div>
-                  
-                  {product.isCurrent && (
-                    <div className="inline-flex items-center gap-1 px-3 py-1 bg-[#0660D3] text-white rounded-full text-xs font-medium mb-3">
-                      <Check className="w-3 h-3" />
-                      Current Plan
-                    </div>
-                  )}
-                </div>
-
-                {/* Price */}
-                <div className="text-center mb-4">
-                  <p className="text-2xl font-bold text-gray-900">{product.price}</p>
-                  <p className="text-sm text-gray-600">{product.usdPrice}</p>
-                </div>
-
-                {/* Product Contents */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Includes:</h4>
-                  <ul className="space-y-2">
-                    {product.productContents.map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Action Button */}
-                <button
-                  className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
-                    product.isCurrent
-                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                      : 'bg-[#0660D3] text-white hover:bg-blue-700'
+            {packages.map((pkg, index) => {
+              const isCurrent = userData?.membershipPackage !== 'No Plan' && pkg.packageId === userData?.membershipPackage;
+              const currentPackageLevel = packages.find(p => p.packageId === userData?.membershipPackage)?.level || 0;
+              const canUpgrade = userData && pkg.level > currentPackageLevel;
+              
+              return (
+                <motion.div
+                  key={pkg.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`bg-white rounded-2xl shadow-md border p-6 hover:shadow-lg transition-all duration-200 ${
+                    isCurrent ? 'border-[#0660D3] ring-2 ring-[#0660D3] ring-opacity-20' : 'border-gray-200'
                   }`}
-                  disabled={product.isCurrent}
                 >
-                  <ShoppingCart className="w-4 h-4" />
-                  {product.isCurrent ? 'Current Plan' : 'Upgrade Now'}
-                </button>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Mobile Horizontal Scroll Fallback */}
-          <div className="block lg:hidden mt-6">
-            <div className="flex space-x-4 overflow-x-auto pb-4 -mx-3 px-3">
-              {products.map((product, index) => (
-                <div
-                  key={product.id}
-                  className="flex-shrink-0 w-80 bg-white rounded-2xl shadow-md border p-6"
-                >
-                  {/* Same card content as above */}
+                  {/* Plan Header */}
                   <div className="text-center mb-4">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Package className="w-5 h-5 text-[#0660D3]" />
-                      <h3 className="text-lg font-bold text-gray-900">{product.name}</h3>
+                      <h3 className="text-lg font-bold text-gray-900">{pkg.name}</h3>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-3">
-                      <span>Level {product.level}</span>
+                      <span>Level {pkg.level}</span>
                       <span>•</span>
-                      <span>{product.pv} PV</span>
+                      <span>{pkg.pv} PV</span>
+                      <span>•</span>
+                      <span>{pkg.tp} TP</span>
                     </div>
                     
-                    {product.isCurrent && (
+                    {isCurrent && (
                       <div className="inline-flex items-center gap-1 px-3 py-1 bg-[#0660D3] text-white rounded-full text-xs font-medium mb-3">
                         <Check className="w-3 h-3" />
                         Current Plan
@@ -270,42 +229,48 @@ const UpgradePage = () => {
                     )}
                   </div>
 
+                  {/* Price */}
                   <div className="text-center mb-4">
-                    <p className="text-2xl font-bold text-gray-900">{product.price}</p>
-                    <p className="text-sm text-gray-600">{product.usdPrice}</p>
+                    <p className="text-2xl font-bold text-gray-900">₦{pkg.priceNGN.toLocaleString()}</p>
+                    <p className="text-sm text-gray-600">${pkg.priceUSD.toLocaleString()}</p>
                   </div>
 
+                  {/* Product Contents */}
                   <div className="mb-6">
                     <h4 className="text-sm font-semibold text-gray-900 mb-3">Includes:</h4>
                     <ul className="space-y-2">
-                      {product.productContents.slice(0, 3).map((item, idx) => (
+                      {formatProductContents(pkg.productContents).map((item, idx) => (
                         <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
                           <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span className="truncate">{item}</span>
+                          <span>{item}</span>
                         </li>
                       ))}
-                      {product.productContents.length > 3 && (
-                        <li className="text-sm text-gray-500 text-center">
-                          +{product.productContents.length - 3} more items
-                        </li>
-                      )}
                     </ul>
                   </div>
 
-                  <button
+                  {/* Action Button */}
+                  <a
+                    href={!isCurrent && canUpgrade ? `/payment/upgrade/${user?.id}?package=${pkg.packageId}` : '#'}
                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
-                      product.isCurrent
+                      isCurrent
+                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                        : !canUpgrade
                         ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         : 'bg-[#0660D3] text-white hover:bg-blue-700'
                     }`}
-                    disabled={product.isCurrent}
                   >
                     <ShoppingCart className="w-4 h-4" />
-                    {product.isCurrent ? 'Current Plan' : 'Upgrade Now'}
-                  </button>
-                </div>
-              ))}
-            </div>
+                    {isCurrent ? 'Current Plan' : !canUpgrade ? 'Cannot Downgrade' : 'Upgrade Now'}
+                  </a>
+
+                  {!canUpgrade && !isCurrent && (
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      You can only upgrade to higher level packages
+                    </p>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         </main>
       </div>
