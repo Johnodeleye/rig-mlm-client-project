@@ -1,3 +1,4 @@
+// app/payment/upgrade/[userId]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -75,21 +76,23 @@ const UpgradePaymentPage = () => {
       ]);
 
       if (userRes.ok && packagesRes.ok && walletRes.ok) {
-        const userData = await userRes.json();
+        const userDataResponse = await userRes.json();
         const packagesData = await packagesRes.json();
         const walletDataRes = await walletRes.json();
 
-        if (!userData.user) {
+        if (!userDataResponse.users || userDataResponse.users.length === 0) {
           setError('User not found');
           return;
         }
 
+        const foundUser = userDataResponse.users[0];
+
         setUserData({
-          id: userData.user.id,
-          fullName: userData.user.fullName,
-          username: userData.user.username,
-          membershipPackage: userData.user.membershipPackage,
-          walletBalance: userData.user.walletBalance
+          id: foundUser.id,
+          fullName: foundUser.fullName,
+          username: foundUser.username,
+          membershipPackage: foundUser.membershipPackage,
+          walletBalance: foundUser.walletBalance
         });
 
         setWalletData(walletDataRes.walletData);
@@ -97,7 +100,7 @@ const UpgradePaymentPage = () => {
         const allPackages = packagesData.packages || [];
         
         const currentPkg = allPackages.find(
-          (pkg: PackageData) => pkg.packageId === userData.user.membershipPackage
+          (pkg: PackageData) => pkg.packageId === foundUser.membershipPackage
         );
         
         const newPkg = allPackages.find(
