@@ -36,6 +36,7 @@ const MobileSidebar = ({
     { id: 'upgrade', label: 'Upgrade', icon: TrendingUp, href: '/upgrade' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },
     { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
+    {id:  'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim'   }
   ];
 
   const handleMenuClick = (menuId: string) => {

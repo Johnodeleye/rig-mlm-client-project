@@ -1,7 +1,6 @@
-// context/AuthContext.tsx
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
@@ -60,6 +59,7 @@ interface AuthContextType {
   } | null;
   fetchUserProfile: () => Promise<void>;
   updateProfilePicture: (profilePicture: string) => Promise<void>;
+  getStoredToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,9 +85,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const router = useRouter();
 
-  const fetchUserProfile = useCallback(async () => {
+  const getStoredToken = () => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  };
+
+  const fetchUserProfile = async () => {
     try {
-      const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const storedToken = getStoredToken();
       if (!storedToken) return;
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/me`, {
@@ -116,11 +121,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
-  }, []);
+  };
 
   const updateProfilePicture = async (profilePicture: string) => {
     try {
-      const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const storedToken = getStoredToken();
       if (!storedToken) return;
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/upload-profile-picture`, {
@@ -145,10 +150,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const checkAuth = useCallback(async () => {
+  const checkAuth = async () => {
     try {
       setIsLoading(true);
-      const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const storedToken = getStoredToken();
       
       if (!storedToken) {
         setIsLoading(false);
@@ -196,15 +201,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'authToken' || e.key === null) {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const clearAuthData = () => {
-    localStorage.removeItem('authToken');
-    sessionStorage.removeItem('authToken');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+    }
     setUser(null);
     setAccountType(null);
     setToken(null);
@@ -273,12 +291,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/logout`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    }).catch(console.error);
+    if (token) {
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }).catch(console.error);
+    }
 
     clearAuthData();
     toast.success('Logged out successfully');
@@ -302,6 +322,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     userProfile,
     fetchUserProfile,
     updateProfilePicture,
+    getStoredToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

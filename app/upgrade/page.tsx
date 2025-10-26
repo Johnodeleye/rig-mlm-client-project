@@ -8,6 +8,7 @@ import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+import AuthRedirect from '../components/AuthRedirect';
 
 interface Package {
   id: string;
@@ -128,6 +129,7 @@ const UpgradePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+            <AuthRedirect requireAuth={true} requireActive={true} redirectTo="/login" />
       <Header 
         setIsSidebarOpen={setIsSidebarOpen}
         isProfileDropdownOpen={isProfileDropdownOpen}

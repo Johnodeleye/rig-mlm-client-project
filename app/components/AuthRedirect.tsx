@@ -1,4 +1,3 @@
-// components/AuthRedirect.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -26,46 +25,36 @@ export default function AuthRedirect({
     if (!isLoading) {
       setIsChecking(false);
       
-      // If authentication check is complete
       if (requireAuth) {
-        // User must be authenticated
         if (!isAuthenticated) {
           router.push(redirectTo);
           return;
         }
 
-        // Check account type restrictions
         if (isAuthenticated && accountType) {
-          // Prevent admins from accessing user routes
           if (accountType === 'admin' && !pathname.includes('/admin')) {
             router.push('/admin/home');
             return;
           }
 
-          // Prevent users from accessing admin routes
           if (accountType === 'user' && pathname.includes('/admin')) {
             router.push('/home');
             return;
           }
         }
 
-        // If user needs to be active but is not active
         if (requireActive && accountType === 'user' && user && !user.isActive) {
-          // Don't redirect, just show the activation message
           return;
         }
 
-        // Redirect authenticated users away from auth pages
         if ((pathname === '/login' || pathname === '/register' || pathname === '/') && isAuthenticated) {
           if (accountType === 'admin') {
             router.push('/admin/home');
           } else if (accountType === 'user' && user?.isActive) {
             router.push('/home');
           }
-         
         }
       } else {
-        // For non-auth required pages, redirect authenticated users to appropriate dashboard
         if (isAuthenticated && accountType) {
           if (pathname === '/login' || pathname === '/register' || pathname === '/') {
             if (accountType === 'admin') {
@@ -78,7 +67,6 @@ export default function AuthRedirect({
       }
     }
   }, [isAuthenticated, isLoading, user, accountType, requireAuth, requireActive, router, redirectTo, pathname]);
-
 
   if (isLoading || isChecking) {
     return (
@@ -94,7 +82,6 @@ export default function AuthRedirect({
     );
   }
 
-  // Show activation required message for inactive users on protected routes
   if (requireAuth && requireActive && accountType === 'user' && user && !user.isActive && pathname !== '/login') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
@@ -136,9 +123,7 @@ export default function AuthRedirect({
     );
   }
 
-  // Show access denied message for wrong account type
   if (isAuthenticated && accountType) {
-    // Users trying to access admin routes
     if (accountType === 'user' && pathname.includes('/admin')) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
@@ -180,7 +165,6 @@ export default function AuthRedirect({
       );
     }
 
-    // Admins trying to access user routes (when they shouldn't)
     if (accountType === 'admin' && !pathname.includes('/admin') && pathname !== '/login') {
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">

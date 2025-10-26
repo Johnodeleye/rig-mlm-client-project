@@ -28,6 +28,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
     { id: 'upgrade', label: 'Upgrade Plan', icon: TrendingUp, href: '/upgrade' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },
     { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
+    {id:  'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim'   }
   ];
 
   const handleLogout = () => {

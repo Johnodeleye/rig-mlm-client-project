@@ -1,4 +1,3 @@
-// app/layout.tsx (updated)
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Outfit } from "next/font/google";
@@ -17,10 +16,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "RIG Global - MLM Management System",
-  description:
-    "RIG Global is a modern MLM management platform for tracking users, downlines, commissions, and earnings. Secure, scalable, and built for transparency and growth.",
-  keywords:
-    "RIG Global, MLM system, network marketing, commission tracking, referral management, business dashboard",
+  description: "RIG Global is a modern MLM management platform for tracking users, downlines, commissions, and earnings. Secure, scalable, and built for transparency and growth.",
+  keywords: "RIG Global, MLM system, network marketing, commission tracking, referral management, business dashboard",
   authors: [{ name: "Built by John Odeleye Ayomide", url: "https://rigglobal.com" }],
   robots: "index, follow",
 };
@@ -85,7 +82,6 @@ export default function RootLayout({
 
             <div className="mx-auto md:pb-0 pb-26">
               <div className="md:ml-64 lg:mr-80 lg:mb-0 md:mb-0 hidden lg:block">
-                {/* <Footer /> */}
               </div>
             </div>
           </CurrencyProvider>
