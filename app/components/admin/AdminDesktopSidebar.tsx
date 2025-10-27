@@ -11,7 +11,8 @@ import {
   BarChart3, 
   Settings, 
   LogOut,
-  Gift
+  Gift,
+  Bell
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -26,13 +27,14 @@ const AdminDesktopSidebar = ({ activeMenu, setActiveMenu }: AdminDesktopSidebarP
   const { logout } = useAuth();
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/admin/dashboard' },
+    { id: 'home', label: 'Home', icon: Home, path: '/admin/home' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'packages', label: 'Packages', icon: Gift, path: '/admin/packages' },
-    { id: 'wallet', label: 'Wallet & Points', icon: Wallet, path: '/admin/wallet' },
+    { id: 'wallet', label: 'Wallet', icon: Wallet, path: '/admin/wallet' },
+    { id: 'points', label: 'Points', icon: Wallet, path: '/admin/points' },
     { id: 'withdrawals', label: 'Withdrawals', icon: BarChart3, path: '/admin/withdrawals' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
+    { id: 'notifications', label: 'Notifications', icon: Bell, path: '/admin/notifications' },
   ];
 
   const handleMenuClick = (menuId: string, path: string) => {

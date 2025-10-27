@@ -3,22 +3,20 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Plus, Edit, Trash2, Search, Filter, DollarSign, TrendingUp, Image as ImageIcon } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Search, Filter, Image as ImageIcon, Camera, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AdminHeader from '@/app/components/admin/AdminHeader';
 import AdminDesktopSidebar from '@/app/components/admin/AdminDesktopSidebar';
 import AdminMobileSidebar from '@/app/components/admin/AdminMobileSidebar';
+import { useAuth } from '@/context/AuthContext';
 
 interface Product {
   id: string;
   name: string;
   description: string;
-  image: string;
-  amount: string;
-  pv: number;
-  tp: number;
-  uplineLevel: number;
-  commissionableAmount: string;
+  price: number;
+  image?: string;
+  stock: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -31,96 +29,56 @@ const AdminProductsPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [productImage, setProductImage] = useState<string>('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  
   const router = useRouter();
-
-  // Check authentication
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth');
-    if (!isAuthenticated) {
-      router.push('/admin');
-    }
-  }, [router]);
-
-  // Mock products data
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'Baobab Powder',
-      description: 'Premium organic baobab powder rich in vitamin C and antioxidants',
-      image: '/images/baobab-powder.jpg',
-      amount: '₦4,500',
-      pv: 2,
-      tp: 1,
-      uplineLevel: 1,
-      commissionableAmount: '₦3,800',
-      isActive: true,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '2',
-      name: 'Dates Powder',
-      description: 'Natural dates powder perfect for smoothies and baking',
-      image: '/images/dates-powder.jpg',
-      amount: '₦3,200',
-      pv: 1,
-      tp: 1,
-      uplineLevel: 1,
-      commissionableAmount: '₦2,700',
-      isActive: true,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '3',
-      name: 'Dates Seed Coffee',
-      description: 'Healthy coffee alternative made from date seeds',
-      image: '/images/date-seed-coffee.jpg',
-      amount: '₦6,800',
-      pv: 3,
-      tp: 2,
-      uplineLevel: 2,
-      commissionableAmount: '₦5,900',
-      isActive: true,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '4',
-      name: 'Potato Powder',
-      description: 'Versatile potato powder for cooking and baking',
-      image: '/images/potato-powder.jpg',
-      amount: '₦5,500',
-      pv: 2,
-      tp: 1,
-      uplineLevel: 1,
-      commissionableAmount: '₦4,800',
-      isActive: true,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: '5',
-      name: 'Dates Syrup',
-      description: 'Natural sweetener made from fresh dates',
-      image: '/images/dates-syrup.jpg',
-      amount: '₦4,200',
-      pv: 2,
-      tp: 1,
-      uplineLevel: 1,
-      commissionableAmount: '₦3,500',
-      isActive: true,
-      createdAt: '2024-01-01'
-    }
-  ]);
+  const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    price: '',
     image: '',
-    amount: '',
-    pv: '',
-    tp: '',
-    uplineLevel: '',
-    commissionableAmount: '',
+    stock: '',
     isActive: true
   });
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated || accountType !== 'admin') {
+        router.push('/login');
+      }
+    }
+  }, [isAuthenticated, accountType, authLoading, router]);
+
+  const fetchProducts = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setProducts(data.products);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && accountType === 'admin') {
+      fetchProducts();
+    }
+  }, [isAuthenticated, accountType]);
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,47 +97,87 @@ const AdminProductsPage = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      setImageFile(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setProductImage(base64String);
+        setFormData(prev => ({
+          ...prev,
+          image: base64String
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const productData = {
-      id: editingProduct ? editingProduct.id : Date.now().toString(),
-      name: formData.name,
-      description: formData.description,
-      image: formData.image || '/images/default-product.jpg',
-      amount: formData.amount,
-      pv: parseInt(formData.pv),
-      tp: parseInt(formData.tp),
-      uplineLevel: parseInt(formData.uplineLevel),
-      commissionableAmount: formData.commissionableAmount,
-      isActive: formData.isActive,
-      createdAt: editingProduct ? editingProduct.createdAt : new Date().toISOString().split('T')[0]
-    };
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const url = editingProduct 
+        ? `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products/${editingProduct.id}`
+        : `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products`;
+      
+      const method = editingProduct ? 'PUT' : 'POST';
+      
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        image: productImage || null,
+        stock: parseInt(formData.stock) || 0,
+        isActive: formData.isActive
+      };
 
-    if (editingProduct) {
-      // Update existing product
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? productData : p));
-    } else {
-      // Add new product
-      setProducts(prev => [...prev, productData]);
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productData)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchProducts();
+          resetForm();
+          setShowAddProduct(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving product:', error);
     }
-
-    resetForm();
-    setShowAddProduct(false);
   };
 
   const resetForm = () => {
     setFormData({
       name: '',
       description: '',
+      price: '',
       image: '',
-      amount: '',
-      pv: '',
-      tp: '',
-      uplineLevel: '',
-      commissionableAmount: '',
+      stock: '',
       isActive: true
     });
+    setProductImage('');
+    setImageFile(null);
     setEditingProduct(null);
   };
 
@@ -188,28 +186,80 @@ const AdminProductsPage = () => {
     setFormData({
       name: product.name,
       description: product.description,
-      image: product.image,
-      amount: product.amount,
-      pv: product.pv.toString(),
-      tp: product.tp.toString(),
-      uplineLevel: product.uplineLevel.toString(),
-      commissionableAmount: product.commissionableAmount,
+      price: product.price.toString(),
+      image: product.image || '',
+      stock: product.stock.toString(),
       isActive: product.isActive
     });
+    if (product.image) {
+      setProductImage(product.image);
+    }
     setShowAddProduct(true);
   };
 
-  const handleDelete = (productId: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      setProducts(prev => prev.filter(p => p.id !== productId));
+  const handleDelete = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products/${productId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchProducts();
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
     }
   };
 
-  const toggleProductStatus = (productId: string) => {
-    setProducts(prev => prev.map(p => 
-      p.id === productId ? { ...p, isActive: !p.isActive } : p
-    ));
+  const toggleProductStatus = async (product: Product) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products/${product.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...product,
+          isActive: !product.isActive
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchProducts();
+        }
+      }
+    } catch (error) {
+      console.error('Error updating product status:', error);
+    }
   };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || accountType !== 'admin') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -233,7 +283,6 @@ const AdminProductsPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -261,7 +310,6 @@ const AdminProductsPage = () => {
             </div>
           </motion.div>
 
-          {/* Search and Filter */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -269,7 +317,6 @@ const AdminProductsPage = () => {
             className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mb-4 lg:mb-6"
           >
             <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -281,7 +328,6 @@ const AdminProductsPage = () => {
                 />
               </div>
 
-              {/* Filter */}
               <div className="flex gap-3">
                 <select
                   value={filterStatus}
@@ -296,7 +342,6 @@ const AdminProductsPage = () => {
             </div>
           </motion.div>
 
-          {/* Products Grid */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -312,7 +357,6 @@ const AdminProductsPage = () => {
                 className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="p-4 lg:p-6">
-                  {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                       {product.image ? (
@@ -334,7 +378,7 @@ const AdminProductsPage = () => {
                         {product.isActive ? 'Active' : 'Inactive'}
                       </span>
                       <button
-                        onClick={() => toggleProductStatus(product.id)}
+                        onClick={() => toggleProductStatus(product)}
                         className={`p-1 rounded ${
                           product.isActive 
                             ? 'text-yellow-600 hover:bg-yellow-50' 
@@ -346,7 +390,6 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  {/* Product Info */}
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {product.name}
                   </h3>
@@ -354,31 +397,17 @@ const AdminProductsPage = () => {
                     {product.description}
                   </p>
 
-                  {/* Product Details */}
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Price:</span>
-                      <span className="font-semibold text-gray-900">{product.amount}</span>
+                      <span className="font-semibold text-gray-900">₦{product.price.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Commission:</span>
-                      <span className="font-semibold text-green-600">{product.commissionableAmount}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="text-center p-2 bg-blue-50 rounded">
-                        <span className="font-medium text-blue-600">PV: {product.pv}</span>
-                      </div>
-                      <div className="text-center p-2 bg-green-50 rounded">
-                        <span className="font-medium text-green-600">TP: {product.tp}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Upline Level: {product.uplineLevel}</span>
-                      <span>Created: {product.createdAt}</span>
+                      <span className="text-sm text-gray-600">Stock:</span>
+                      <span className="font-semibold text-gray-900">{product.stock}</span>
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
                     <button 
                       onClick={() => handleEdit(product)}
@@ -411,19 +440,57 @@ const AdminProductsPage = () => {
             </motion.div>
           )}
 
-          {/* Add/Edit Product Modal */}
           {showAddProduct && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="fixed inset-0 bg-transparent backdrop-blur-md bg-opacity-50 flex items-center justify-center p-4 z-50">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-red-500 shadow-lg border border-gray-200"
               >
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  {editingProduct ? 'Edit Product' : 'Add New Product'}
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {editingProduct ? 'Edit Product' : 'Add New Product'}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowAddProduct(false);
+                      resetForm();
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="flex flex-col items-center mb-4">
+                    <div className="relative mb-4">
+                      <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-xl flex items-center justify-center overflow-hidden border-2 border-gray-200 bg-gray-50">
+                        {productImage ? (
+                          <img 
+                            src={productImage} 
+                            alt="Product" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-red-100 flex items-center justify-center">
+                            <Package className="w-12 h-12 lg:w-16 lg:h-16 text-red-600" />
+                          </div>
+                        )}
+                      </div>
+                      <label className="absolute bottom-0 right-0 bg-red-600 text-white p-2 rounded-full cursor-pointer hover:bg-red-700 transition-colors">
+                        <Camera className="w-4 h-4" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    <p className="text-sm text-gray-500">Click camera icon to add product image</p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -445,12 +512,12 @@ const AdminProductsPage = () => {
                         Price (₦) *
                       </label>
                       <input
-                        type="text"
-                        name="amount"
-                        value={formData.amount}
+                        type="number"
+                        name="price"
+                        value={formData.price}
                         onChange={handleInputChange}
                         required
-                        placeholder="e.g., ₦4,500"
+                        placeholder="e.g., 4500"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
@@ -471,82 +538,20 @@ const AdminProductsPage = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Image URL
-                    </label>
-                    <div className="relative">
-                      <ImageIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="url"
-                        name="image"
-                        value={formData.image}
-                        onChange={handleInputChange}
-                        placeholder="https://example.com/image.jpg"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        PV Points *
+                        Stock Quantity
                       </label>
                       <input
                         type="number"
-                        name="pv"
-                        value={formData.pv}
+                        name="stock"
+                        value={formData.stock}
                         onChange={handleInputChange}
-                        required
-                        placeholder="PV points"
+                        placeholder="e.g., 100"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        TP Points *
-                      </label>
-                      <input
-                        type="number"
-                        name="tp"
-                        value={formData.tp}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="TP points"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upline Level *
-                      </label>
-                      <input
-                        type="number"
-                        name="uplineLevel"
-                        value={formData.uplineLevel}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Upline level"
-                        min="1"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Commissionable Amount (₦) *
-                    </label>
-                    <input
-                      type="text"
-                      name="commissionableAmount"
-                      value={formData.commissionableAmount}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="e.g., ₦3,800"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
-                    />
                   </div>
 
                   <div className="flex items-center gap-2">

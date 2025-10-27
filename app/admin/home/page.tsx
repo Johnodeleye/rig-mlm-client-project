@@ -14,19 +14,55 @@ const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('home');
-    const router = useRouter();
-  const { user, accountType, isAuthenticated, isLoading } = useAuth();
+  const [statsData, setStatsData] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalProducts: 0,
+    pendingWithdrawals: 0,
+    totalEarnings: '₦0'
+  });
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const router = useRouter();
+  const { user, accountType, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  // Check authentication and admin role
   useEffect(() => {
-    if (!isLoading) {
+    const fetchAdminStats = async () => {
+      try {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setStatsData(data.stats);
+            setRecentActivities(data.stats.recentActivities);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching admin stats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isAuthenticated && accountType === 'admin') {
+      fetchAdminStats();
+    }
+  }, [isAuthenticated, accountType]);
+
+  useEffect(() => {
+    if (!authLoading) {
       if (!isAuthenticated || accountType !== 'admin') {
         router.push('/login');
       }
     }
-  }, [isAuthenticated, accountType, isLoading, router]);
+  }, [isAuthenticated, accountType, authLoading, router]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -38,24 +74,8 @@ const AdminDashboard = () => {
   }
 
   if (!isAuthenticated || accountType !== 'admin') {
-    return null; // Will redirect due to useEffect
+    return null;
   }
-
-  const statsData = {
-    totalUsers: 1250,
-    activeUsers: 890,
-    totalProducts: 15,
-    pendingWithdrawals: 23,
-    totalEarnings: '₦2,450,670',
-    monthlyRevenue: '₦450,230'
-  };
-
-  const recentActivities = [
-    { id: 1, user: 'John Ayomide', action: 'Upgraded to Business Pack', time: '2 mins ago' },
-    { id: 2, user: 'Sarah Johnson', action: 'Requested withdrawal', time: '5 mins ago' },
-    { id: 3, user: 'Mike Chen', action: 'Joined platform', time: '10 mins ago' },
-    { id: 4, user: 'Emily Davis', action: 'Added new referral', time: '15 mins ago' },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,7 +99,6 @@ const AdminDashboard = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Welcome Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -88,19 +107,17 @@ const AdminDashboard = () => {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
-                  Good Morning, Admin Michael!
+                  Good Morning, Admin {user?.username}!
                 </h1>
                 <p className="text-gray-600">Here's what's happening with your platform today.</p>
               </div>
               <div className="mt-3 lg:mt-0 text-sm text-gray-500">
-                Last login: Today at 08:30 AM
+                Last login: Today at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           </motion.div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-4 lg:mb-6">
-            {/* Total Users */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -119,7 +136,6 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Total Products */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -138,7 +154,6 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Pending Withdrawals */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -157,7 +172,6 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Total Earnings */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -175,48 +189,9 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </motion.div>
-
-            {/* Monthly Revenue */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Monthly Revenue</p>
-                  <p className="text-xl lg:text-2xl font-bold text-gray-900">{statsData.monthlyRevenue}</p>
-                  <p className="text-sm text-green-600">+12% from last month</p>
-                </div>
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 lg:w-6 lg:h-6 text-indigo-600" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Quick Actions</p>
-                  <p className="text-xl lg:text-2xl font-bold text-gray-900">Manage</p>
-                  <p className="text-sm text-gray-500">Platform tools</p>
-                </div>
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <Activity className="w-5 h-5 lg:w-6 lg:h-6 text-red-600" />
-                </div>
-              </div>
-            </motion.div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            {/* Recent Activities */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -224,7 +199,7 @@ const AdminDashboard = () => {
             >
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h2>
               <div className="space-y-3">
-                {recentActivities.map((activity, index) => (
+                {recentActivities.map((activity:any) => (
                   <div
                     key={activity.id}
                     className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
@@ -243,7 +218,6 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}

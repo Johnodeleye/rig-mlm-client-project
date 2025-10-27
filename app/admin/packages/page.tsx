@@ -8,15 +8,18 @@ import { useRouter } from 'next/navigation';
 import AdminHeader from '@/app/components/admin/AdminHeader';
 import AdminDesktopSidebar from '@/app/components/admin/AdminDesktopSidebar';
 import AdminMobileSidebar from '@/app/components/admin/AdminMobileSidebar';
+import { useAuth } from '@/context/AuthContext';
 
 interface PackageType {
   id: string;
+  packageId: string;
   name: string;
   level: number;
-  price: string;
-  usdPrice: string;
+  priceNGN: number;
+  priceUSD: number;
+  tp: number;
   pv: number;
-  productContents: string[];
+  productContents: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -29,88 +32,57 @@ const AdminPackagesPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddPackage, setShowAddPackage] = useState(false);
   const [editingPackage, setEditingPackage] = useState<PackageType | null>(null);
+  const [packages, setPackages] = useState<PackageType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const router = useRouter();
-
-  // Check authentication
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth');
-    if (!isAuthenticated) {
-      router.push('/admin');
-    }
-  }, [router]);
-
-  // Mock packages data
-  const [packages, setPackages] = useState<PackageType[]>([
-    {
-      id: 'beginner',
-      name: 'Beginner Plan',
-      level: 1,
-      price: '₦9,000',
-      usdPrice: '$13.99',
-      pv: 5,
-      productContents: ['1x Baobab (250g)'],
-      isActive: true,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: 'junior',
-      name: 'Junior Pack',
-      level: 3,
-      price: '₦32,000',
-      usdPrice: '$46.46',
-      pv: 20,
-      productContents: ['2x Baobab (250g)', '1x Dates Powder (600g)', '1x Dates Powder (200g)'],
-      isActive: true,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: 'senior',
-      name: 'Senior Pack',
-      level: 5,
-      price: '₦76,500',
-      usdPrice: '$109.00',
-      pv: 50,
-      productContents: [
-        '4x Baobab (250g)',
-        '1x Dates Seed Coffee (200g)',
-        '1x Potato Powder (1kg)',
-        '2x Dates Syrup (300ml)',
-        '1x Dates Powder (600g)',
-        '1x Dates Powder (200g)'
-      ],
-      isActive: true,
-      createdAt: '2024-01-01'
-    },
-    {
-      id: 'business',
-      name: 'Business Pack',
-      level: 7,
-      price: '₦184,000',
-      usdPrice: '$265.00',
-      pv: 125,
-      productContents: [
-        '6x Baobab (250g)',
-        '2x Baobab (500g)',
-        '2x Dates Seed Coffee (200g)',
-        '2x Potato Powder (1kg)',
-        '5x Dates Syrup (300ml)',
-        '7x Dates Powder (200g)',
-        '2x Dates Powder (600g)'
-      ],
-      isActive: true,
-      createdAt: '2024-01-01'
-    }
-  ]);
+  const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
 
   const [formData, setFormData] = useState({
+    packageId: '',
     name: '',
     level: '',
-    price: '',
-    usdPrice: '',
+    priceNGN: '',
+    priceUSD: '',
+    tp: '',
     pv: '',
     productContents: '',
     isActive: true
   });
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated || accountType !== 'admin') {
+        router.push('/login');
+      }
+    }
+  }, [isAuthenticated, accountType, authLoading, router]);
+
+  const fetchPackages = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/packages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setPackages(data.packages);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && accountType === 'admin') {
+      fetchPackages();
+    }
+  }, [isAuthenticated, accountType]);
 
   const filteredPackages = packages.filter(pkg => {
     const matchesSearch = pkg.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -128,37 +100,59 @@ const AdminPackagesPage = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const packageData: PackageType = {
-      id: editingPackage ? editingPackage.id : Date.now().toString(),
-      name: formData.name,
-      level: parseInt(formData.level),
-      price: formData.price,
-      usdPrice: formData.usdPrice,
-      pv: parseInt(formData.pv),
-      productContents: formData.productContents.split('\n').filter(item => item.trim()),
-      isActive: formData.isActive,
-      createdAt: editingPackage ? editingPackage.createdAt : new Date().toISOString().split('T')[0]
-    };
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const url = editingPackage 
+        ? `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/packages/${editingPackage.packageId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/packages`;
+      
+      const method = editingPackage ? 'PUT' : 'POST';
+      
+      const packageData = {
+        packageId: formData.packageId,
+        name: formData.name,
+        level: parseInt(formData.level),
+        priceNGN: parseFloat(formData.priceNGN),
+        priceUSD: parseFloat(formData.priceUSD),
+        tp: parseInt(formData.tp),
+        pv: parseInt(formData.pv),
+        productContents: formData.productContents,
+        isActive: formData.isActive
+      };
 
-    if (editingPackage) {
-      setPackages(prev => prev.map(p => p.id === editingPackage.id ? packageData : p));
-    } else {
-      setPackages(prev => [...prev, packageData]);
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(packageData)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchPackages();
+          resetForm();
+          setShowAddPackage(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving package:', error);
     }
-
-    resetForm();
-    setShowAddPackage(false);
   };
 
   const resetForm = () => {
     setFormData({
+      packageId: '',
       name: '',
       level: '',
-      price: '',
-      usdPrice: '',
+      priceNGN: '',
+      priceUSD: '',
+      tp: '',
       pv: '',
       productContents: '',
       isActive: true
@@ -169,28 +163,82 @@ const AdminPackagesPage = () => {
   const handleEdit = (pkg: PackageType) => {
     setEditingPackage(pkg);
     setFormData({
+      packageId: pkg.packageId,
       name: pkg.name,
       level: pkg.level.toString(),
-      price: pkg.price,
-      usdPrice: pkg.usdPrice,
+      priceNGN: pkg.priceNGN.toString(),
+      priceUSD: pkg.priceUSD.toString(),
+      tp: pkg.tp.toString(),
       pv: pkg.pv.toString(),
-      productContents: pkg.productContents.join('\n'),
+      productContents: pkg.productContents,
       isActive: pkg.isActive
     });
     setShowAddPackage(true);
   };
 
-  const handleDelete = (packageId: string) => {
-    if (confirm('Are you sure you want to delete this package?')) {
-      setPackages(prev => prev.filter(p => p.id !== packageId));
+  const handleDelete = async (packageId: string) => {
+    if (!confirm('Are you sure you want to delete this package?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/packages/${packageId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchPackages();
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting package:', error);
     }
   };
 
-  const togglePackageStatus = (packageId: string) => {
-    setPackages(prev => prev.map(p => 
-      p.id === packageId ? { ...p, isActive: !p.isActive } : p
-    ));
+  const togglePackageStatus = async (pkg: PackageType) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/packages/${pkg.packageId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...pkg,
+          isActive: !pkg.isActive
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchPackages();
+        }
+      }
+    } catch (error) {
+      console.error('Error updating package status:', error);
+    }
   };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading packages...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || accountType !== 'admin') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -214,7 +262,6 @@ const AdminPackagesPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -242,7 +289,6 @@ const AdminPackagesPage = () => {
             </div>
           </motion.div>
 
-          {/* Search and Filter */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -250,7 +296,6 @@ const AdminPackagesPage = () => {
             className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mb-4 lg:mb-6"
           >
             <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -262,7 +307,6 @@ const AdminPackagesPage = () => {
                 />
               </div>
 
-              {/* Filter */}
               <div className="flex gap-3">
                 <select
                   value={filterStatus}
@@ -277,7 +321,6 @@ const AdminPackagesPage = () => {
             </div>
           </motion.div>
 
-          {/* Packages Grid */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -293,7 +336,6 @@ const AdminPackagesPage = () => {
                 className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="p-4 lg:p-6">
-                  {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                       <Package className="w-6 h-6 text-purple-600" />
@@ -307,7 +349,7 @@ const AdminPackagesPage = () => {
                         {pkg.isActive ? 'Active' : 'Inactive'}
                       </span>
                       <button
-                        onClick={() => togglePackageStatus(pkg.id)}
+                        onClick={() => togglePackageStatus(pkg)}
                         className={`p-1 rounded ${
                           pkg.isActive 
                             ? 'text-yellow-600 hover:bg-yellow-50' 
@@ -319,7 +361,6 @@ const AdminPackagesPage = () => {
                     </div>
                   </div>
 
-                  {/* Package Info */}
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {pkg.name}
                   </h3>
@@ -332,38 +373,38 @@ const AdminPackagesPage = () => {
                       <Users className="w-4 h-4 text-blue-500" />
                       <span>{pkg.pv} PV</span>
                     </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4 text-green-500" />
+                      <span>{pkg.tp} TP</span>
+                    </div>
                   </div>
 
-                  {/* Price */}
                   <div className="text-center mb-4 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-2xl font-bold text-gray-900">{pkg.price}</p>
-                    <p className="text-sm text-gray-600">{pkg.usdPrice}</p>
+                    <p className="text-2xl font-bold text-gray-900">₦{pkg.priceNGN.toLocaleString()}</p>
+                    <p className="text-sm text-gray-600">${pkg.priceUSD.toLocaleString()}</p>
                   </div>
 
-                  {/* Product Contents */}
                   <div className="mb-4">
                     <h4 className="text-sm font-semibold text-gray-900 mb-2">Includes:</h4>
                     <ul className="space-y-1 text-sm text-gray-600">
-                      {pkg.productContents.slice(0, 3).map((item, idx) => (
+                      {pkg.productContents.split(',').slice(0, 3).map((item, idx) => (
                         <li key={idx} className="flex items-center gap-2">
                           <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                          {item}
+                          {item.trim()}
                         </li>
                       ))}
-                      {pkg.productContents.length > 3 && (
+                      {pkg.productContents.split(',').length > 3 && (
                         <li className="text-xs text-gray-500">
-                          +{pkg.productContents.length - 3} more items
+                          +{pkg.productContents.split(',').length - 3} more items
                         </li>
                       )}
                     </ul>
                   </div>
 
-                  {/* Created Date */}
                   <div className="text-xs text-gray-500 mb-4">
-                    Created: {pkg.createdAt}
+                    Created: {new Date(pkg.createdAt).toLocaleDateString()}
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
                     <button 
                       onClick={() => handleEdit(pkg)}
@@ -373,7 +414,7 @@ const AdminPackagesPage = () => {
                       Edit
                     </button>
                     <button 
-                      onClick={() => handleDelete(pkg.id)}
+                      onClick={() => handleDelete(pkg.packageId)}
                       className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -396,13 +437,12 @@ const AdminPackagesPage = () => {
             </motion.div>
           )}
 
-          {/* Add/Edit Package Modal */}
           {showAddPackage && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="fixed inset-0 bg-transparent backdrop-blur-md flex items-center justify-center p-4 z-50">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-lg border border-gray-200 shadow-red-500"
               >
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
                   {editingPackage ? 'Edit Package' : 'Add New Package'}
@@ -410,6 +450,21 @@ const AdminPackagesPage = () => {
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Package ID *
+                      </label>
+                      <input
+                        type="text"
+                        name="packageId"
+                        value={formData.packageId}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="e.g., beginner"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Package Name *
@@ -424,7 +479,9 @@ const AdminPackagesPage = () => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
+                  </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Level *
@@ -440,54 +497,74 @@ const AdminPackagesPage = () => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Price (₦) *
                       </label>
                       <input
-                        type="text"
-                        name="price"
-                        value={formData.price}
+                        type="number"
+                        name="priceNGN"
+                        value={formData.priceNGN}
                         onChange={handleInputChange}
                         required
-                        placeholder="e.g., ₦9,000"
+                        placeholder="e.g., 9000"
+                        step="0.01"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Price (USD) *
+                      </label>
+                      <input
+                        type="number"
+                        name="priceUSD"
+                        value={formData.priceUSD}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="e.g., 13.99"
+                        step="0.01"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        USD Price *
+                        PV Points *
                       </label>
                       <input
-                        type="text"
-                        name="usdPrice"
-                        value={formData.usdPrice}
+                        type="number"
+                        name="pv"
+                        value={formData.pv}
                         onChange={handleInputChange}
                         required
-                        placeholder="e.g., $13.99"
+                        placeholder="e.g., 5"
+                        min="1"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      PV Points *
-                    </label>
-                    <input
-                      type="number"
-                      name="pv"
-                      value={formData.pv}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="e.g., 5"
-                      min="1"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        TP Points *
+                      </label>
+                      <input
+                        type="number"
+                        name="tp"
+                        value={formData.tp}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="e.g., 10"
+                        min="1"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -499,13 +576,10 @@ const AdminPackagesPage = () => {
                       value={formData.productContents}
                       onChange={handleInputChange}
                       required
-                      placeholder="Enter each product on a new line:
-1x Baobab (250g)
-1x Dates Powder (200g)"
+                      placeholder="Enter product contents separated by commas: 1x Baobab (250g), 1x Dates Powder (200g)"
                       rows={4}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200 resize-none"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Enter each product on a separate line</p>
                   </div>
 
                   <div className="flex items-center gap-2">

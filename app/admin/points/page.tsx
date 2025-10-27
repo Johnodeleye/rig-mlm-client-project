@@ -1,4 +1,3 @@
-// app/admin/points/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,14 +13,17 @@ const AdminPointsPage = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('points');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [tpAmount, setTpAmount] = useState('');
   const [pvAmount, setPvAmount] = useState('');
   const [pointsType, setPointsType] = useState('add');
   const [description, setDescription] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Check authentication
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuth');
     if (!isAuthenticated) {
@@ -29,55 +31,116 @@ const AdminPointsPage = () => {
     }
   }, [router]);
 
-  // Mock users data
-  const users = [
-    {
-      id: 1,
-      name: 'John Ayomide',
-      email: 'john.ayomide@email.com',
-      tpPoints: 1500,
-      pvPoints: 450,
-      rank: 'Gold'
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@email.com',
-      tpPoints: 890,
-      pvPoints: 230,
-      rank: 'Silver'
-    },
-    {
-      id: 3,
-      name: 'Mike Chen',
-      email: 'mike.chen@email.com',
-      tpPoints: 450,
-      pvPoints: 120,
-      rank: 'Bronze'
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredUsers([]);
+    } else {
+      searchUsers(searchTerm);
     }
-  ];
+  }, [searchTerm]);
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const searchUsers = async (query: string) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/users/search?search=${encodeURIComponent(query)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-  const handlePointsUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    // In a real app, you would make an API call here
-    console.log({
-      user: selectedUser,
-      type: pointsType,
-      tpPoints: tpAmount,
-      pvPoints: pvAmount,
-      description
-    });
-    // Reset form
-    setTpAmount('');
-    setPvAmount('');
-    setDescription('');
-    setSelectedUser('');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setFilteredUsers(data.users);
+        }
+      }
+    } catch (error) {
+      console.error('Search users error:', error);
+    }
   };
+
+  const handleUserSelect = (user: any) => {
+    setSelectedUser(user);
+    setShowUserDropdown(false);
+    setSearchTerm(user.fullName);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setShowUserDropdown(true);
+    if (e.target.value === '') {
+      setSelectedUser(null);
+    }
+  };
+
+  const handlePointsUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedUser) {
+      alert('Please select a user');
+      return;
+    }
+
+    const pvValue = parseInt(pvAmount) || 0;
+    const tpValue = parseInt(tpAmount) || 0;
+
+    if (pvValue <= 0 && tpValue <= 0) {
+      alert('Please enter at least one valid point amount');
+      return;
+    }
+
+    if (pointsType === 'deduct') {
+      if ((pvValue > 0 && pvValue > selectedUser.pv) || (tpValue > 0 && tpValue > selectedUser.tp)) {
+        alert('Deduction amount exceeds available points');
+        return;
+      }
+    }
+
+    setIsLoading(true);
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const endpoint = pointsType === 'add' 
+        ? `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/add-points`
+        : `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/deduct-points`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          pvAmount: pvValue,
+          tpAmount: tpValue,
+          description: description || `Admin ${pointsType === 'add' ? 'added' : 'deducted'} points`
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          alert(`Points ${pointsType === 'add' ? 'added' : 'deducted'} successfully!`);
+          setSelectedUser({
+            ...selectedUser,
+            pv: data.newPV,
+            tp: data.newTP
+          });
+          setTpAmount('');
+          setPvAmount('');
+          setDescription('');
+        }
+      } else {
+        alert(`Error ${pointsType === 'add' ? 'adding' : 'deducting'} points`);
+      }
+    } catch (error) {
+      console.error('Points update error:', error);
+      alert(`Error ${pointsType === 'add' ? 'adding' : 'deducting'} points`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const allUsers = searchTerm ? filteredUsers : users;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,7 +164,6 @@ const AdminPointsPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -114,14 +176,10 @@ const AdminPointsPage = () => {
                 </h1>
                 <p className="text-gray-600">Manage TP and PV points for users</p>
               </div>
-              <div className="mt-3 lg:mt-0 text-sm text-gray-500">
-                Total Users: {users.length}
-              </div>
             </div>
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            {/* Points Update Form */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -132,7 +190,6 @@ const AdminPointsPage = () => {
               </h2>
 
               <form onSubmit={handlePointsUpdate} className="space-y-4">
-                {/* Points Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Action Type
@@ -165,27 +222,64 @@ const AdminPointsPage = () => {
                   </div>
                 </div>
 
-                {/* User Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Select User
                   </label>
-                  <select
-                    value={selectedUser}
-                    onChange={(e) => setSelectedUser(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
-                  >
-                    <option value="">Select a user</option>
-                    {users.map(user => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} - {user.email}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search users by name, email, or phone..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      onFocus={() => setShowUserDropdown(true)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                    />
+                    
+                    {showUserDropdown && filteredUsers.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {filteredUsers.map(user => (
+                          <div
+                            key={user.id}
+                            onClick={() => handleUserSelect(user)}
+                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-gray-900">{user.fullName}</div>
+                            <div className="text-sm text-gray-600">{user.email}</div>
+                            <div className="text-sm text-gray-500">{user.phoneNumber}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedUser && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-green-900">Selected: {selectedUser.fullName}</p>
+                          <p className="text-sm text-green-700">PV: {selectedUser.pv} | TP: {selectedUser.tp}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedUser(null);
+                            setSearchTerm('');
+                          }}
+                          className="text-red-600 hover:text-red-700 text-sm font-medium"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
 
-                {/* TP Points */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     TP Points
@@ -199,7 +293,6 @@ const AdminPointsPage = () => {
                   />
                 </div>
 
-                {/* PV Points */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     PV Points
@@ -213,7 +306,6 @@ const AdminPointsPage = () => {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description
@@ -228,21 +320,20 @@ const AdminPointsPage = () => {
                   />
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
+                  disabled={isLoading || !selectedUser}
                   className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 ${
                     pointsType === 'add'
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-red-600 hover:bg-red-700'
+                      ? 'bg-green-600 hover:bg-green-700 disabled:bg-green-400'
+                      : 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
                   }`}
                 >
-                  {pointsType === 'add' ? 'Add Points' : 'Deduct Points'}
+                  {isLoading ? 'Processing...' : pointsType === 'add' ? 'Add Points' : 'Deduct Points'}
                 </button>
               </form>
             </motion.div>
 
-            {/* Users Points Overview */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -263,7 +354,7 @@ const AdminPointsPage = () => {
               </div>
 
               <div className="space-y-4">
-                {filteredUsers.map((user, index) => (
+                {allUsers.map((user, index) => (
                   <motion.div
                     key={user.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -277,24 +368,24 @@ const AdminPointsPage = () => {
                           <Users className="w-5 h-5 text-red-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{user.name}</p>
+                          <p className="font-medium text-gray-900">{user.fullName}</p>
                           <p className="text-sm text-gray-500">{user.email}</p>
                         </div>
                       </div>
                       <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                        {user.rank}
+                        {user.membershipPackage}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-3 bg-blue-50 rounded-lg">
                         <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-                        <p className="text-lg font-bold text-blue-600">{user.tpPoints}</p>
+                        <p className="text-lg font-bold text-blue-600">{user.tp}</p>
                         <p className="text-xs text-blue-600">TP Points</p>
                       </div>
                       <div className="text-center p-3 bg-green-50 rounded-lg">
                         <TrendingDown className="w-6 h-6 text-green-600 mx-auto mb-1" />
-                        <p className="text-lg font-bold text-green-600">{user.pvPoints}</p>
+                        <p className="text-lg font-bold text-green-600">{user.pv}</p>
                         <p className="text-xs text-green-600">PV Points</p>
                       </div>
                     </div>
@@ -302,7 +393,7 @@ const AdminPointsPage = () => {
                 ))}
               </div>
 
-              {filteredUsers.length === 0 && (
+              {allUsers.length === 0 && (
                 <div className="text-center py-8">
                   <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500">No users found</p>

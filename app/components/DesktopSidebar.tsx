@@ -1,4 +1,4 @@
-// app/components/DesktopSidebar.tsx
+'app/components/DesktopSidebar.tsx'
 'use client';
 
 import { 
@@ -37,10 +37,8 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
 
   return (
     <div className="hidden lg:flex fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 flex-col z-30 pt-16">
-      {/* User Profile Section with Logo */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3 mb-4">
-         
           <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
             <Image 
               src="/logo.png" 
@@ -49,7 +47,6 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
               height={40}
               className="rounded-lg"
             />
-
           </div>
           <div>
             <h2 className="font-bold text-gray-900 text-lg">RIG GLOBAL</h2>
@@ -75,9 +72,8 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
         </div>
       </div>
 
-      {/* Navigation Menu with Better Spacing */}
-      <nav className="flex-1 p-4">
-        <ul className="space-y-3"> {/* Increased from space-y-2 to space-y-3 */}
+      <nav className="flex-1 p-4 overflow-y-auto">
+        <ul className="space-y-3">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeMenu === item.id;
@@ -103,8 +99,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
         </ul>
       </nav>
 
-      {/* Logout Button with Better Spacing */}
-      <div className="p-4 border-t border-gray-200 mt-4"> {/* Added mt-4 for top margin */}
+      <div className="p-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 hover:shadow-sm"

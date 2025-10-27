@@ -7,6 +7,7 @@ import { Users, UserCheck, UserX, ChevronDown, ChevronRight, DollarSign, Calenda
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+import { useAuth } from '@/context/AuthContext';
 
 interface TeamMember {
   id: string;
@@ -42,6 +43,15 @@ const TeamsPage = () => {
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+    const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+
+    useEffect(() => {
+      if (!authLoading) {
+        if (!isAuthenticated || accountType !== 'user') {
+          router.push('/login');
+        }
+      }
+    }, [isAuthenticated, accountType, authLoading, router]);
 
   // Fetch team data
   useEffect(() => {

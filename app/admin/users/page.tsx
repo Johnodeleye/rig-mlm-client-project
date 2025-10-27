@@ -1,4 +1,3 @@
-// app/admin/users/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,6 +7,19 @@ import { useRouter } from 'next/navigation';
 import AdminHeader from '../../components/admin/AdminHeader';
 import AdminDesktopSidebar from '../../components/admin/AdminDesktopSidebar';
 import AdminMobileSidebar from '../../components/admin/AdminMobileSidebar';
+import { useAuth } from '@/context/AuthContext';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  plan: string;
+  status: string;
+  joinDate: string;
+  totalEarnings: string;
+  referrals: number;
+}
 
 const AdminUsersPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -15,86 +27,117 @@ const AdminUsersPage = () => {
   const [activeMenu, setActiveMenu] = useState('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const router = useRouter();
+  const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
 
-  // Check authentication
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth');
-    if (!isAuthenticated) {
-      router.push('/admin');
+    if (!authLoading) {
+      if (!isAuthenticated || accountType !== 'admin') {
+        router.push('/login');
+      }
     }
-  }, [router]);
+  }, [isAuthenticated, accountType, authLoading, router]);
 
-  // Mock users data
-  const users = [
-    {
-      id: 1,
-      name: 'John Ayomide',
-      email: 'john.ayomide@email.com',
-      phone: '+234 812 345 6789',
-      plan: 'Beginner Plan',
-      status: 'Active',
-      joinDate: '2024-01-15',
-      totalEarnings: '₦45,670',
-      referrals: 15
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@email.com',
-      phone: '+234 812 345 6788',
-      plan: 'Business Pack',
-      status: 'Active',
-      joinDate: '2024-01-14',
-      totalEarnings: '₦89,120',
-      referrals: 8
-    },
-    {
-      id: 3,
-      name: 'Mike Chen',
-      email: 'mike.chen@email.com',
-      phone: '+234 812 345 6787',
-      plan: 'Senior Pack',
-      status: 'Inactive',
-      joinDate: '2024-01-10',
-      totalEarnings: '₦23,450',
-      referrals: 3
-    },
-    {
-      id: 4,
-      name: 'Emily Davis',
-      email: 'emily.d@email.com',
-      phone: '+234 812 345 6786',
-      plan: 'Junior Pack',
-      status: 'Active',
-      joinDate: '2024-01-08',
-      totalEarnings: '₦15,670',
-      referrals: 5
-    },
-    {
-      id: 5,
-      name: 'Alex Rodriguez',
-      email: 'alex.r@email.com',
-      phone: '+234 812 345 6785',
-      plan: 'Beginner Plan',
-      status: 'Suspended',
-      joinDate: '2024-01-05',
-      totalEarnings: '₦8,900',
-      referrals: 2
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const url = new URL(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/users`);
+      
+      if (searchTerm) url.searchParams.append('search', searchTerm);
+      if (filterStatus !== 'all') url.searchParams.append('status', filterStatus);
+
+      const response = await fetch(url.toString(), {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsers(data.users);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setIsLoading(false);
     }
-  ];
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const toggleUserStatus = (userId: number, currentStatus: string) => {
-    // In a real app, you would make an API call here
-    console.log(`Toggling status for user ${userId} from ${currentStatus}`);
   };
+
+  useEffect(() => {
+    if (isAuthenticated && accountType === 'admin') {
+      fetchUsers();
+    }
+  }, [isAuthenticated, accountType, searchTerm, filterStatus]);
+
+  const toggleUserStatus = async (userId: string, currentStatus: string) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const newStatus = currentStatus === 'Active' ? 'inactive' : 'active';
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/users/${userId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsers(users.map(user => 
+            user.id === userId 
+              ? { ...user, status: newStatus === 'active' ? 'Active' : 'Inactive' }
+              : user
+          ));
+        }
+      }
+    } catch (error) {
+      console.error('Error updating user status:', error);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsers(users.filter(user => user.id !== userId));
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading users...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || accountType !== 'admin') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,7 +161,6 @@ const AdminUsersPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -137,7 +179,6 @@ const AdminUsersPage = () => {
             </div>
           </motion.div>
 
-          {/* Search and Filter */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -145,7 +186,6 @@ const AdminUsersPage = () => {
             className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mb-4 lg:mb-6"
           >
             <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -157,7 +197,6 @@ const AdminUsersPage = () => {
                 />
               </div>
 
-              {/* Filter */}
               <div className="flex gap-3">
                 <select
                   value={filterStatus}
@@ -167,13 +206,11 @@ const AdminUsersPage = () => {
                   <option value="all">All Status</option>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
-                  <option value="Suspended">Suspended</option>
                 </select>
               </div>
             </div>
           </motion.div>
 
-          {/* Users Table */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -205,7 +242,7 @@ const AdminUsersPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map((user, index) => (
+                  {users.map((user, index) => (
                     <motion.tr
                       key={user.id}
                       initial={{ opacity: 0 }}
@@ -231,8 +268,6 @@ const AdminUsersPage = () => {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           user.status === 'Active' 
                             ? 'bg-green-100 text-green-800'
-                            : user.status === 'Inactive'
-                            ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
                           {user.status}
@@ -256,10 +291,13 @@ const AdminUsersPage = () => {
                           >
                             {user.status === 'Active' ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                           </button>
-                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                          {/* <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                             <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          </button> */}
+                          <button 
+                            onClick={() => deleteUser(user.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -270,7 +308,7 @@ const AdminUsersPage = () => {
               </table>
             </div>
 
-            {filteredUsers.length === 0 && (
+            {users.length === 0 && (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500">No users found matching your criteria</p>

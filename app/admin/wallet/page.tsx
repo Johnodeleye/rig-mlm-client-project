@@ -1,4 +1,3 @@
-// app/admin/wallet/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,67 +17,10 @@ const AdminWalletPage = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Mock users data
-  useEffect(() => {
-    const mockUsers = [
-      { 
-        id: '1', 
-        name: 'John Doe', 
-        email: 'john@example.com', 
-        phone: '+2348012345678',
-        walletBalance: 25000,
-        pvBalance: 1250,
-        tpBalance: 300,
-        totalTransactions: 47
-      },
-      { 
-        id: '2', 
-        name: 'Jane Smith', 
-        email: 'jane@example.com', 
-        phone: '+2348023456789',
-        walletBalance: 18000,
-        pvBalance: 890,
-        tpBalance: 150,
-        totalTransactions: 32
-      },
-      { 
-        id: '3', 
-        name: 'Mike Johnson', 
-        email: 'mike@example.com', 
-        phone: '+2348034567890',
-        walletBalance: 32000,
-        pvBalance: 2100,
-        tpBalance: 450,
-        totalTransactions: 65
-      },
-      { 
-        id: '4', 
-        name: 'Sarah Wilson', 
-        email: 'sarah@example.com', 
-        phone: '+2348045678901',
-        walletBalance: 15000,
-        pvBalance: 750,
-        tpBalance: 120,
-        totalTransactions: 28
-      },
-      { 
-        id: '5', 
-        name: 'David Brown', 
-        email: 'david@example.com', 
-        phone: '+2348056789012',
-        walletBalance: 42000,
-        pvBalance: 3100,
-        tpBalance: 600,
-        totalTransactions: 89
-      },
-    ];
-    setUsers(mockUsers);
-    setFilteredUsers(mockUsers);
-  }, []);
-
-  // Check authentication
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuth');
     if (!isAuthenticated) {
@@ -86,24 +28,72 @@ const AdminWalletPage = () => {
     }
   }, [router]);
 
-  // Filter users based on search
   useEffect(() => {
     if (searchTerm.trim() === '') {
-      setFilteredUsers(users);
+      setFilteredUsers([]);
     } else {
-      const filtered = users.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.phone.includes(searchTerm)
-      );
-      setFilteredUsers(filtered);
+      searchUsers(searchTerm);
     }
-  }, [searchTerm, users]);
+  }, [searchTerm]);
 
-  const handleUserSelect = (user: any) => {
-    setSelectedUser(user);
-    setShowUserDropdown(false);
-    setSearchTerm(user.name);
+  const searchUsers = async (query: string) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/users/search?search=${encodeURIComponent(query)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setFilteredUsers(data.users);
+        }
+      }
+    } catch (error) {
+      console.error('Search users error:', error);
+    }
+  };
+
+  const handleUserSelect = async (user: any) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/user/${user.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSelectedUser(data.user);
+          fetchUserTransactions(data.user.id);
+        }
+      }
+    } catch (error) {
+      console.error('Fetch user details error:', error);
+    } finally {
+      setIsLoading(false);
+      setShowUserDropdown(false);
+      setSearchTerm(user.fullName);
+    }
+  };
+
+  const fetchUserTransactions = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/transactions/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setTransactions(data.transactions);
+        }
+      }
+    } catch (error) {
+      console.error('Fetch transactions error:', error);
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,47 +101,214 @@ const AdminWalletPage = () => {
     setShowUserDropdown(true);
     if (e.target.value === '') {
       setSelectedUser(null);
+      setTransactions([]);
     }
   };
 
-  const handleAddFunds = () => {
+  const handleAddFunds = async () => {
     if (!selectedUser) return;
-    // Implementation for adding funds
-    console.log('Adding funds to user:', selectedUser.id);
-    // You would typically open a modal or form here
+    
+    const amount = parseFloat(prompt('Enter amount to add:') || '0');
+    if (amount <= 0 || isNaN(amount)) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    const description = prompt('Enter description (optional):') || `Admin added funds`;
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/add-funds`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          amount,
+          description
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          alert('Funds added successfully!');
+          setSelectedUser({
+            ...selectedUser,
+            walletBalance: data.newBalance
+          });
+          fetchUserTransactions(selectedUser.id);
+        }
+      } else {
+        alert('Error adding funds');
+      }
+    } catch (error) {
+      console.error('Add funds error:', error);
+      alert('Error adding funds');
+    }
   };
 
-  const handleDeductFunds = () => {
+  const handleDeductFunds = async () => {
     if (!selectedUser) return;
-    // Implementation for deducting funds
-    console.log('Deducting funds from user:', selectedUser.id);
-    // You would typically open a modal or form here
+    
+    const amount = parseFloat(prompt('Enter amount to deduct:') || '0');
+    if (amount <= 0 || isNaN(amount)) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    if (amount > selectedUser.walletBalance) {
+      alert('Deduction amount exceeds wallet balance');
+      return;
+    }
+
+    const description = prompt('Enter description (optional):') || `Admin deducted funds`;
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/deduct-funds`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          amount,
+          description
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          alert('Funds deducted successfully!');
+          setSelectedUser({
+            ...selectedUser,
+            walletBalance: data.newBalance
+          });
+          fetchUserTransactions(selectedUser.id);
+        }
+      } else {
+        alert('Error deducting funds');
+      }
+    } catch (error) {
+      console.error('Deduct funds error:', error);
+      alert('Error deducting funds');
+    }
   };
 
-  const handleAddPoints = () => {
+  const handleAddPoints = async () => {
     if (!selectedUser) return;
-    // Implementation for adding points
-    console.log('Adding points to user:', selectedUser.id);
-    // You would typically open a modal or form here
+    
+    const pvAmount = parseInt(prompt('Enter PV amount to add (0 for none):') || '0');
+    const tpAmount = parseInt(prompt('Enter TP amount to add (0 for none):') || '0');
+
+    if (pvAmount <= 0 && tpAmount <= 0) {
+      alert('Please enter at least one valid point amount');
+      return;
+    }
+
+    const description = prompt('Enter description (optional):') || `Admin added points`;
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/add-points`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          pvAmount,
+          tpAmount,
+          description
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          alert('Points added successfully!');
+          setSelectedUser({
+            ...selectedUser,
+            pv: data.newPV,
+            tp: data.newTP
+          });
+        }
+      } else {
+        alert('Error adding points');
+      }
+    } catch (error) {
+      console.error('Add points error:', error);
+      alert('Error adding points');
+    }
   };
 
-  const handleDeductPoints = () => {
+  const handleDeductPoints = async () => {
     if (!selectedUser) return;
-    // Implementation for deducting points
-    console.log('Deducting points from user:', selectedUser.id);
-    // You would typically open a modal or form here
+    
+    const pvAmount = parseInt(prompt('Enter PV amount to deduct (0 for none):') || '0');
+    const tpAmount = parseInt(prompt('Enter TP amount to deduct (0 for none):') || '0');
+
+    if (pvAmount <= 0 && tpAmount <= 0) {
+      alert('Please enter at least one valid point amount');
+      return;
+    }
+
+    if ((pvAmount > 0 && pvAmount > selectedUser.pv) || (tpAmount > 0 && tpAmount > selectedUser.tp)) {
+      alert('Deduction amount exceeds available points');
+      return;
+    }
+
+    const description = prompt('Enter description (optional):') || `Admin deducted points`;
+
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/deduct-points`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          pvAmount,
+          tpAmount,
+          description
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          alert('Points deducted successfully!');
+          setSelectedUser({
+            ...selectedUser,
+            pv: data.newPV,
+            tp: data.newTP
+          });
+        }
+      } else {
+        alert('Error deducting points');
+      }
+    } catch (error) {
+      console.error('Deduct points error:', error);
+      alert('Error deducting points');
+    }
   };
 
   const handleViewTransactions = () => {
     if (!selectedUser) return;
-    // Implementation for viewing transactions
-    console.log('Viewing transactions for user:', selectedUser.id);
+    fetchUserTransactions(selectedUser.id);
   };
 
   const handleUserHistory = () => {
     if (!selectedUser) return;
-    // Implementation for viewing user history
-    console.log('Viewing history for user:', selectedUser.id);
+    alert(`View history for user: ${selectedUser.fullName}`);
   };
 
   return (
@@ -176,7 +333,6 @@ const AdminWalletPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -192,7 +348,6 @@ const AdminWalletPage = () => {
             </div>
           </motion.div>
 
-          {/* User Search Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -214,7 +369,6 @@ const AdminWalletPage = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                   />
                   
-                  {/* User Dropdown */}
                   {showUserDropdown && filteredUsers.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       {filteredUsers.map(user => (
@@ -223,9 +377,9 @@ const AdminWalletPage = () => {
                           onClick={() => handleUserSelect(user)}
                           className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                         >
-                          <div className="font-medium text-gray-900">{user.name}</div>
+                          <div className="font-medium text-gray-900">{user.fullName}</div>
                           <div className="text-sm text-gray-600">{user.email}</div>
-                          <div className="text-sm text-gray-500">{user.phone}</div>
+                          <div className="text-sm text-gray-500">{user.phoneNumber}</div>
                         </div>
                       ))}
                     </div>
@@ -242,12 +396,13 @@ const AdminWalletPage = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-green-900">Selected User</h3>
-                      <p className="text-green-700">{selectedUser.name} • {selectedUser.email}</p>
+                      <p className="text-green-700">{selectedUser.fullName} • {selectedUser.email}</p>
                     </div>
                     <button
                       onClick={() => {
                         setSelectedUser(null);
                         setSearchTerm('');
+                        setTransactions([]);
                       }}
                       className="text-red-600 hover:text-red-700 text-sm font-medium"
                     >
@@ -259,7 +414,6 @@ const AdminWalletPage = () => {
             </div>
           </motion.div>
 
-          {/* Wallet Information */}
           {selectedUser && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -267,7 +421,6 @@ const AdminWalletPage = () => {
               transition={{ delay: 0.2 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-4 lg:mb-6"
             >
-              {/* Wallet Balance */}
               <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Wallet Balance</h3>
@@ -277,27 +430,24 @@ const AdminWalletPage = () => {
                 <p className="text-sm text-gray-600">Available balance</p>
               </div>
 
-              {/* PV Balance */}
               <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">PV Balance</h3>
                   <TrendingUp className="w-8 h-8 text-blue-600 bg-blue-100 p-2 rounded-lg" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.pvBalance?.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.pv?.toLocaleString()}</p>
                 <p className="text-sm text-gray-600">Point Value</p>
               </div>
 
-              {/* Travel Points Balance */}
               <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Travel Points</h3>
                   <Plane className="w-8 h-8 text-purple-600 bg-purple-100 p-2 rounded-lg" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.tpBalance?.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.tp?.toLocaleString()}</p>
                 <p className="text-sm text-gray-600">Travel Points Balance</p>
               </div>
 
-              {/* Total Transactions */}
               <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Total Transactions</h3>
@@ -309,7 +459,6 @@ const AdminWalletPage = () => {
             </motion.div>
           )}
 
-          {/* Action Buttons */}
           {selectedUser && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -365,7 +514,6 @@ const AdminWalletPage = () => {
             </motion.div>
           )}
 
-          {/* Transaction History */}
           {selectedUser && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -392,50 +540,39 @@ const AdminWalletPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-600">2024-01-15</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Credit</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Package Purchase</td>
-                      <td className="py-3 px-4 text-sm font-medium text-green-600">+₦9,000</td>
-                      <td className="py-3 px-4 text-sm font-medium text-blue-600">+5</td>
-                      <td className="py-3 px-4 text-sm font-medium text-purple-600">+10</td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Completed</span>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-600">2024-01-14</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Debit</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Product Purchase</td>
-                      <td className="py-3 px-4 text-sm font-medium text-red-600">-₦4,500</td>
-                      <td className="py-3 px-4 text-sm font-medium text-blue-600">+2</td>
-                      <td className="py-3 px-4 text-sm font-medium text-purple-600">+5</td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Completed</span>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-600">2024-01-13</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Credit</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Commission</td>
-                      <td className="py-3 px-4 text-sm font-medium text-green-600">+₦1,200</td>
-                      <td className="py-3 px-4 text-sm font-medium text-blue-600">-</td>
-                      <td className="py-3 px-4 text-sm font-medium text-purple-600">-</td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Completed</span>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-600">2024-01-12</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Debit</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">Withdrawal</td>
-                      <td className="py-3 px-4 text-sm font-medium text-red-600">-₦10,000</td>
-                      <td className="py-3 px-4 text-sm font-medium text-blue-600">-</td>
-                      <td className="py-3 px-4 text-sm font-medium text-purple-600">-</td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Pending</span>
-                      </td>
-                    </tr>
+                    {transactions.length > 0 ? (
+                      transactions.map((transaction) => (
+                        <tr key={transaction.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4 text-sm text-gray-600">{transaction.date}</td>
+                          <td className="py-3 px-4 text-sm text-gray-600">{transaction.type}</td>
+                          <td className="py-3 px-4 text-sm text-gray-600">{transaction.description}</td>
+                          <td className={`py-3 px-4 text-sm font-medium ${
+                            transaction.type === 'Credit' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {transaction.amount}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-medium text-blue-600">{transaction.pv}</td>
+                          <td className="py-3 px-4 text-sm font-medium text-purple-600">{transaction.tp}</td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              transaction.status === 'Completed' 
+                                ? 'bg-green-100 text-green-800'
+                                : transaction.status === 'Pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {transaction.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="py-4 text-center text-gray-500">
+                          No transactions found
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
