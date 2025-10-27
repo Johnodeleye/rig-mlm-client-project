@@ -304,7 +304,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Logged out successfully');
     
     if (accountType === 'admin') {
-      router.push('/admin');
+      router.push('/login');
     } else {
       router.push('/login');
     }

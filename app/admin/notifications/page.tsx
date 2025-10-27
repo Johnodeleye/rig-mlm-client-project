@@ -28,7 +28,7 @@ const AdminNotificationsPage = () => {
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuth');
     if (!isAuthenticated) {
-      router.push('/admin');
+      router.push('/login');
     } else {
       fetchAdminNotifications();
     }

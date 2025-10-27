@@ -598,17 +598,17 @@ const Register = () => {
                 </p>
               </div>
 
-              <div className="mt-1 text-center">
+              {/* <div className="mt-1 text-center">
                 <p className="text-sm text-gray-600">
                   Not a user/member?{' '}
                   <Link 
-                    href="/admin" 
+                    href="/login" 
                     className="text-[#0660D3] hover:text-blue-700 font-semibold transition-colors"
                   >
                     Login as Admin
                   </Link>
                 </p>
-              </div>
+              </div> */}
             </form>
           </motion.div>
         </motion.div>
