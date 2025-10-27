@@ -8,6 +8,7 @@ import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface TeamMember {
   id: string;
@@ -44,6 +45,7 @@ const TeamsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
     const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+     const router = useRouter();
 
     useEffect(() => {
       if (!authLoading) {
