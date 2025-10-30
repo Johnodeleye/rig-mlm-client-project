@@ -427,7 +427,7 @@ const Dashboard = () => {
             <td className={`py-2 lg:py-3 text-xs lg:text-sm font-medium ${
               transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
             }`}>
-              {transaction.type === 'credit' ? '+' : '-'}{transaction.amount}
+              {transaction.type === 'credit' ? '' : ''}{transaction.amount}
             </td>
             <td className="py-2 lg:py-3">
               <span

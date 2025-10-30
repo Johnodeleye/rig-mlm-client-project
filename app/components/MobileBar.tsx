@@ -1,14 +1,16 @@
-// app/components/MobileBar.tsx
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Users, DollarSign, CreditCard, TrendingUp, 
   Package, MessageCircle, Settings, LogOut, X,
-  User, Shield, Bell, PersonStanding, Send, Wallet
+  User, Shield, Bell, PersonStanding, Send, Wallet, Store, ShoppingCart,
+  Package2,
+  Clock10
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
+import { useEffect } from 'react';
 
 interface MobileSidebarProps {
   isSidebarOpen: boolean;
@@ -25,6 +27,11 @@ const MobileSidebar = ({
 }: MobileSidebarProps) => {
   const { user, userProfile, logout, accountType } = useAuth();
 
+  // useEffect(() => {
+  //   console.log('MobileSidebar - userProfile:', userProfile);
+  //   console.log('MobileSidebar - isStockist:', userProfile?.isStockist);
+  // }, [userProfile]);
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/home' },
     { id: 'referrals', label: 'My Referrals', icon: Users, href: '/referrals' },
@@ -36,8 +43,42 @@ const MobileSidebar = ({
     { id: 'upgrade', label: 'Upgrade', icon: TrendingUp, href: '/upgrade' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },
     { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
-    {id:  'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim'   }
+    { id: 'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim' }
   ];
+
+  // console.log('MobileSidebar - Before condition, isStockist:', userProfile?.isStockist);
+
+  if (userProfile?.isStockist === true) {
+    // console.log('MobileSidebar - Adding See Orders for stockist');
+    menuItems.push({
+      id: 'orders',
+      label: 'See Orders',
+      icon: ShoppingCart,
+      href: '/stockist/requests/orders'
+    });
+    menuItems.push({
+      id: 'inventory',
+      label: 'Inventory',
+      icon: Package2,
+      href: '/stockist/inventory'
+    });
+    menuItems.push({
+      id: 'requests',
+      label: 'Requests',
+      icon: Clock10,
+      href: '/stockist/requests'
+    });
+  } else {
+    // console.log('MobileSidebar - Adding Become a Stockist for non-stockist');
+    menuItems.push({
+      id: 'become-stockist',
+      label: 'Become a Stockist',
+      icon: Store,
+      href: '/become-stockist'
+    });
+  }
+
+  // console.log('MobileSidebar - Final menuItems:', menuItems);
 
   const handleMenuClick = (menuId: string) => {
     setActiveMenu(menuId);
@@ -53,7 +94,6 @@ const MobileSidebar = ({
     <AnimatePresence>
       {isSidebarOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -62,7 +102,6 @@ const MobileSidebar = ({
             onClick={() => setIsSidebarOpen(false)}
           />
           
-          {/* Sidebar */}
           <motion.div
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
@@ -70,7 +109,6 @@ const MobileSidebar = ({
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="lg:hidden fixed left-0 top-0 h-full w-64 bg-white shadow-2xl z-50 flex flex-col"
           >
-            {/* Compact Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-[#0660D3] to-blue-600 rounded-lg flex items-center justify-center">
@@ -92,49 +130,55 @@ const MobileSidebar = ({
               </button>
             </div>
 
-{/* Compact User nfo */}
-<div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
-  <div className="flex items-center gap-3">
-    {userProfile?.profilePicture ? (
-      <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 border-white shadow-md">
-        <img 
-          src={userProfile.profilePicture} 
-          alt="Profile" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-    ) : (
-      <div className="w-10 h-10 bg-gradient-to-br from-[#0660D3] to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-        <User className="w-5 h-5 text-white" />
-      </div>
-    )}
-    <div className="flex-1 min-w-0">
-      <h4 className="font-semibold text-gray-900 text-sm truncate">
-        {userProfile?.name || user?.username || 'Loading...'}
-      </h4>
-      <div className="flex items-center gap-1 mt-0.5">
-        <Shield className="w-3 h-3 text-blue-600" />
-        <p className="text-xs text-gray-600">
-          {userProfile?.plan || 'Basic'} Plan
-        </p>
-      </div>
-    </div>
-  </div>
-  
-  {/* Compact Stats */}
-  <div className="flex items-center gap-2 mt-2">
-    <div className="flex-1 bg-white/70 backdrop-blur px-2 py-1 rounded-md border border-blue-100">
-      <span className="text-[10px] text-gray-500 block">PV</span>
-      <span className="text-xs font-bold text-gray-900">{userProfile?.pv || 0}</span>
-    </div>
-    <div className="flex-1 bg-white/70 backdrop-blur px-2 py-1 rounded-md border border-green-100">
-      <span className="text-[10px] text-gray-500 block">TP</span>
-      <span className="text-xs font-bold text-gray-900">{userProfile?.tp || 0}</span>
-    </div>
-  </div>
-</div>
+            <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                {userProfile?.profilePicture ? (
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border-2 border-white shadow-md">
+                    <img 
+                      src={userProfile.profilePicture} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#0660D3] to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-gray-900 text-sm truncate">
+                    {userProfile?.name || user?.username || 'Loading...'}
+                  </h4>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Shield className="w-3 h-3 text-blue-600" />
+                    <p className="text-xs text-gray-600">
+                      {userProfile?.plan || 'Basic'} Plan
+                    </p>
+                  </div>
+                  <div className="mt-1">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      userProfile?.isStockist 
+                        ? 'bg-purple-100 text-purple-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {userProfile?.isStockist ? 'Stockist' : 'Member'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 bg-white/70 backdrop-blur px-2 py-1 rounded-md border border-blue-100">
+                  <span className="text-[10px] text-gray-500 block">PV</span>
+                  <span className="text-xs font-bold text-gray-900">{userProfile?.pv || 0}</span>
+                </div>
+                <div className="flex-1 bg-white/70 backdrop-blur px-2 py-1 rounded-md border border-green-100">
+                  <span className="text-[10px] text-gray-500 block">TP</span>
+                  <span className="text-xs font-bold text-gray-900">{userProfile?.tp || 0}</span>
+                </div>
+              </div>
+            </div>
 
-            {/* Compact Navigation Menu */}
             <nav className="flex-1 px-3 py-2 overflow-y-auto">
               <ul className="space-y-0.5">
                 {menuItems.map((item) => {
@@ -174,7 +218,6 @@ const MobileSidebar = ({
               </ul>
             </nav>
 
-            {/* Compact Logout Button */}
             <div className="p-3 border-t border-gray-100 bg-gray-50">
               <button
                 onClick={handleLogout}

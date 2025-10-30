@@ -2,11 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Package, CheckCircle, Clock } from 'lucide-react';
-import Header from '../../components/Header';
-import DesktopSidebar from '../../components/DesktopSidebar';
-import MobileSidebar from '../../components/MobileBar';
+import { Package, MapPin, Phone, MessageCircle, Truck, User } from 'lucide-react';
+import Header from '@/app/components/Header';
+import DesktopSidebar from '@/app/components/DesktopSidebar';
+import MobileSidebar from '@/app/components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+
+interface Stockist {
+  id: string;
+  name: string;
+  owner: string;
+  country: string;
+  state: string;
+  city: string;
+  address: string;
+  whatsapp: string;
+  call: string;
+  availableProducts: number;
+  totalInventory: number;
+}
 
 interface Purchase {
   id: string;
@@ -14,8 +28,9 @@ interface Purchase {
   quantity: number;
   totalAmount: number;
   status: string;
-createdAt: string;
+  createdAt: string;
   product: {
+    id: string;
     name: string;
     description: string;
     image: string | null;
@@ -23,17 +38,41 @@ createdAt: string;
   };
 }
 
-const ProductsClaimPage = () => {
+const ClaimProductPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('claim-products');
+  const [stockists, setStockists] = useState<Stockist[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [selectedStockist, setSelectedStockist] = useState<Stockist | null>(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [address, setAddress] = useState('');
+  const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const { getStoredToken } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { getStoredToken, userProfile } = useAuth();
 
   useEffect(() => {
+    fetchStockists();
     fetchPurchases();
   }, []);
+
+  const fetchStockists = async () => {
+    try {
+      const token = getStoredToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/stockist-management/nearby-stockists`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStockists(data.stockists || []);
+      }
+    } catch (error) {
+      console.error('Error fetching stockists:', error);
+    }
+  };
 
   const fetchPurchases = async () => {
     try {
@@ -53,7 +92,7 @@ const ProductsClaimPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setPurchases(data.purchases);
+          setPurchases(data.purchases || []);
         }
       } else {
         console.error('Failed to fetch purchases:', response.status);
@@ -65,26 +104,65 @@ const ProductsClaimPage = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'text-green-600 bg-green-100';
-      case 'shipped': return 'text-blue-600 bg-blue-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const handleRequestProduct = async () => {
+    if (!selectedStockist || !selectedPurchase || !address) {
+      alert('Please select a stockist, product, and provide delivery address');
+      return;
+    }
+
+    if (quantity > selectedPurchase.quantity) {
+      alert(`You can only claim up to ${selectedPurchase.quantity} items of this product`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = getStoredToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/stockist-management/request-product`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          stockistId: selectedStockist.id,
+          productId: selectedPurchase.product.id,
+          quantity: quantity,
+          address: address,
+          notes: notes
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Product request submitted successfully! The stockist will contact you soon.');
+        setSelectedStockist(null);
+        setSelectedPurchase(null);
+        setQuantity(1);
+        setAddress('');
+        setNotes('');
+        fetchPurchases();
+      } else {
+        alert(data.error || 'Failed to submit request');
+      }
+    } catch (error) {
+      console.error('Error requesting product:', error);
+      alert('Error submitting request');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
+  const getRemainingQuantity = (purchase: Purchase) => {
+    const claimedQuantity = 0;
+    return purchase.quantity - claimedQuantity;
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading purchases...</div>
+        <div className="text-lg">Loading your purchases...</div>
       </div>
     );
   }
@@ -119,91 +197,288 @@ const ProductsClaimPage = () => {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
-                  My Purchases
+                  Claim Products
                 </h1>
-                <p className="text-gray-600">View and track your product purchases</p>
+                <p className="text-gray-600">Find nearby stockists to claim your purchased products</p>
+              </div>
+              <div className="mt-3 lg:mt-0">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+                  <p className="text-sm text-blue-800">
+                    <strong>{purchases.length}</strong> purchased product{purchases.length !== 1 ? 's' : ''} available to claim
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 gap-4 lg:gap-6">
-            {purchases.map((purchase, index) => (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
               <motion.div
-                key={purchase.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition-all duration-200"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-6"
               >
-                <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-                  <div className="w-full lg:w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {purchase.product.image ? (
-                      <img 
-                        src={purchase.product.image} 
-                        alt={purchase.product.name}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <Package className="w-16 h-16 text-gray-400" />
-                    )}
-                  </div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Purchased Products</h2>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {purchases.map((purchase, index) => (
+                    <motion.div
+                      key={purchase.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedPurchase?.id === purchase.id
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedPurchase(purchase)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{purchase.product.name}</h3>
+                          <p className="text-sm text-gray-600 mt-1">{purchase.product.description}</p>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                            <span>Purchased: {purchase.quantity}</span>
+                            <span>Available: {getRemainingQuantity(purchase)}</span>
+                            <span>Price: ₦{purchase.product.price.toLocaleString()}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Package className="w-4 h-4 text-blue-600" />
+                            <span className="text-blue-600 font-medium">
+                              {getRemainingQuantity(purchase)} available
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Total: ₦{purchase.totalAmount.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
 
-                  <div className="flex-1">
-                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          {purchase.product.name}
-                        </h3>
-                        <p className="text-gray-600 mb-3">{purchase.product.description}</p>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 mb-4 lg:mb-0">
-                        {getStatusIcon(purchase.status)}
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(purchase.status)}`}>
-                          {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
-                        </span>
-                      </div>
+                  {purchases.length === 0 && (
+                    <div className="text-center py-8">
+                      <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No purchased products found</p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Products you purchase will appear here for claiming.
+                      </p>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Quantity:</span>
-                        <p className="font-semibold">{purchase.quantity}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Unit Price:</span>
-                        <p className="font-semibold">₦{purchase.product.price.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Total Amount:</span>
-                        <p className="font-semibold text-lg">₦{purchase.totalAmount.toLocaleString()}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <span className="text-gray-600 text-sm">
-                        Purchased on: {new Date(purchase.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
-            ))}
-          </div>
 
-          {purchases.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No purchases found.</p>
-              <p className="text-gray-500 text-sm mt-2">
-                Products you purchase will appear here.
-              </p>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-6"
+              >
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Available Stockists</h2>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {stockists.map((stockist, index) => (
+                    <motion.div
+                      key={stockist.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedStockist?.id === stockist.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedStockist(stockist)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{stockist.name}</h3>
+                          <p className="text-sm text-gray-600">Owner: {stockist.owner}</p>
+                          <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+                            <MapPin className="w-4 h-4" />
+                            <span>{stockist.city}, {stockist.state}, {stockist.country}</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">{stockist.address}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Package className="w-4 h-4 text-green-600" />
+                            <span className="text-green-600 font-medium">
+                              {stockist.availableProducts} products
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {stockist.totalInventory} items in stock
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <a
+                          href={`https://wa.me/${stockist.whatsapp}`}
+                          className="flex items-center gap-1 px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                          WhatsApp
+                        </a>
+                        <a
+                          href={`tel:${stockist.call}`}
+                          className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                        >
+                          <Phone className="w-3 h-3" />
+                          Call
+                        </a>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {stockists.length === 0 && (
+                    <div className="text-center py-8">
+                      <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No stockists found in your area</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             </div>
-          )}
+
+            <div className="space-y-6">
+              {selectedPurchase && selectedStockist && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-6"
+                >
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    Claim {selectedPurchase.product.name}
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    Requesting delivery from {selectedStockist.name}
+                  </p>
+
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        {selectedPurchase.product.image ? (
+                          <img
+                            src={selectedPurchase.product.image}
+                            alt={selectedPurchase.product.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <Package className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{selectedPurchase.product.name}</h4>
+                          <p className="text-sm text-gray-600">
+                            Available: {getRemainingQuantity(selectedPurchase)} / {selectedPurchase.quantity}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Quantity to Claim
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={getRemainingQuantity(selectedPurchase)}
+                        value={quantity}
+                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Maximum: {getRemainingQuantity(selectedPurchase)} items
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Delivery Address
+                      </label>
+                      <textarea
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        rows={3}
+                        placeholder="Enter your complete delivery address"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Additional Notes (Optional)
+                      </label>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={2}
+                        placeholder="Any special delivery instructions..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-blue-800">Stockist Contact:</span>
+                        <div className="flex gap-2">
+                          <a
+                            href={`https://wa.me/${selectedStockist.whatsapp}`}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            WhatsApp
+                          </a>
+                          <span className="text-blue-300">|</span>
+                          <a
+                            href={`tel:${selectedStockist.call}`}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            Call
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleRequestProduct}
+                      disabled={isSubmitting || !address.trim() || quantity < 1}
+                      className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? 'Submitting Request...' : 'Submit Claim Request'}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {(!selectedPurchase || !selectedStockist) && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-6 text-center"
+                >
+                  <Truck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {!selectedPurchase ? 'Select a Product' : 'Select a Stockist'}
+                  </h3>
+                  <p className="text-gray-600">
+                    {!selectedPurchase 
+                      ? 'Choose a purchased product from the list to claim it'
+                      : 'Choose a stockist from the list to handle your delivery'
+                    }
+                  </p>
+                </motion.div>
+              )}
+            </div>
+          </div>
         </main>
       </div>
     </div>
   );
 };
 
-export default ProductsClaimPage;
+export default ClaimProductPage;

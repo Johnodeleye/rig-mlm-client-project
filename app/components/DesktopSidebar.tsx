@@ -1,13 +1,15 @@
-'app/components/DesktopSidebar.tsx'
 'use client';
 
 import { 
   Home, Users, DollarSign, CreditCard, TrendingUp, 
   Package, MessageCircle, Settings, LogOut, 
-  PersonStanding, Bell, User
+  PersonStanding, Bell, User, Store, ShoppingCart,
+  Package2,
+  Clock10
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
+import { useEffect } from 'react';
 
 interface DesktopSidebarProps {
   activeMenu: string;
@@ -16,6 +18,11 @@ interface DesktopSidebarProps {
 
 const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
   const { userProfile, logout } = useAuth();
+
+  // useEffect(() => {
+  //   console.log('DesktopSidebar - userProfile:', userProfile);
+  //   console.log('DesktopSidebar - isStockist:', userProfile?.isStockist);
+  // }, [userProfile]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/home' },
@@ -28,8 +35,42 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
     { id: 'upgrade', label: 'Upgrade Plan', icon: TrendingUp, href: '/upgrade' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },
     { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
-    {id:  'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim'   }
+    { id: 'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim' }
   ];
+
+  console.log('DesktopSidebar - Before condition, isStockist:', userProfile?.isStockist);
+
+  if (userProfile?.isStockist === true) {
+    console.log('DesktopSidebar - Adding See Orders for stockist');
+    menuItems.push({
+      id: 'orders',
+      label: 'See Orders',
+      icon: ShoppingCart,
+      href: '/stockist/requests/orders'
+    });
+    menuItems.push({
+      id: 'inventory',
+      label: 'Inventory',
+      icon: Package2,
+      href: '/stockist/inventory'
+    });
+    menuItems.push({
+      id: 'requests',
+      label: 'Requests',
+      icon: Clock10,
+      href: '/stockist/requests'
+    });
+  } else {
+    console.log('DesktopSidebar - Adding Become a Stockist for non-stockist');
+    menuItems.push({
+      id: 'become-stockist',
+      label: 'Become a Stockist',
+      icon: Store,
+      href: '/become-stockist'
+    });
+  }
+
+  console.log('DesktopSidebar - Final menuItems:', menuItems);
 
   const handleLogout = () => {
     logout();
@@ -67,6 +108,15 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
             </span>
             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
               TP: {userProfile?.tp || 0}
+            </span>
+          </div>
+          <div className="mt-2">
+            <span className={`text-xs px-2 py-1 rounded ${
+              userProfile?.isStockist 
+                ? 'bg-purple-100 text-purple-800' 
+                : 'bg-gray-100 text-gray-800'
+            }`}>
+              {userProfile?.isStockist ? 'Stockist' : 'Member'}
             </span>
           </div>
         </div>

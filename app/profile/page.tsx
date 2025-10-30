@@ -1,9 +1,8 @@
-// app/profile/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Shield, Calendar, Package, Edit, Save, Camera, X } from 'lucide-react';
+import { User, Mail, Phone, Shield, Calendar, Package, Edit, Save, Camera, X, Store, MapPin, PhoneCall, MessageCircle } from 'lucide-react';
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
@@ -21,6 +20,23 @@ interface ProfileData {
   profilePicture?: string;
 }
 
+interface StockistData {
+  firstName: string;
+  storeName: string;
+  email: string;
+  country: string;
+  state: string;
+  city: string;
+  fullAddress: string;
+  whatsappNumber: string;
+  callNumber: string;
+  package: string;
+  investmentAmount: number;
+  finderFeeAmount: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 const ProfilePage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -30,6 +46,7 @@ const ProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profilePicture, setProfilePicture] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [stockistData, setStockistData] = useState<StockistData | null>(null);
 
   const { user, userProfile, token, updateProfilePicture } = useAuth();
 
@@ -51,6 +68,10 @@ const ProfilePage = () => {
     newPassword: '',
     confirmPassword: ''
   });
+
+  const getStockistInitial = (storeName: string) => {
+    return storeName ? storeName.charAt(0).toUpperCase() : 'S';
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -81,15 +102,30 @@ const ProfilePage = () => {
           }
         }
 
-        if (token && !userProfile?.profilePicture) {
-          const pictureResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/profile-picture`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          if (pictureResponse.ok) {
-            const pictureData = await pictureResponse.json();
-            if (pictureData.profilePicture) {
-              setProfilePicture(pictureData.profilePicture);
+        if (token) {
+          if (!userProfile?.profilePicture) {
+            const pictureResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/profile-picture`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (pictureResponse.ok) {
+              const pictureData = await pictureResponse.json();
+              if (pictureData.profilePicture) {
+                setProfilePicture(pictureData.profilePicture);
+              }
+            }
+          }
+
+          if (userProfile?.isStockist) {
+            const stockistResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/stockist/profile`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (stockistResponse.ok) {
+              const stockistData = await stockistResponse.json();
+              if (stockistData.success) {
+                setStockistData(stockistData.stockist);
+              }
             }
           }
         }
@@ -462,6 +498,86 @@ const ProfilePage = () => {
                   />
                 </div>
               </div>
+
+              {userProfile?.isStockist && stockistData && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Store className="w-5 h-5 text-green-600" />
+                    Stockist Information
+                  </h3>
+                  
+                  <div className="flex flex-col items-center mb-4">
+                    <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2">
+                      {getStockistInitial(stockistData.storeName)}
+                    </div>
+                    <p className="text-sm text-gray-600">{stockistData.storeName}</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <Store className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">Store Name</p>
+                        <p className="font-medium text-gray-900">{stockistData.storeName}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <User className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">First Name</p>
+                        <p className="font-medium text-gray-900">{stockistData.firstName}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <MapPin className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">Location</p>
+                        <p className="font-medium text-gray-900">{stockistData.city}, {stockistData.state}, {stockistData.country}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <MessageCircle className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">WhatsApp</p>
+                        <p className="font-medium text-gray-900">{stockistData.whatsappNumber}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <PhoneCall className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">Call Number</p>
+                        <p className="font-medium text-gray-900">{stockistData.callNumber}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <Package className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">Stockist Package</p>
+                        <p className="font-medium text-gray-900">{stockistData.package}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm text-gray-600">Stockist Status</p>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          stockistData.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {stockistData.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         </main>

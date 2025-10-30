@@ -192,7 +192,7 @@ const TeamsPage = () => {
           setIsSidebarOpen={setIsSidebarOpen}
           activeMenu={activeMenu}
           setActiveMenu={setActiveMenu}
-        />
+          />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
           {/* Header */}

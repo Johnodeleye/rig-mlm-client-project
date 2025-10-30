@@ -16,6 +16,7 @@ interface User {
   isActive: boolean;
   pv: number;
   tp: number;
+  isStockist?: boolean;
   walletBalance: number;
   totalEarnings: number;
   totalReferrals: number;
@@ -56,6 +57,10 @@ interface AuthContextType {
     totalReferrals: number;
     isActive: boolean;
     profilePicture?: string;
+    country?: string;
+    phoneNumber?: string;
+    referralId?: string;
+    isStockist?: boolean;
   } | null;
   fetchUserProfile: () => Promise<void>;
   updateProfilePicture: (profilePicture: string) => Promise<void>;
@@ -81,6 +86,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     totalReferrals: number;
     isActive: boolean;
     profilePicture?: string;
+    referralId?: string;
+    isStockist?:boolean;
   } | null>(null);
   
   const router = useRouter();
@@ -101,21 +108,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (response.ok) {
         const data = await response.json();
+        console.log('AuthContext - API Response:', data);
         if (data.success && data.account) {
           const userData = data.account;
-          setUserProfile({
+          const profileData = {
             name: userData.fullName || userData.username,
             email: userData.email || 'user@example.com',
             username: userData.username,
             plan: userData.membershipPackage || 'No Plan',
             pv: userData.pv || 0,
             tp: userData.tp || 0,
+            referralId: userData.referralId || '',
             walletBalance: userData.walletBalance || 0,
             totalEarnings: userData.totalEarnings || 0,
             totalReferrals: userData.totalReferrals || 0,
             isActive: userData.isActive || false,
-            profilePicture: userData.profilePicture || null
-          });
+            profilePicture: userData.profilePicture || null,
+            isStockist: userData.isStockist || false
+          };
+          console.log('AuthContext - Setting userProfile:', profileData);
+          setUserProfile(profileData);
         }
       }
     } catch (error) {
@@ -168,6 +180,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (response.ok) {
         const data = await response.json();
+        console.log('AuthContext - checkAuth response:', data);
         if (data.success) {
           setUser(data.account);
           setAccountType(data.accountType);
@@ -175,7 +188,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           if (data.account) {
             const userData = data.account;
-            setUserProfile({
+            const profileData = {
               name: userData.fullName || userData.username,
               email: userData.email || 'user@example.com',
               username: userData.username,
@@ -186,8 +199,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               totalEarnings: userData.totalEarnings || 0,
               totalReferrals: userData.totalReferrals || 0,
               isActive: userData.isActive || false,
-              profilePicture: userData.profilePicture || null
-            });
+              profilePicture: userData.profilePicture || null,
+              isStockist: userData.isStockist || false
+            };
+            console.log('AuthContext - checkAuth setting profile:', profileData);
+            setUserProfile(profileData);
           }
         } else {
           clearAuthData();
@@ -204,6 +220,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
+    console.log('AuthContext - Initial checkAuth');
     checkAuth();
   }, []);
 
@@ -242,6 +259,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       const data = await response.json();
+      console.log('AuthContext - Login response:', data);
 
       if (data.success) {
         const { account, accountType, token: authToken } = data;
@@ -257,7 +275,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setToken(authToken);
         
         if (account && accountType === 'user') {
-          setUserProfile({
+          const profileData = {
             name: account.fullName || account.username,
             email: account.email || 'user@example.com',
             username: account.username,
@@ -268,8 +286,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             totalEarnings: account.totalEarnings || 0,
             totalReferrals: account.totalReferrals || 0,
             isActive: account.isActive || false,
-            profilePicture: account.profilePicture || null
-          });
+            profilePicture: account.profilePicture || null,
+            isStockist: account.isStockist || false
+          };
+          console.log('AuthContext - Login setting profile:', profileData);
+          setUserProfile(profileData);
         }
         
         toast.success(`Login successful! Welcome ${accountType === 'admin' ? 'Admin' : ''}${account.username}`);
