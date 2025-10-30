@@ -38,10 +38,10 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
     { id: 'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim' }
   ];
 
-  console.log('DesktopSidebar - Before condition, isStockist:', userProfile?.isStockist);
+  
 
   if (userProfile?.isStockist === true) {
-    console.log('DesktopSidebar - Adding See Orders for stockist');
+   
     menuItems.push({
       id: 'orders',
       label: 'See Orders',
@@ -61,7 +61,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
       href: '/stockist/requests'
     });
   } else {
-    console.log('DesktopSidebar - Adding Become a Stockist for non-stockist');
+   
     menuItems.push({
       id: 'become-stockist',
       label: 'Become a Stockist',
@@ -70,7 +70,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
     });
   }
 
-  console.log('DesktopSidebar - Final menuItems:', menuItems);
+
 
   const handleLogout = () => {
     logout();

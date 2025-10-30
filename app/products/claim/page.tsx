@@ -29,6 +29,8 @@ interface Purchase {
   totalAmount: number;
   status: string;
   createdAt: string;
+  claimedQuantity: number;
+  remainingQuantity: number;
   product: {
     id: string;
     name: string;
@@ -46,7 +48,6 @@ const ClaimProductPage = () => {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [selectedStockist, setSelectedStockist] = useState<Stockist | null>(null);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -55,7 +56,7 @@ const ClaimProductPage = () => {
 
   useEffect(() => {
     fetchStockists();
-    fetchPurchases();
+    fetchPurchasesWithClaims();
   }, []);
 
   const fetchStockists = async () => {
@@ -74,7 +75,7 @@ const ClaimProductPage = () => {
     }
   };
 
-  const fetchPurchases = async () => {
+  const fetchPurchasesWithClaims = async () => {
     try {
       const token = getStoredToken();
       if (!token) {
@@ -92,7 +93,13 @@ const ClaimProductPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setPurchases(data.purchases || []);
+          console.log('Purchases data:', data.purchases);
+          const purchasesWithClaims = data.purchases.map((purchase: any) => ({
+            ...purchase,
+            claimedQuantity: 0,
+            remainingQuantity: purchase.quantity
+          }));
+          setPurchases(purchasesWithClaims);
         }
       } else {
         console.error('Failed to fetch purchases:', response.status);
@@ -110,10 +117,20 @@ const ClaimProductPage = () => {
       return;
     }
 
-    if (quantity > selectedPurchase.quantity) {
-      alert(`You can only claim up to ${selectedPurchase.quantity} items of this product`);
-      return;
-    }
+    console.log('Selected Purchase:', selectedPurchase);
+    console.log('Selected Purchase ID:', selectedPurchase.id);
+    console.log('Selected Purchase Product ID:', selectedPurchase.productId);
+    console.log('Selected Purchase Product Object:', selectedPurchase.product);
+
+    const requestData = {
+      stockistId: selectedStockist.id,
+      productId: selectedPurchase.productId,
+      quantity: selectedPurchase.remainingQuantity,
+      address: address,
+      notes: notes
+    };
+
+    console.log('Submitting request with data:', requestData);
 
     setIsSubmitting(true);
     try {
@@ -124,25 +141,19 @@ const ClaimProductPage = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          stockistId: selectedStockist.id,
-          productId: selectedPurchase.product.id,
-          quantity: quantity,
-          address: address,
-          notes: notes
-        })
+        body: JSON.stringify(requestData)
       });
 
       const data = await response.json();
+      console.log('Response from server:', data);
 
       if (data.success) {
         alert('Product request submitted successfully! The stockist will contact you soon.');
         setSelectedStockist(null);
         setSelectedPurchase(null);
-        setQuantity(1);
         setAddress('');
         setNotes('');
-        fetchPurchases();
+        fetchPurchasesWithClaims();
       } else {
         alert(data.error || 'Failed to submit request');
       }
@@ -152,11 +163,6 @@ const ClaimProductPage = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const getRemainingQuantity = (purchase: Purchase) => {
-    const claimedQuantity = 0;
-    return purchase.quantity - claimedQuantity;
   };
 
   if (isLoading) {
@@ -231,7 +237,10 @@ const ClaimProductPage = () => {
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      onClick={() => setSelectedPurchase(purchase)}
+                      onClick={() => {
+                        console.log('Selected purchase:', purchase);
+                        setSelectedPurchase(purchase);
+                      }}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -239,15 +248,22 @@ const ClaimProductPage = () => {
                           <p className="text-sm text-gray-600 mt-1">{purchase.product.description}</p>
                           <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                             <span>Purchased: {purchase.quantity}</span>
-                            <span>Available: {getRemainingQuantity(purchase)}</span>
+                            <span>Claimed: {purchase.claimedQuantity}</span>
+                            <span>Available: {purchase.remainingQuantity}</span>
                             <span>Price: ₦{purchase.product.price.toLocaleString()}</span>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-400">
+                            Purchase ID: {purchase.id}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            Product ID: {purchase.productId}
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="flex items-center gap-2 text-sm">
                             <Package className="w-4 h-4 text-blue-600" />
                             <span className="text-blue-600 font-medium">
-                              {getRemainingQuantity(purchase)} available
+                              {purchase.remainingQuantity} available
                             </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
@@ -373,7 +389,10 @@ const ClaimProductPage = () => {
                         <div>
                           <h4 className="font-semibold text-gray-900">{selectedPurchase.product.name}</h4>
                           <p className="text-sm text-gray-600">
-                            Available: {getRemainingQuantity(selectedPurchase)} / {selectedPurchase.quantity}
+                            Available: {selectedPurchase.remainingQuantity} / {selectedPurchase.quantity}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Product ID: {selectedPurchase.productId}
                           </p>
                         </div>
                       </div>
@@ -385,14 +404,12 @@ const ClaimProductPage = () => {
                       </label>
                       <input
                         type="number"
-                        min="1"
-                        max={getRemainingQuantity(selectedPurchase)}
-                        value={quantity}
-                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={selectedPurchase.remainingQuantity}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Maximum: {getRemainingQuantity(selectedPurchase)} items
+                        This is the total available quantity from your purchase
                       </p>
                     </div>
 
@@ -446,7 +463,7 @@ const ClaimProductPage = () => {
 
                     <button
                       onClick={handleRequestProduct}
-                      disabled={isSubmitting || !address.trim() || quantity < 1}
+                      disabled={isSubmitting || !address.trim()}
                       className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? 'Submitting Request...' : 'Submit Claim Request'}
