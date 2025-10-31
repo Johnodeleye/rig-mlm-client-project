@@ -1,4 +1,3 @@
-// app/components/Dashboard.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -18,6 +17,7 @@ import MobileSidebar from '../components/MobileBar';
 import PointsSystem from '../components/PointsSystem';
 import { useAuth } from '@/context/AuthContext';
 import AuthRedirect from './AuthRedirect';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface PointsData {
   monthlyPV: { personal: number; team: number };
@@ -62,25 +62,12 @@ const Dashboard = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Use ref to track if data has been fetched
   const dataFetchedRef = useRef(false);
 
-  // Use AuthContext to get user data
   const { userProfile, user, token } = useAuth();
+  const { currency, convertAmount } = useCurrency();
 
-  // Format currency function
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
-
-  // Fetch dashboard data only once when component mounts
   useEffect(() => {
-    // Prevent multiple fetches
     if (dataFetchedRef.current) return;
     
     const fetchData = async () => {
@@ -95,7 +82,6 @@ const Dashboard = () => {
           return;
         }
         
-        // Fetch data in parallel
         const [pointsRes, referralsRes, transactionsRes, notificationsRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/points/my-points`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -139,16 +125,16 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
   const commissionData = [
-    { level: 1, totalMembers: 1, commission: '48%', commissionableAmount: '₦2,500' },
-    { level: 3, totalMembers: 3, commission: '48%', commissionableAmount: '₦5,000' },
-    { level: 5, totalMembers: 5, commission: '48%', commissionableAmount: '₦10,000' },
-    { level: 7, totalMembers: 7, commission: '48%', commissionableAmount: '₦15,000' },
-    { level: 10, totalMembers: 10, commission: '48%', commissionableAmount: '₦30,000' },
-    { level: 12, totalMembers: 12, commission: '48%', commissionableAmount: '₦60,000' },
-    { level: 15, totalMembers: 15, commission: '48%', commissionableAmount: '₦150,000' }
+    { level: 1, totalMembers: 1, commission: '48%', commissionableAmount: convertAmount(2500) },
+    { level: 3, totalMembers: 3, commission: '48%', commissionableAmount: convertAmount(5000) },
+    { level: 5, totalMembers: 5, commission: '48%', commissionableAmount: convertAmount(10000) },
+    { level: 7, totalMembers: 7, commission: '48%', commissionableAmount: convertAmount(15000) },
+    { level: 10, totalMembers: 10, commission: '48%', commissionableAmount: convertAmount(30000) },
+    { level: 12, totalMembers: 12, commission: '48%', commissionableAmount: convertAmount(60000) },
+    { level: 15, totalMembers: 15, commission: '48%', commissionableAmount: convertAmount(150000) }
   ];
 
   const copyReferralLink = () => {
@@ -232,7 +218,6 @@ const Dashboard = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Welcome Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -270,10 +255,8 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* Points System */}
           {pointsData && <PointsSystem pointsData={pointsData} />}
 
-          {/* Earnings Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-4 lg:mb-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -285,7 +268,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {formatCurrency(userProfile?.totalEarnings || 0)}
+                    {convertAmount(userProfile?.totalEarnings || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -304,7 +287,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Available Balance</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {formatCurrency(userProfile?.walletBalance || 0)}
+                    {convertAmount(userProfile?.walletBalance || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -315,7 +298,6 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            {/* Referral Section */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -323,7 +305,6 @@ const Dashboard = () => {
             >
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Referral Program</h2>
               
-              {/* Referral Link */}
               <div className="mb-4 lg:mb-6">
                 <p className="text-sm text-gray-600 mb-2">Your Referral Link</p>
                 <div className="flex flex-col gap-2">
@@ -351,7 +332,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Referral Stats */}
               <div className="grid grid-cols-1 gap-3">
                 <div className="text-center p-3 lg:p-4 bg-blue-50 rounded-lg">
                   <Users className="w-6 h-6 lg:w-8 lg:h-8 text-[#0660D3] mx-auto mb-2" />
@@ -363,7 +343,6 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            {/* Commission Breakdown */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -395,7 +374,6 @@ const Dashboard = () => {
             </motion.div>
           </div>
 
-{/* Recent Transactions */}
 <motion.div
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
@@ -459,7 +437,6 @@ const Dashboard = () => {
   )}
 </motion.div>
 
-{/* Notifications */}
 <motion.div
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}

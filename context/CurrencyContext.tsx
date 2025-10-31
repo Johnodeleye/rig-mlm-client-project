@@ -1,4 +1,3 @@
-// contexts/CurrencyContext.tsx
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -13,6 +12,7 @@ interface CurrencyContextType {
   convertAmount: (amount: number) => string;
   detectedCountry: string;
   isDetecting: boolean;
+  exchangeRate: number;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -22,42 +22,66 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [userType, setUserType] = useState<UserType>('user');
   const [detectedCountry, setDetectedCountry] = useState('');
   const [isDetecting, setIsDetecting] = useState(true);
+  const [exchangeRate, setExchangeRate] = useState(1500);
 
-  //
   useEffect(() => {
-    const detectLocation = async () => {
+    const detectLocationAndCurrency = async () => {
       try {
         setIsDetecting(true);
-        // Simulate API call with timeout
-        await new Promise(resolve => setTimeout(resolve, 1500));
         
-        // For demo, we'll randomly assign Nigeria or International
-        const isNigeria = Math.random() > 0.5;
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        const userIP = ipData.ip;
         
-        if (isNigeria) {
+        let country = 'NG';
+        let countryName = 'Nigeria';
+
+        try {
+          const countryResponse = await fetch(`https://ipapi.co/${userIP}/country/`);
+          country = await countryResponse.text();
+          
+          const countryNameResponse = await fetch(`https://ipapi.co/${userIP}/country_name/`);
+          countryName = await countryNameResponse.text();
+        } catch (ipError) {
+          console.log('ipapi.co failed, using defaults');
+        }
+
+        if (country === 'NG') {
           setCurrency('NGN');
-          setDetectedCountry('Nigeria 🇳🇬');
+          setDetectedCountry('Nigeria');
         } else {
           setCurrency('USD');
-          setDetectedCountry('United States 🇺🇸');
+          setDetectedCountry(countryName);
         }
+
+        try {
+          const rateResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/rates/active`);
+          const rateData = await rateResponse.json();
+          
+          if (rateData.success && rateData.rate) {
+            setExchangeRate(rateData.rate.rate);
+          }
+        } catch (rateError) {
+          console.log('Failed to fetch exchange rate, using default');
+        }
+
       } catch (error) {
         console.log('Error detecting location, defaulting to NGN');
         setCurrency('NGN');
-        setDetectedCountry('Nigeria 🇳🇬');
+        setDetectedCountry('Nigeria');
       } finally {
         setIsDetecting(false);
       }
     };
 
-    detectLocation();
+    detectLocationAndCurrency();
   }, []);
 
   const convertAmount = (amount: number): string => {
     if (currency === 'NGN') {
       return `₦${amount.toLocaleString()}`;
     } else {
-      const usdAmount = amount / 700; // Example conversion rate
+      const usdAmount = amount / exchangeRate;
       return `$${usdAmount.toFixed(2)}`;
     }
   };
@@ -69,7 +93,8 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setUserType, 
       convertAmount, 
       detectedCountry,
-      isDetecting 
+      isDetecting,
+      exchangeRate
     }}>
       {children}
     </CurrencyContext.Provider>

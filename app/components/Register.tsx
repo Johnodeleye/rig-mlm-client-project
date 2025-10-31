@@ -1,4 +1,3 @@
-// components/Register.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,6 +7,7 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import AuthRedirect from './AuthRedirect';
 import { useSearchParams } from 'next/navigation';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface MembershipPackage {
   id: string;
@@ -17,12 +17,6 @@ interface MembershipPackage {
   usdPrice: string;
   pv: number;
   productContents: string;
-}
-
-interface LocationData {
-  country: string;
-  countryCode: string;
-  currency: string;
 }
 
 interface ReferralUser {
@@ -37,13 +31,12 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [detectedLocation, setDetectedLocation] = useState<LocationData | null>(null);
-  const [isDetectingLocation, setIsDetectingLocation] = useState(true);
   const [isValidatingReferral, setIsValidatingReferral] = useState(false);
   const [referralUser, setReferralUser] = useState<ReferralUser | null>(null);
 
   const searchParams = useSearchParams();
   const referralParam = searchParams.get('ref');
+  const { currency, detectedCountry, isDetecting, convertAmount } = useCurrency();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -58,19 +51,17 @@ const Register = () => {
 
   const [membershipPackages, setMembershipPackages] = useState<MembershipPackage[]>([]);
 
-  // Fetch membership packages
   useEffect(() => {
     const fetchPackages = async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/packages`);
         const data = await response.json();
         if (data.success) {
-          // Transform the data to match frontend format
           const transformedPackages = data.packages.map((pkg: any) => ({
             id: pkg.packageId,
             name: pkg.name,
             level: pkg.level,
-            price: `₦${pkg.priceNGN.toLocaleString()}`,
+            price: currency === 'NGN' ? `₦${pkg.priceNGN.toLocaleString()}` : `$${pkg.priceUSD.toFixed(2)}`,
             usdPrice: `$${pkg.priceUSD.toFixed(2)}`,
             pv: pkg.pv,
             productContents: pkg.productContents
@@ -84,33 +75,8 @@ const Register = () => {
     };
 
     fetchPackages();
-  }, []);
+  }, [currency]);
 
-  // Detect user location
-  useEffect(() => {
-    const detectLocation = async () => {
-      try {
-        setIsDetectingLocation(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/detect-location`);
-        const locationData: LocationData = await response.json();
-        setDetectedLocation(locationData);
-      } catch (error) {
-        console.error('Error detecting location:', error);
-        // Fallback to Nigeria
-        setDetectedLocation({
-          country: 'Nigeria',
-          countryCode: 'NG',
-          currency: 'NGN'
-        });
-      } finally {
-        setIsDetectingLocation(false);
-      }
-    };
-
-    detectLocation();
-  }, []);
-
-  // Validate referral ID when it changes
   useEffect(() => {
     const validateReferralId = async (referralId: string) => {
       if (!referralId || referralId === 'REF123456') {
@@ -155,7 +121,6 @@ const Register = () => {
     }
   }, [formData.referralId]);
 
-  // Generate username when fullName changes
   const generateUsername = useCallback(async (fullName: string) => {
     if (fullName.trim().length < 2) return;
 
@@ -178,7 +143,6 @@ const Register = () => {
     }
   }, []);
 
-  // Debounced username generation
   useEffect(() => {
     const timer = setTimeout(() => {
       if (formData.fullName.trim()) {
@@ -192,7 +156,6 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -208,7 +171,6 @@ const Register = () => {
       return;
     }
 
-    // Validate referral ID if provided and not the default
     if (formData.referralId && formData.referralId !== 'REF123456' && referralUser && !referralUser.isValid) {
       toast.error('Please enter a valid referral ID');
       return;
@@ -224,7 +186,7 @@ const Register = () => {
         },
         body: JSON.stringify({
           ...formData,
-          country: detectedLocation?.country || 'Nigeria'
+          country: detectedCountry || 'Nigeria'
         }),
       });
 
@@ -294,7 +256,6 @@ const Register = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-lg"
         >
-          {/* Logo */}
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
@@ -308,7 +269,6 @@ const Register = () => {
             </div>
             <p className="text-gray-600">Create your account and start your journey</p>
             
-            {/* Show message if referral link was used */}
             {referralParam && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -322,7 +282,6 @@ const Register = () => {
             )}
           </motion.div>
 
-          {/* Register Form */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -331,7 +290,6 @@ const Register = () => {
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Detected Location */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Detected Location
@@ -341,20 +299,19 @@ const Register = () => {
                     <input
                       type="text"
                       value={
-                        isDetectingLocation 
+                        isDetecting 
                           ? 'Detecting location...' 
-                          : `${detectedLocation?.country} ${detectedLocation?.countryCode ? getFlagEmoji(detectedLocation.countryCode) : ''}`
+                          : `${detectedCountry} ${currency === 'NGN' ? '🇳🇬' : '🇺🇸'}`
                       }
                       disabled
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                     />
-                    {isDetectingLocation && (
+                    {isDetecting && (
                       <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
                     )}
                   </div>
                 </div>
 
-                {/* Referral ID */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Referral ID
@@ -368,7 +325,6 @@ const Register = () => {
                     placeholder="Enter referral ID"
                   />
                   
-                  {/* Referral Validation Display */}
                   {isValidatingReferral && (
                     <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -401,7 +357,6 @@ const Register = () => {
                   )}
                 </div>
 
-                {/* Full Name */}
                 <div className="md:col-span-2">
                   <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
                     Full Name
@@ -421,7 +376,6 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* Username */}
                 <div className="md:col-span-2">
                   <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                     Username
@@ -448,7 +402,6 @@ const Register = () => {
                   </p>
                 </div>
 
-                {/* Email */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Email
@@ -468,7 +421,6 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* Phone Number */}
                 <div>
                   <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number
@@ -488,7 +440,6 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                     Password
@@ -516,7 +467,6 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* Confirm Password */}
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                     Confirm Password
@@ -544,7 +494,6 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* Membership Package */}
                 <div className="md:col-span-2">
                   <label htmlFor="membershipPackage" className="block text-sm font-medium text-gray-700 mb-2">
                     Membership Package
@@ -567,7 +516,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -588,7 +536,6 @@ const Register = () => {
                 )}
               </motion.button>
 
-              {/* Login Link */}
               <div className="text-center">
                 <p className="text-gray-600">
                   Already have an account?{' '}
@@ -597,18 +544,6 @@ const Register = () => {
                   </Link>
                 </p>
               </div>
-
-              {/* <div className="mt-1 text-center">
-                <p className="text-sm text-gray-600">
-                  Not a user/member?{' '}
-                  <Link 
-                    href="/login" 
-                    className="text-[#0660D3] hover:text-blue-700 font-semibold transition-colors"
-                  >
-                    Login as Admin
-                  </Link>
-                </p>
-              </div> */}
             </form>
           </motion.div>
         </motion.div>
@@ -616,14 +551,5 @@ const Register = () => {
     </>
   );
 };
-
-// Helper function to get flag emoji from country code
-function getFlagEmoji(countryCode: string) {
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-}
 
 export default Register;
