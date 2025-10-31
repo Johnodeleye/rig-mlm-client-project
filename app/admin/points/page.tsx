@@ -27,7 +27,7 @@ const AdminPointsPage = () => {
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('adminAuth');
     if (!isAuthenticated) {
-      router.push('/admin');
+      router.push('/login');
     }
   }, [router]);
 
