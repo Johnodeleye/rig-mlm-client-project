@@ -14,7 +14,8 @@ import {
   Gift,
   Bell,
   Store,
-  FileText
+  FileText,
+  DollarSign
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -39,6 +40,7 @@ const AdminDesktopSidebar = ({ activeMenu, setActiveMenu }: AdminDesktopSidebarP
     { id: 'notifications', label: 'Notifications', icon: Bell, path: '/admin/notifications' },
     { id: 'stockists', label: 'Stockists', icon: Store, path: '/admin/stockists' },
     { id: 'stockist-reports', label: 'Stockist Reports', icon: FileText, path: '/admin/stockists/reports' },
+    { id: 'rates', label: 'Rates', icon: DollarSign, path: '/admin/rates' }
   ];
 
   const handleMenuClick = (menuId: string, path: string) => {

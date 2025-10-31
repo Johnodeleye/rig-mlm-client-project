@@ -38,7 +38,7 @@ export default function PopupPermissionPrompt() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-medium text-gray-900">Enable Pop-ups for HubPost</h3>
+              <h3 className="text-lg font-medium text-gray-900">Enable Pop-ups for MLM</h3>
               <p className="mt-1 text-sm text-gray-500">
                 Allow pop-ups for the best experience and to ensure all features work correctly, including notifications and external links.
               </p>

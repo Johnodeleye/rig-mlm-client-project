@@ -43,6 +43,7 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/admin/notifications' },
         { id: 'stockists', label: 'Stockists', icon: Store, href: '/admin/stockists' },
     { id: 'stockist-reports', label: 'Stockist Reports', icon: FileText, href: '/admin/stockists/reports' },
+    { id: 'rates', label: 'Rates', icon: DollarSign, href: '/admin/rates' }
   ];
 
   const handleMenuClick = (menuId: string) => {
