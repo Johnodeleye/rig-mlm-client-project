@@ -16,7 +16,9 @@ import {
   Gift,
   BarChart3,
   LogOut,
-  Bell
+  Bell,
+  Store,
+  FileText
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext";
 
@@ -36,9 +38,11 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
     { id: 'products', label: 'Products', icon: Package, href: '/admin/products' },
     { id: 'packages', label: 'Packages', icon: Gift, href: '/admin/packages' },
     { id: 'wallet', label: 'Wallet', icon: Wallet, href: '/admin/wallet' },
-    { id: 'points', label: 'Points', icon: Wallet, path: '/admin/points' },
+    { id: 'points', label: 'Points', icon: Wallet, href: '/admin/points' },
     { id: 'withdrawals', label: 'Withdrawals', icon: BarChart3, href: '/admin/withdrawals' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/admin/notifications' },
+        { id: 'stockists', label: 'Stockists', icon: Store, href: '/admin/stockists' },
+    { id: 'stockist-reports', label: 'Stockist Reports', icon: FileText, href: '/admin/stockists/reports' },
   ];
 
   const handleMenuClick = (menuId: string) => {

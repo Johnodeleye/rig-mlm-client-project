@@ -12,7 +12,9 @@ import {
   Settings, 
   LogOut,
   Gift,
-  Bell
+  Bell,
+  Store,
+  FileText
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -35,6 +37,8 @@ const AdminDesktopSidebar = ({ activeMenu, setActiveMenu }: AdminDesktopSidebarP
     { id: 'points', label: 'Points', icon: Wallet, path: '/admin/points' },
     { id: 'withdrawals', label: 'Withdrawals', icon: BarChart3, path: '/admin/withdrawals' },
     { id: 'notifications', label: 'Notifications', icon: Bell, path: '/admin/notifications' },
+    { id: 'stockists', label: 'Stockists', icon: Store, path: '/admin/stockists' },
+    { id: 'stockist-reports', label: 'Stockist Reports', icon: FileText, path: '/admin/stockists/reports' },
   ];
 
   const handleMenuClick = (menuId: string, path: string) => {

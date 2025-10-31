@@ -46,7 +46,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
       id: 'orders',
       label: 'See Orders',
       icon: ShoppingCart,
-      href: '/stockist/requests/orders'
+      href: '/stockist/orders'
     });
     menuItems.push({
       id: 'inventory',

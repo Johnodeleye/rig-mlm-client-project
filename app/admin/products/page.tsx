@@ -1,4 +1,3 @@
-// app/admin/products/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,6 +14,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  commissionPercentage: number;
   image?: string;
   stock: number;
   isActive: boolean;
@@ -41,6 +41,7 @@ const AdminProductsPage = () => {
     name: '',
     description: '',
     price: '',
+    commissionPercentage: '',
     image: '',
     stock: '',
     isActive: true
@@ -57,7 +58,7 @@ const AdminProductsPage = () => {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/products/admin/products`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -131,8 +132,8 @@ const AdminProductsPage = () => {
     try {
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       const url = editingProduct 
-        ? `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products/${editingProduct.id}`
-        : `${process.env.NEXT_PUBLIC_BACKEND}/api/admin/products`;
+        ? `${process.env.NEXT_PUBLIC_BACKEND}/api/products/admin/products/${editingProduct.id}`
+        : `${process.env.NEXT_PUBLIC_BACKEND}/api/products/admin/products`;
       
       const method = editingProduct ? 'PUT' : 'POST';
       
@@ -140,6 +141,7 @@ const AdminProductsPage = () => {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
+        commissionPercentage: parseFloat(formData.commissionPercentage),
         image: productImage || null,
         stock: parseInt(formData.stock) || 0,
         isActive: formData.isActive
@@ -161,6 +163,9 @@ const AdminProductsPage = () => {
           resetForm();
           setShowAddProduct(false);
         }
+      } else {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -172,6 +177,7 @@ const AdminProductsPage = () => {
       name: '',
       description: '',
       price: '',
+      commissionPercentage: '',
       image: '',
       stock: '',
       isActive: true
@@ -187,6 +193,7 @@ const AdminProductsPage = () => {
       name: product.name,
       description: product.description,
       price: product.price.toString(),
+      commissionPercentage: product.commissionPercentage.toString(),
       image: product.image || '',
       stock: product.stock.toString(),
       isActive: product.isActive
@@ -403,6 +410,10 @@ const AdminProductsPage = () => {
                       <span className="font-semibold text-gray-900">₦{product.price.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Commission:</span>
+                      <span className="font-semibold text-green-600">{product.commissionPercentage}%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Stock:</span>
                       <span className="font-semibold text-gray-900">{product.stock}</span>
                     </div>
@@ -523,22 +534,25 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description *
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="Enter product description"
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200 resize-none"
-                    />
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Commission Percentage (%) *
+                      </label>
+                      <input
+                        type="number"
+                        name="commissionPercentage"
+                        value={formData.commissionPercentage}
+                        onChange={handleInputChange}
+                        required
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="e.g., 2"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Stock Quantity
@@ -552,6 +566,21 @@ const AdminProductsPage = () => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description *
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Enter product description"
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200 resize-none"
+                    />
                   </div>
 
                   <div className="flex items-center gap-2">
