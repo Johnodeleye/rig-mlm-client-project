@@ -40,6 +40,13 @@ interface Purchase {
   };
 }
 
+interface ProductRequest {
+  id: string;
+  productId: string;
+  quantity: number;
+  status: string;
+}
+
 const ClaimProductPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -84,52 +91,66 @@ const ClaimProductPage = () => {
         return;
       }
 
+      // Fetch purchases
       const purchasesResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/products/my-purchases`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      if (purchasesResponse.ok) {
-        const purchasesData = await purchasesResponse.json();
-        
-        const requestsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/stockist-management/stockist/requests`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        let claimedQuantities: {[key: string]: number} = {};
-        
-        if (requestsResponse.ok) {
-          const requestsData = await requestsResponse.json();
-          if (requestsData.success) {
-            requestsData.requests.forEach((request: any) => {
-              if (!claimedQuantities[request.productId]) {
-                claimedQuantities[request.productId] = 0;
-              }
-              claimedQuantities[request.productId] += request.quantity;
-            });
-          }
-        }
-
-        if (purchasesData.success) {
-          const purchasesWithClaims = purchasesData.purchases.map((purchase: any) => {
-            const claimedQuantity = claimedQuantities[purchase.productId] || 0;
-            const remainingQuantity = Math.max(0, purchase.quantity - claimedQuantity);
-            
-            return {
-              ...purchase,
-              claimedQuantity: claimedQuantity,
-              remainingQuantity: remainingQuantity
-            };
-          }).filter((purchase: Purchase) => purchase.remainingQuantity > 0);
-          
-          setPurchases(purchasesWithClaims);
-        }
-      } else {
+      if (!purchasesResponse.ok) {
         console.error('Failed to fetch purchases:', purchasesResponse.status);
+        setIsLoading(false);
+        return;
       }
+
+      const purchasesData = await purchasesResponse.json();
+      
+      if (!purchasesData.success) {
+        console.error('Failed to fetch purchases:', purchasesData.error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch all product requests to calculate claimed quantities
+      const requestsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/stockist-management/member/claimed-products`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      let claimedQuantities: {[key: string]: number} = {};
+      
+      if (requestsResponse.ok) {
+        const requestsData = await requestsResponse.json();
+        if (requestsData.success && requestsData.claimedProducts) {
+          // Calculate total claimed quantity per product
+          requestsData.claimedProducts.forEach((request: ProductRequest) => {
+            if (!claimedQuantities[request.productId]) {
+              claimedQuantities[request.productId] = 0;
+            }
+            // Only count pending and assigned requests (not delivered/completed)
+            if (request.status === 'pending' || request.status === 'assigned') {
+              claimedQuantities[request.productId] += request.quantity;
+            }
+          });
+        }
+      }
+
+      // Process purchases with claims
+      const purchasesWithClaims = purchasesData.purchases.map((purchase: any) => {
+        const claimedQuantity = claimedQuantities[purchase.productId] || 0;
+        const remainingQuantity = Math.max(0, purchase.quantity - claimedQuantity);
+        
+        return {
+          ...purchase,
+          claimedQuantity: claimedQuantity,
+          remainingQuantity: remainingQuantity
+        };
+      }).filter((purchase: Purchase) => purchase.remainingQuantity > 0); // Only show purchases with available quantity
+      
+      setPurchases(purchasesWithClaims);
+      
     } catch (error) {
       console.error('Error fetching purchases:', error);
     } finally {
@@ -171,7 +192,7 @@ const ClaimProductPage = () => {
         setSelectedPurchase(null);
         setAddress('');
         setNotes('');
-        fetchPurchasesWithClaims();
+        fetchPurchasesWithClaims(); // Refresh the list
       } else {
         alert(data.error || 'Failed to submit request');
       }
@@ -286,9 +307,6 @@ const ClaimProductPage = () => {
                             </div>
                             <div className="mt-2 text-xs text-gray-400">
                               Purchase ID: {purchase.id.substring(0, 8)}...
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              Product ID: {purchase.productId.substring(0, 8)}...
                             </div>
                           </div>
                         </div>
@@ -425,9 +443,6 @@ const ClaimProductPage = () => {
                           <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{selectedPurchase.product.name}</h4>
                           <p className="text-xs sm:text-sm text-gray-600">
                             Available: {selectedPurchase.remainingQuantity} / {selectedPurchase.quantity}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Product ID: {selectedPurchase.productId.substring(0, 8)}...
                           </p>
                         </div>
                       </div>
