@@ -40,6 +40,7 @@ interface Notification {
   message: string;
   time: string;
   read: boolean;
+  type: string;
 }
 
 interface ReferralData {
@@ -58,14 +59,14 @@ const Dashboard = () => {
   
   const [pointsData, setPointsData] = useState<PointsData | null>(null);
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [rawTransactions, setRawTransactions] = useState<Transaction[]>([]);
+  const [rawNotifications, setRawNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const dataFetchedRef = useRef(false);
 
   const { userProfile, user, token } = useAuth();
-  const { currency, convertAmount } = useCurrency();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   useEffect(() => {
     if (dataFetchedRef.current) return;
@@ -109,12 +110,12 @@ const Dashboard = () => {
 
         if (transactionsRes.ok) {
           const transactionsData = await transactionsRes.json();
-          setTransactions(transactionsData.transactions || []);
+          setRawTransactions(transactionsData.transactions || []);
         }
 
         if (notificationsRes.ok) {
           const notificationsData = await notificationsRes.json();
-          setNotifications(notificationsData.notifications || []);
+          setRawNotifications(notificationsData.notifications || []);
         }
 
       } catch (error) {
@@ -126,6 +127,43 @@ const Dashboard = () => {
 
     fetchData();
   }, []);
+
+  const processNotifications = (notifications: Notification[]) => {
+    return notifications.map(notification => {
+      let processedMessage = notification.message;
+      
+      if (currency === 'USD') {
+        const nairaMatch = processedMessage.match(/₦([\d,]+(\.\d{2})?)/);
+        if (nairaMatch) {
+          const nairaAmount = parseFloat(nairaMatch[1].replace(/,/g, ''));
+          const usdAmount = nairaAmount / exchangeRate;
+          processedMessage = processedMessage.replace(
+            `₦${nairaMatch[1]}`,
+            `$${usdAmount.toFixed(2)}`
+          );
+        }
+      }
+      
+      return {
+        ...notification,
+        message: processedMessage
+      };
+    });
+  };
+
+  const processTransactionAmount = (amount: string, type: string): string => {
+    if (currency === 'NGN') {
+      return type === 'credit' ? amount : amount;
+    } else {
+      const nairaMatch = amount.match(/₦([\d,]+(\.\d{2})?)/);
+      if (nairaMatch) {
+        const nairaAmount = parseFloat(nairaMatch[1].replace(/,/g, ''));
+        const usdAmount = nairaAmount / exchangeRate;
+        return type === 'credit' ? `$${usdAmount.toFixed(2)}` : `-$${usdAmount.toFixed(2)}`;
+      }
+      return amount;
+    }
+  };
 
   const commissionData = [
     { level: 1, totalMembers: 1, commission: '48%', commissionableAmount: convertAmount(2500) },
@@ -162,6 +200,13 @@ const Dashboard = () => {
       }
     }
   };
+
+  const processedTransactions = rawTransactions.map(transaction => ({
+    ...transaction,
+    amount: processTransactionAmount(transaction.amount, transaction.type)
+  }));
+
+  const processedNotifications = processNotifications(rawNotifications);
 
   if (isLoading) {
     return (
@@ -343,7 +388,7 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
@@ -371,115 +416,115 @@ const Dashboard = () => {
                   </tbody>
                 </table>
               </div>
-            </motion.div>
+            </motion.div> */}
           </div>
 
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-             className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mt-4 lg:mt-6"
-  id='txt'
->
-  <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
-  
-  <div className="overflow-x-auto">
-    <table className="w-full min-w-[600px]">
-      <thead>
-        <tr className="border-b border-gray-200">
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Date</th>
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Description</th>
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Amount</th>
-          <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((transaction, index) => (
-          <tr key={transaction.id} className="border-b border-gray-100 last:border-0">
-            <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {transaction.date}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mt-4 lg:mt-6"
+            id='txt'
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h2>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Date</th>
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Description</th>
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Amount</th>
+                    <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {processedTransactions.map((transaction, index) => (
+                    <tr key={transaction.id} className="border-b border-gray-100 last:border-0">
+                      <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {transaction.date}
+                        </div>
+                      </td>
+                      <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-900">{transaction.description}</td>
+                      <td className={`py-2 lg:py-3 text-xs lg:text-sm font-medium ${
+                        transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transaction.amount}
+                      </td>
+                      <td className="py-2 lg:py-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                            transaction.status === 'Paid' || transaction.status === 'Completed'
+                              ? 'bg-green-100 text-green-800'
+                              : transaction.status === 'Pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {transaction.status === 'Paid' || transaction.status === 'Completed' ? <CheckCircle className="w-3 h-3" /> : null}
+                          {transaction.status === 'Pending' ? <Clock className="w-3 h-3" /> : null}
+                          {transaction.status === 'Failed' ? <XCircle className="w-3 h-3" /> : null}
+                          {transaction.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {processedTransactions.length === 0 && (
+              <div className="text-center py-8">
+                <Wallet className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No transactions yet</p>
               </div>
-            </td>
-            <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-900">{transaction.description}</td>
-            <td className={`py-2 lg:py-3 text-xs lg:text-sm font-medium ${
-              transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {transaction.type === 'credit' ? '' : ''}{transaction.amount}
-            </td>
-            <td className="py-2 lg:py-3">
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                  transaction.status === 'Paid' || transaction.status === 'Completed'
-                    ? 'bg-green-100 text-green-800'
-                    : transaction.status === 'Pending'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mt-4 lg:mt-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
+              <a 
+                href="/notifications" 
+                className="text-sm text-[#0660D3] hover:text-blue-700 font-medium"
               >
-                {transaction.status === 'Paid' || transaction.status === 'Completed' ? <CheckCircle className="w-3 h-3" /> : null}
-                {transaction.status === 'Pending' ? <Clock className="w-3 h-3" /> : null}
-                {transaction.status === 'Failed' ? <XCircle className="w-3 h-3" /> : null}
-                {transaction.status}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-
-  {transactions.length === 0 && (
-    <div className="text-center py-8">
-      <Wallet className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-      <p className="text-gray-500">No transactions yet</p>
-    </div>
-  )}
-</motion.div>
-
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.5 }}
-  className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mt-4 lg:mt-6"
->
-  <div className="flex items-center justify-between mb-4">
-    <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
-    <a 
-      href="/notifications" 
-      className="text-sm text-[#0660D3] hover:text-blue-700 font-medium"
-    >
-      View All
-    </a>
-  </div>
-  <div className="space-y-3">
-    {notifications.slice(0, 3).map((notification) => (
-      <div
-        key={notification.id}
-        className={`flex items-center gap-3 p-3 rounded-lg ${
-          !notification.read ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'
-        }`}
-      >
-        <div className="w-6 h-6 lg:w-8 lg:h-8 bg-[#0660D3] rounded-full flex items-center justify-center flex-shrink-0">
-          <Bell className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-900 truncate">{notification.message}</p>
-          <p className="text-xs text-gray-500">{notification.time}</p>
-        </div>
-        {!notification.read && (
-          <div className="w-2 h-2 bg-[#0660D3] rounded-full flex-shrink-0"></div>
-        )}
-      </div>
-    ))}
-  </div>
-  {notifications.length === 0 && (
-    <div className="text-center py-8 text-gray-500">
-      <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-      <p>No notifications</p>
-    </div>
-  )}
-</motion.div>
+                View All
+              </a>
+            </div>
+            <div className="space-y-3">
+              {processedNotifications.slice(0, 3).map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg ${
+                    !notification.read ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'
+                  }`}
+                >
+                  <div className="w-6 h-6 lg:w-8 lg:h-8 bg-[#0660D3] rounded-full flex items-center justify-center flex-shrink-0">
+                    <Bell className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 truncate">{notification.message}</p>
+                    <p className="text-xs text-gray-500">{notification.time}</p>
+                  </div>
+                  {!notification.read && (
+                    <div className="w-2 h-2 bg-[#0660D3] rounded-full flex-shrink-0"></div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {processedNotifications.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No notifications</p>
+              </div>
+            )}
+          </motion.div>
         </main>
       </div>
     </div>

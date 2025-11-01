@@ -16,6 +16,7 @@ interface MembershipPackage {
   price: string;
   usdPrice: string;
   pv: number;
+  tp: number; // Added TP field
   productContents: string;
 }
 
@@ -64,6 +65,7 @@ const Register = () => {
             price: currency === 'NGN' ? `₦${pkg.priceNGN.toLocaleString()}` : `$${pkg.priceUSD.toFixed(2)}`,
             usdPrice: `$${pkg.priceUSD.toFixed(2)}`,
             pv: pkg.pv,
+            tp: pkg.tp, // Added TP field
             productContents: pkg.productContents
           }));
           setMembershipPackages(transformedPackages);
@@ -509,10 +511,29 @@ const Register = () => {
                     <option value="">Select a package</option>
                     {membershipPackages.map((pkg) => (
                       <option key={pkg.id} value={pkg.id}>
-                        {pkg.name} - {pkg.price} ({pkg.usdPrice})
+                        {pkg.name} - {pkg.price} ({pkg.usdPrice}) - PV: {pkg.pv} | TP: {pkg.tp}
                       </option>
                     ))}
                   </select>
+                  
+                  {/* Package details display when a package is selected */}
+                  {formData.membershipPackage && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      {membershipPackages
+                        .filter(pkg => pkg.id === formData.membershipPackage)
+                        .map(selectedPkg => (
+                          <div key={selectedPkg.id} className="text-sm">
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <div className="text-blue-700 font-medium">PV: {selectedPkg.pv}</div>
+                              <div className="text-green-700 font-medium">TP: {selectedPkg.tp}</div>
+                            </div>
+                            <div className="text-gray-600">
+                              <strong>Contents:</strong> {selectedPkg.productContents}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

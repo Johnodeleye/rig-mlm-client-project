@@ -3,11 +3,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Wallet, Search, User, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Wallet, Search, User, Send, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface WalletData {
   availableBalance: number;
@@ -49,6 +50,8 @@ const SendMoneyPage = () => {
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   // Fetch wallet data and transaction history
   useEffect(() => {
@@ -112,6 +115,14 @@ const SendMoneyPage = () => {
     }
   };
 
+  const convertToNaira = (amount: number): number => {
+    if (currency === 'NGN') {
+      return amount;
+    } else {
+      return amount * exchangeRate;
+    }
+  };
+
   const handleSendMoney = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -125,7 +136,9 @@ const SendMoneyPage = () => {
       return;
     }
 
-    if (!walletData || sendAmount > walletData.availableBalance) {
+    const nairaAmount = convertToNaira(sendAmount);
+
+    if (!walletData || nairaAmount > walletData.availableBalance) {
       setError('Insufficient balance');
       return;
     }
@@ -135,8 +148,9 @@ const SendMoneyPage = () => {
       return;
     }
 
-    if (sendAmount < 100) {
-      setError('Minimum transfer amount is ₦100');
+    const minAmount = currency === 'NGN' ? 100 : 1;
+    if (sendAmount < minAmount) {
+      setError(`Minimum transfer amount is ${currency === 'NGN' ? '₦100' : '$1'}`);
       return;
     }
 
@@ -152,7 +166,7 @@ const SendMoneyPage = () => {
         },
         body: JSON.stringify({
           recipientId: selectedUser.id,
-          amount: sendAmount,
+          amount: nairaAmount,
           note: note.trim() || `Transfer to ${selectedUser.fullName}`
         })
       });
@@ -160,7 +174,8 @@ const SendMoneyPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        setSuccess(`₦${sendAmount.toLocaleString()} sent successfully to ${selectedUser.fullName}!`);
+        const displayAmount = currency === 'NGN' ? `₦${sendAmount.toLocaleString()}` : `$${sendAmount.toFixed(2)}`;
+        setSuccess(`${displayAmount} sent successfully to ${selectedUser.fullName}!`);
         setAmount('');
         setNote('');
         setSelectedUser(null);
@@ -193,6 +208,15 @@ const SendMoneyPage = () => {
       setError('Failed to send money. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const formatTransactionAmount = (amount: number, type: 'sent' | 'received'): string => {
+    if (currency === 'NGN') {
+      return `${type === 'sent' ? '-' : '+'}₦${amount.toLocaleString()}`;
+    } else {
+      const usdAmount = amount / exchangeRate;
+      return `${type === 'sent' ? '-' : '+'}$${usdAmount.toFixed(2)}`;
     }
   };
 
@@ -264,6 +288,14 @@ const SendMoneyPage = () => {
               </div>
             </div>
 
+            {/* Exchange Rate Info */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-blue-700">
+                <Info className="w-4 h-4" />
+                <span>Current Exchange Rate: 1 USD = ₦{exchangeRate.toLocaleString()}</span>
+              </div>
+            </div>
+
             {/* Wallet Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
@@ -271,7 +303,7 @@ const SendMoneyPage = () => {
                   <div>
                     <p className="text-sm text-blue-600 mb-1">Available Balance</p>
                     <p className="text-xl font-bold text-gray-900">
-                      ₦{(walletData?.availableBalance || 0).toLocaleString()}
+                      {convertAmount(walletData?.availableBalance || 0)}
                     </p>
                   </div>
                   <Wallet className="w-8 h-8 text-blue-600" />
@@ -283,7 +315,7 @@ const SendMoneyPage = () => {
                   <div>
                     <p className="text-sm text-green-600 mb-1">Total Earnings</p>
                     <p className="text-xl font-bold text-gray-900">
-                      ₦{(walletData?.totalEarnings || 0).toLocaleString()}
+                      {convertAmount(walletData?.totalEarnings || 0)}
                     </p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-green-600" />
@@ -391,21 +423,27 @@ const SendMoneyPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount (₦)
+                    Amount ({currency === 'NGN' ? '₦' : '$'})
                   </label>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Enter amount"
+                    placeholder={`Enter amount in ${currency}`}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    min="100"
-                    step="100"
+                    min={currency === 'NGN' ? '100' : '1'}
+                    step={currency === 'NGN' ? '100' : '0.01'}
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Minimum transfer: ₦100
+                    Minimum transfer: {currency === 'NGN' ? '₦100' : '$1'}
+                    {currency === 'USD' && ` (₦${exchangeRate.toLocaleString()})`}
                   </p>
+                  {currency === 'USD' && amount && !isNaN(parseFloat(amount)) && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Equivalent: ₦{(parseFloat(amount) * exchangeRate).toLocaleString()}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -478,7 +516,7 @@ const SendMoneyPage = () => {
                         <p className={`font-bold ${
                           transaction.type === 'sent' ? 'text-red-600' : 'text-green-600'
                         }`}>
-                          {transaction.type === 'sent' ? '-' : '+'}₦{transaction.amount.toLocaleString()}
+                          {formatTransactionAmount(transaction.amount, transaction.type)}
                         </p>
                         <p className="text-xs text-gray-500 capitalize">
                           {transaction.type}

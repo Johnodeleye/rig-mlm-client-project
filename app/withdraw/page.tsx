@@ -3,11 +3,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Wallet, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Wallet, Clock, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface WalletData {
   availableBalance: number;
@@ -40,6 +41,8 @@ const WithdrawPage = () => {
   const [accountName, setAccountName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   // Fetch wallet data and withdrawal history
   useEffect(() => {
@@ -77,6 +80,14 @@ const WithdrawPage = () => {
     fetchData();
   }, []);
 
+  const convertToNaira = (amount: number): number => {
+    if (currency === 'NGN') {
+      return amount;
+    } else {
+      return amount * exchangeRate;
+    }
+  };
+
   const handleWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -90,7 +101,9 @@ const WithdrawPage = () => {
       return;
     }
 
-    if (!walletData || amount > walletData.availableBalance) {
+    const nairaAmount = convertToNaira(amount);
+
+    if (!walletData || nairaAmount > walletData.availableBalance) {
       setError('Insufficient balance');
       return;
     }
@@ -105,6 +118,12 @@ const WithdrawPage = () => {
       return;
     }
 
+    const minAmount = currency === 'NGN' ? 100 : 1;
+    if (amount < minAmount) {
+      setError(`Minimum withdrawal amount is ${currency === 'NGN' ? '₦100' : '$1'}`);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
@@ -116,7 +135,7 @@ const WithdrawPage = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          amount: amount,
+          amount: nairaAmount,
           bankName: bankName.trim(),
           accountNumber: accountNumber.trim(),
           accountName: accountName.trim()
@@ -126,7 +145,8 @@ const WithdrawPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        setSuccess('Withdrawal request submitted successfully! It will be processed within 24 hours.');
+        const displayAmount = currency === 'NGN' ? `₦${amount.toLocaleString()}` : `$${amount.toFixed(2)}`;
+        setSuccess(`${displayAmount} withdrawal request submitted successfully! It will be processed within 24 hours.`);
         setWithdrawalAmount('');
         setBankName('');
         setAccountNumber('');
@@ -181,6 +201,15 @@ const WithdrawPage = () => {
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-yellow-100 text-yellow-800';
+    }
+  };
+
+  const formatWithdrawalAmount = (amount: number): string => {
+    if (currency === 'NGN') {
+      return `₦${amount.toLocaleString()}`;
+    } else {
+      const usdAmount = amount / exchangeRate;
+      return `$${usdAmount.toFixed(2)}`;
     }
   };
 
@@ -252,6 +281,14 @@ const WithdrawPage = () => {
               </div>
             </div>
 
+            {/* Exchange Rate Info */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-blue-700">
+                <Info className="w-4 h-4" />
+                <span>Current Exchange Rate: 1 USD = ₦{exchangeRate.toLocaleString()}</span>
+              </div>
+            </div>
+
             {/* Wallet Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
@@ -259,7 +296,7 @@ const WithdrawPage = () => {
                   <div>
                     <p className="text-sm text-blue-600 mb-1">Available Balance</p>
                     <p className="text-xl font-bold text-gray-900">
-                      ₦{(walletData?.availableBalance || 0).toLocaleString()}
+                      {convertAmount(walletData?.availableBalance || 0)}
                     </p>
                   </div>
                   <Wallet className="w-8 h-8 text-blue-600" />
@@ -271,7 +308,7 @@ const WithdrawPage = () => {
                   <div>
                     <p className="text-sm text-green-600 mb-1">Total Earnings</p>
                     <p className="text-xl font-bold text-gray-900">
-                      ₦{(walletData?.totalEarnings || 0).toLocaleString()}
+                      {convertAmount(walletData?.totalEarnings || 0)}
                     </p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-green-600" />
@@ -283,7 +320,7 @@ const WithdrawPage = () => {
                   <div>
                     <p className="text-sm text-yellow-600 mb-1">Pending Withdrawals</p>
                     <p className="text-xl font-bold text-gray-900">
-                      ₦{(walletData?.pendingWithdrawals || 0).toLocaleString()}
+                      {convertAmount(walletData?.pendingWithdrawals || 0)}
                     </p>
                   </div>
                   <Clock className="w-8 h-8 text-yellow-600" />
@@ -318,21 +355,27 @@ const WithdrawPage = () => {
               <form onSubmit={handleWithdrawal} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount to Withdraw (₦)
+                    Amount to Withdraw ({currency === 'NGN' ? '₦' : '$'})
                   </label>
                   <input
                     type="number"
                     value={withdrawalAmount}
                     onChange={(e) => setWithdrawalAmount(e.target.value)}
-                    placeholder="Enter amount"
+                    placeholder={`Enter amount in ${currency}`}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    min="100"
-                    step="100"
+                    min={currency === 'NGN' ? '100' : '1'}
+                    step={currency === 'NGN' ? '100' : '0.01'}
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Minimum withdrawal: ₦100
+                    Minimum withdrawal: {currency === 'NGN' ? '₦100' : '$1'}
+                    {currency === 'USD' && ` (₦${exchangeRate.toLocaleString()})`}
                   </p>
+                  {currency === 'USD' && withdrawalAmount && !isNaN(parseFloat(withdrawalAmount)) && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Equivalent: ₦{(parseFloat(withdrawalAmount) * exchangeRate).toLocaleString()}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -413,7 +456,7 @@ const WithdrawPage = () => {
                         {getStatusIcon(request.status)}
                         <div>
                           <p className="font-semibold text-gray-900">
-                            ₦{request.amount.toLocaleString()}
+                            {formatWithdrawalAmount(request.amount)}
                           </p>
                           <p className="text-sm text-gray-500">
                             {new Date(request.createdAt).toLocaleDateString()}

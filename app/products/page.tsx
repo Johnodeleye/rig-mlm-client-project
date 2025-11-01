@@ -1,3 +1,4 @@
+// app/products/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,6 +8,7 @@ import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Product {
   id: string;
@@ -27,6 +29,7 @@ const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { getStoredToken } = useAuth();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   useEffect(() => {
     fetchProducts();
@@ -126,6 +129,15 @@ const ProductsPage = () => {
     }
   };
 
+  const formatProductPrice = (price: number): string => {
+    if (currency === 'NGN') {
+      return `₦${price.toLocaleString()}`;
+    } else {
+      const usdPrice = price / exchangeRate;
+      return `$${usdPrice.toFixed(2)}`;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -202,7 +214,9 @@ const ProductsPage = () => {
                   <h3 className="text-lg font-bold text-gray-900 mb-2">{product.name}</h3>
                   <p className="text-sm text-gray-600 mb-3">{product.description}</p>
                   <div className="flex justify-between items-center">
-                    <p className="text-2xl font-bold text-gray-900">₦{product.price.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {formatProductPrice(product.price)}
+                    </p>
                     <p className="text-sm text-gray-500">Stock: {product.stock}</p>
                   </div>
                 </div>

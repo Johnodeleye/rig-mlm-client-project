@@ -41,7 +41,7 @@ const AdminHeader = ({ setIsSidebarOpen, isProfileDropdownOpen, setIsProfileDrop
           </div>
 
           {/* Notifications */}
-          <a href='/notifications' className="relative p-2 text-gray-600 hover:text-red-600 transition-colors">
+          <a href='/admin/notifications' className="relative p-2 text-gray-600 hover:text-red-600 transition-colors">
             <Bell className="w-6 h-6" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </a>

@@ -7,6 +7,7 @@ import Header from '../../components/Header';
 import DesktopSidebar from '../../components/DesktopSidebar';
 import MobileSidebar from '../../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Order {
   id: string;
@@ -35,6 +36,7 @@ const StockistOrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { getStoredToken, userProfile } = useAuth();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   useEffect(() => {
     if (userProfile?.isStockist) {
@@ -84,7 +86,12 @@ const StockistOrdersPage = () => {
   };
 
   const calculateCommission = (price: number, quantity: number, commissionPercentage: number) => {
-    return (price * quantity * commissionPercentage) / 100;
+    const commission = (price * quantity * commissionPercentage) / 100;
+    return convertAmount(commission);
+  };
+
+  const processAmount = (amount: number): string => {
+    return convertAmount(amount);
   };
 
   const getStatusColor = (status: string) => {
@@ -214,7 +221,7 @@ const StockistOrdersPage = () => {
                               </h3>
                               <p className="text-gray-600 mt-1">Quantity: {order.quantity}</p>
                               <p className="text-lg font-bold text-blue-600 mt-1">
-                                ₦{(order.product.price * order.quantity).toLocaleString()}
+                                {processAmount(order.product.price * order.quantity)}
                               </p>
                             </div>
                             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs sm:text-sm font-medium border ${getStatusColor(order.status)}`}>
@@ -283,7 +290,7 @@ const StockistOrdersPage = () => {
                             Your Commission ({order.product.commissionPercentage}%)
                           </div>
                           <div className="text-lg font-bold text-green-600">
-                            ₦{calculateCommission(order.product.price, order.quantity, order.product.commissionPercentage).toLocaleString()}
+                            {calculateCommission(order.product.price, order.quantity, order.product.commissionPercentage)}
                           </div>
                           <button
                             onClick={() => handleDeliverOrder(order.id)}
@@ -303,7 +310,7 @@ const StockistOrdersPage = () => {
                             Commission Earned ({order.product.commissionPercentage}%)
                           </div>
                           <div className="text-lg font-bold text-green-600">
-                            ₦{calculateCommission(order.product.price, order.quantity, order.product.commissionPercentage).toLocaleString()}
+                            {calculateCommission(order.product.price, order.quantity, order.product.commissionPercentage)}
                           </div>
                           <div className="mt-3 flex items-center justify-center text-green-700">
                             <CheckCircle className="w-5 h-5 mr-1" />

@@ -9,6 +9,7 @@ import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
 import AuthRedirect from '../components/AuthRedirect';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Package {
   id: string;
@@ -36,11 +37,12 @@ const UpgradePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const { user, userProfile, accountType } = useAuth(); // Get userProfile and accountType
+  const { user, userProfile, accountType } = useAuth();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   useEffect(() => {
     fetchData();
-  }, [userProfile]); // Add userProfile as dependency
+  }, [userProfile]);
 
   const fetchData = async () => {
     try {
@@ -62,9 +64,8 @@ const UpgradePage = () => {
 
         setPackages(packagesData.packages || []);
         
-        // Use userProfile.plan which already has the membership package info
         setUserData({
-          membershipPackage: userProfile?.plan || 'No Plan', // Use userProfile.plan
+          membershipPackage: userProfile?.plan || 'No Plan',
           walletBalance: walletData.walletData?.availableBalance || 0
         });
       } else {
@@ -79,7 +80,6 @@ const UpgradePage = () => {
   };
 
   const getCurrentPlanName = () => {
-    // Handle case where userData.membershipPackage might be "No Plan"
     if (userData?.membershipPackage === 'No Plan') {
       return 'No Plan';
     }
@@ -91,10 +91,24 @@ const UpgradePage = () => {
     return contents.split(',').map(item => item.trim());
   };
 
-  // Redirect if admin tries to access this page
+  const formatPackagePrice = (pkg: Package): string => {
+    if (currency === 'NGN') {
+      return `₦${pkg.priceNGN.toLocaleString()}`;
+    } else {
+      return `$${pkg.priceUSD.toLocaleString()}`;
+    }
+  };
+
+  const getPackagePrice = (pkg: Package): number => {
+    if (currency === 'NGN') {
+      return pkg.priceNGN;
+    } else {
+      return pkg.priceUSD;
+    }
+  };
+
   useEffect(() => {
     if (accountType === 'admin') {
-      // Redirect admin to admin dashboard
       window.location.href = '/admin/home';
     }
   }, [accountType]);
@@ -129,7 +143,7 @@ const UpgradePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-            <AuthRedirect requireAuth={true} requireActive={true} redirectTo="/login" />
+      <AuthRedirect requireAuth={true} requireActive={true} redirectTo="/login" />
       <Header 
         setIsSidebarOpen={setIsSidebarOpen}
         isProfileDropdownOpen={isProfileDropdownOpen}
@@ -177,7 +191,7 @@ const UpgradePage = () => {
                   <div>
                     <p className="text-sm text-blue-600">Available Balance</p>
                     <p className="text-lg font-bold text-gray-900">
-                      ₦{userData.walletBalance.toLocaleString()}
+                      {convertAmount(userData.walletBalance)}
                     </p>
                   </div>
                   <Package className="w-6 h-6 text-blue-600" />
@@ -233,8 +247,14 @@ const UpgradePage = () => {
 
                   {/* Price */}
                   <div className="text-center mb-4">
-                    <p className="text-2xl font-bold text-gray-900">₦{pkg.priceNGN.toLocaleString()}</p>
-                    <p className="text-sm text-gray-600">${pkg.priceUSD.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {formatPackagePrice(pkg)}
+                    </p>
+                    {currency === 'USD' && (
+                      <p className="text-sm text-gray-600">
+                        ₦{pkg.priceNGN.toLocaleString()}
+                      </p>
+                    )}
                   </div>
 
                   {/* Product Contents */}

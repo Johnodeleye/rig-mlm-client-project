@@ -9,6 +9,7 @@ import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface TeamMember {
   id: string;
@@ -44,18 +45,60 @@ const TeamsPage = () => {
   const [teamData, setTeamData] = useState<TeamData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-    const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
-     const router = useRouter();
+  const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
-    useEffect(() => {
-      if (!authLoading) {
-        if (!isAuthenticated || accountType !== 'user') {
-          router.push('/login');
-        }
+  const processEarningsAmount = (earnings: string): string => {
+    if (currency === 'NGN') {
+      return earnings;
+    } else {
+      const nairaMatch = earnings.match(/₦([\d,]+(\.\d{2})?)/);
+      if (nairaMatch) {
+        const nairaAmount = parseFloat(nairaMatch[1].replace(/,/g, ''));
+        const usdAmount = nairaAmount / exchangeRate;
+        return `$${usdAmount.toFixed(2)}`;
       }
-    }, [isAuthenticated, accountType, authLoading, router]);
+      return earnings;
+    }
+  };
 
-  // Fetch team data
+  const processTotalEarnings = (totalEarnings: string): string => {
+    if (currency === 'NGN') {
+      return totalEarnings;
+    } else {
+      const nairaMatch = totalEarnings.match(/₦([\d,]+(\.\d{2})?)/);
+      if (nairaMatch) {
+        const nairaAmount = parseFloat(nairaMatch[1].replace(/,/g, ''));
+        const usdAmount = nairaAmount / exchangeRate;
+        return `$${usdAmount.toFixed(2)}`;
+      }
+      return totalEarnings;
+    }
+  };
+
+  const calculateLevelEarnings = (members: TeamMember[]): string => {
+    const totalNaira = members.reduce((sum, member) => {
+      const earningsValue = parseFloat(member.earnings.replace('₦', '').replace(/,/g, '')) || 0;
+      return sum + earningsValue;
+    }, 0);
+    
+    if (currency === 'NGN') {
+      return `₦${totalNaira.toLocaleString()}`;
+    } else {
+      const usdAmount = totalNaira / exchangeRate;
+      return `$${usdAmount.toFixed(2)}`;
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!isAuthenticated || accountType !== 'user') {
+        router.push('/login');
+      }
+    }
+  }, [isAuthenticated, accountType, authLoading, router]);
+
   useEffect(() => {
     const fetchTeamData = async () => {
       try {
@@ -116,17 +159,14 @@ const TeamsPage = () => {
           />
           <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
             <div className="animate-pulse space-y-6">
-              {/* Header Skeleton */}
               <div className="bg-white rounded-xl p-6 h-32"></div>
               
-              {/* Summary Cards Skeleton */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="bg-white rounded-xl p-6 h-24"></div>
                 ))}
               </div>
               
-              {/* Team Levels Skeleton */}
               <div className="bg-white rounded-xl p-6">
                 <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
                 {[...Array(5)].map((_, i) => (
@@ -195,7 +235,6 @@ const TeamsPage = () => {
           />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -207,7 +246,6 @@ const TeamsPage = () => {
             <p className="text-gray-600">View and manage your network team</p>
           </motion.div>
 
-          {/* Summary Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-4 lg:mb-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -257,7 +295,7 @@ const TeamsPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Team Earnings</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {teamData?.totalEarnings || '₦0'}
+                    {teamData?.totalEarnings ? processTotalEarnings(teamData.totalEarnings) : currency === 'NGN' ? '₦0' : '$0'}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -267,7 +305,6 @@ const TeamsPage = () => {
             </motion.div>
           </div>
 
-          {/* Team Levels */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -293,10 +330,7 @@ const TeamsPage = () => {
                         <span className="text-sm text-gray-500">({levelData.members.length} members)</span>
                       </div>
                       <div className="text-sm text-gray-600">
-                        Total Earnings: ₦{levelData.members.reduce((sum, member) => {
-                          const earningsValue = parseFloat(member.earnings.replace('₦', '').replace(/,/g, '')) || 0;
-                          return sum + earningsValue;
-                        }, 0).toLocaleString()}
+                        Total Earnings: {calculateLevelEarnings(levelData.members)}
                       </div>
                     </button>
 
@@ -331,7 +365,7 @@ const TeamsPage = () => {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <p className="font-semibold text-gray-900">{member.earnings}</p>
+                                  <p className="font-semibold text-gray-900">{processEarningsAmount(member.earnings)}</p>
                                   <p className="text-xs text-gray-500">Earnings</p>
                                 </div>
                               </div>

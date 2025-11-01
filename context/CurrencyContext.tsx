@@ -10,6 +10,7 @@ interface CurrencyContextType {
   userType: UserType;
   setUserType: (type: UserType) => void;
   convertAmount: (amount: number) => string;
+  formatAmount: (amount: number) => string;
   detectedCountry: string;
   isDetecting: boolean;
   exchangeRate: number;
@@ -43,7 +44,6 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const countryNameResponse = await fetch(`https://ipapi.co/${userIP}/country_name/`);
           countryName = await countryNameResponse.text();
         } catch (ipError) {
-          console.log('ipapi.co failed, using defaults');
         }
 
         if (country === 'NG') {
@@ -62,11 +62,9 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setExchangeRate(rateData.rate.rate);
           }
         } catch (rateError) {
-          console.log('Failed to fetch exchange rate, using default');
         }
 
       } catch (error) {
-        console.log('Error detecting location, defaulting to NGN');
         setCurrency('NGN');
         setDetectedCountry('Nigeria');
       } finally {
@@ -86,12 +84,22 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const formatAmount = (amount: number): string => {
+    if (currency === 'NGN') {
+      return `₦${Math.abs(amount).toLocaleString()}`;
+    } else {
+      const usdAmount = Math.abs(amount) / exchangeRate;
+      return `$${usdAmount.toFixed(2)}`;
+    }
+  };
+
   return (
     <CurrencyContext.Provider value={{ 
       currency, 
       userType, 
       setUserType, 
       convertAmount, 
+      formatAmount,
       detectedCountry,
       isDetecting,
       exchangeRate

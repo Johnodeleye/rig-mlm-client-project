@@ -7,6 +7,7 @@ import { DollarSign, Wallet, TrendingUp, Download, Calendar, CreditCard, Clock, 
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface WalletData {
   totalEarnings: number;
@@ -86,6 +87,8 @@ const WalletPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -137,6 +140,25 @@ const WalletPage = () => {
 
     fetchData();
   }, []);
+
+  const processTransactionAmount = (amount: string, type: string): string => {
+    if (currency === 'NGN') {
+      return type === 'credit' ? amount : amount;
+    } else {
+      const nairaMatch = amount.match(/₦([\d,]+(\.\d{2})?)/);
+      if (nairaMatch) {
+        const nairaAmount = parseFloat(nairaMatch[1].replace(/,/g, ''));
+        const usdAmount = nairaAmount / exchangeRate;
+        return type === 'credit' ? `$${usdAmount.toFixed(2)}` : `-$${usdAmount.toFixed(2)}`;
+      }
+      return amount;
+    }
+  };
+
+  const processedTransactions = transactions.map(transaction => ({
+    ...transaction,
+    amount: processTransactionAmount(transaction.amount, transaction.type)
+  }));
 
   const monthlySalaryBonuses = [
     { level: 'SB1', requiredPV: 600, salaryNGN: '₦50,000', salaryUSD: '$100', maxCappedPV: 270 },
@@ -313,7 +335,7 @@ const WalletPage = () => {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Total Commissions</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      ₦{(commissionData?.totalCommissions || 0).toLocaleString()}
+                      {convertAmount(commissionData?.totalCommissions || 0)}
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -364,7 +386,7 @@ const WalletPage = () => {
                               {commission.package}
                             </td>
                             <td className="py-3 px-2 text-sm font-medium text-gray-900">
-                              ₦{commission.commissionAmount.toLocaleString()}
+                              {convertAmount(commission.commissionAmount)}
                             </td>
                             <td className="py-3 px-2">
                               <span
@@ -394,7 +416,7 @@ const WalletPage = () => {
                         <div className="flex justify-between items-start mb-3">
                           <div>
                             <p className="text-lg font-semibold text-gray-900">
-                              ₦{commission.commissionAmount.toLocaleString()}
+                              {convertAmount(commission.commissionAmount)}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
                               {new Date(commission.createdAt).toLocaleDateString('en-US', {
@@ -460,10 +482,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    ₦{(walletData?.totalEarnings || 0).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    ${((walletData?.totalEarnings || 0) / 700).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    {convertAmount(walletData?.totalEarnings || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -482,10 +501,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Available Balance</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    ₦{(walletData?.availableBalance || 0).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    ${((walletData?.availableBalance || 0) / 700).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    {convertAmount(walletData?.availableBalance || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -504,7 +520,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Pending Withdrawals</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    ₦{(walletData?.pendingWithdrawals || 0).toLocaleString()}
+                    {convertAmount(walletData?.pendingWithdrawals || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -719,7 +735,7 @@ const WalletPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((transaction, index) => (
+                  {processedTransactions.map((transaction, index) => (
                     <tr key={transaction.id} className="border-b border-gray-100 last:border-0">
                       <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">
                         <div className="flex items-center gap-1">
@@ -731,7 +747,7 @@ const WalletPage = () => {
                       <td className={`py-2 lg:py-3 text-xs lg:text-sm font-medium ${
                         transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.type === 'credit' ? '' : ''}{transaction.amount}
+                        {transaction.amount}
                       </td>
                       <td className="py-2 lg:py-3">
                         <span
@@ -744,7 +760,6 @@ const WalletPage = () => {
                           }`}
                         >
                           {transaction.status === 'Paid' || transaction.status === 'Completed' ? <CheckCircle className="w-3 h-3" /> : null}
-                          {transaction.status === 'Pending' ? <Clock className="w-3 h-3" /> : null}
                           {transaction.status === 'Failed' ? <XCircle className="w-3 h-3" /> : null}
                           {transaction.status}
                         </span>
@@ -754,6 +769,14 @@ const WalletPage = () => {
                 </tbody>
               </table>
             </div>
+
+            {processedTransactions.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <History className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="font-medium">No transactions yet</p>
+                <p className="text-sm mt-1">Your transactions will appear here</p>
+              </div>
+            )}
           </motion.div>
         </main>
       </div>

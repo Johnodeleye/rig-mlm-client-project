@@ -7,6 +7,7 @@ import { Bell, CheckCheck, Clock, UserCheck, DollarSign, TrendingUp, Send, Recei
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Notification {
   id: string;
@@ -25,7 +26,31 @@ const NotificationsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMarkingRead, setIsMarkingRead] = useState<string | null>(null);
 
-  // Fetch notifications from API
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
+
+  const processNotifications = (notifications: Notification[]) => {
+    return notifications.map(notification => {
+      let processedMessage = notification.message;
+      
+      if (currency === 'USD') {
+        const nairaMatch = processedMessage.match(/₦([\d,]+(\.\d{2})?)/);
+        if (nairaMatch) {
+          const nairaAmount = parseFloat(nairaMatch[1].replace(/,/g, ''));
+          const usdAmount = nairaAmount / exchangeRate;
+          processedMessage = processedMessage.replace(
+            `₦${nairaMatch[1]}`,
+            `$${usdAmount.toFixed(2)}`
+          );
+        }
+      }
+      
+      return {
+        ...notification,
+        message: processedMessage
+      };
+    });
+  };
+
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
@@ -47,7 +72,8 @@ const NotificationsPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setNotifications(data.notifications || []);
+          const processedNotifications = processNotifications(data.notifications || []);
+          setNotifications(processedNotifications);
         } else {
           console.error('Failed to fetch notifications:', data.error);
         }
@@ -64,6 +90,13 @@ const NotificationsPage = () => {
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const processedNotifications = processNotifications(notifications);
+      setNotifications(processedNotifications);
+    }
+  }, [currency, exchangeRate]);
 
   const markAllAsRead = async () => {
     try {
@@ -85,7 +118,6 @@ const NotificationsPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          // Refresh notifications to get updated read status
           await fetchNotifications();
         }
       }
@@ -115,7 +147,6 @@ const NotificationsPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          // Update local state immediately for better UX
           setNotifications(prev => 
             prev.map(notification => 
               notification.id === id ? { ...notification, read: true } : notification
@@ -182,7 +213,6 @@ const NotificationsPage = () => {
           />
 
           <main className="flex-1 w-full lg:ml-64 p-4 lg:p-6">
-            {/* Loading Skeleton */}
             <div className="animate-pulse space-y-6">
               <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 h-20 lg:h-24"></div>
               <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
@@ -225,7 +255,6 @@ const NotificationsPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-4 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -254,7 +283,6 @@ const NotificationsPage = () => {
             </div>
           </motion.div>
 
-          {/* Notifications List */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

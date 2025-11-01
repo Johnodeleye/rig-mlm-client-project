@@ -7,6 +7,7 @@ import Header from '../../components/Header';
 import DesktopSidebar from '../../components/DesktopSidebar';
 import MobileSidebar from '../../components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Request {
   id: string;
@@ -35,6 +36,7 @@ const StockistRequestsPage = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { getStoredToken, userProfile } = useAuth();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   useEffect(() => {
     if (userProfile?.isStockist) {
@@ -84,7 +86,12 @@ const StockistRequestsPage = () => {
   };
 
   const calculateCommission = (price: number, quantity: number, commissionPercentage: number) => {
-    return (price * quantity * commissionPercentage) / 100;
+    const commission = (price * quantity * commissionPercentage) / 100;
+    return convertAmount(commission);
+  };
+
+  const processAmount = (amount: number): string => {
+    return convertAmount(amount);
   };
 
   if (!userProfile?.isStockist) {
@@ -195,7 +202,7 @@ const StockistRequestsPage = () => {
                                 <span className="font-medium">Quantity:</span>
                                 <span>{request.quantity}</span>
                                 <span className="font-medium">Total:</span>
-                                <span>₦{(request.product.price * request.quantity).toLocaleString()}</span>
+                                <span>{processAmount(request.product.price * request.quantity)}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs sm:text-sm font-medium border border-yellow-200">
@@ -262,7 +269,7 @@ const StockistRequestsPage = () => {
                             <span className="text-xs font-medium">Your Commission ({request.product.commissionPercentage}%)</span>
                           </div>
                           <div className="text-lg font-bold text-green-600">
-                            ₦{calculateCommission(request.product.price, request.quantity, request.product.commissionPercentage).toLocaleString()}
+                            {calculateCommission(request.product.price, request.quantity, request.product.commissionPercentage)}
                           </div>
                         </div>
 

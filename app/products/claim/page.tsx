@@ -7,6 +7,7 @@ import Header from '@/app/components/Header';
 import DesktopSidebar from '@/app/components/DesktopSidebar';
 import MobileSidebar from '@/app/components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Stockist {
   id: string;
@@ -60,6 +61,25 @@ const ClaimProductPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { getStoredToken, userProfile } = useAuth();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
+
+  const processProductPrice = (price: number): string => {
+    if (currency === 'NGN') {
+      return `₦${price.toLocaleString()}`;
+    } else {
+      const usdAmount = price / exchangeRate;
+      return `$${usdAmount.toFixed(2)}`;
+    }
+  };
+
+  const processTotalAmount = (amount: number): string => {
+    if (currency === 'NGN') {
+      return `₦${amount.toLocaleString()}`;
+    } else {
+      const usdAmount = amount / exchangeRate;
+      return `$${usdAmount.toFixed(2)}`;
+    }
+  };
 
   useEffect(() => {
     fetchStockists();
@@ -91,7 +111,6 @@ const ClaimProductPage = () => {
         return;
       }
 
-      // Fetch purchases
       const purchasesResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/products/my-purchases`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -112,7 +131,6 @@ const ClaimProductPage = () => {
         return;
       }
 
-      // Fetch all product requests to calculate claimed quantities
       const requestsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/stockist-management/member/claimed-products`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -124,12 +142,10 @@ const ClaimProductPage = () => {
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
         if (requestsData.success && requestsData.claimedProducts) {
-          // Calculate total claimed quantity per product
           requestsData.claimedProducts.forEach((request: ProductRequest) => {
             if (!claimedQuantities[request.productId]) {
               claimedQuantities[request.productId] = 0;
             }
-            // Only count pending and assigned requests (not delivered/completed)
             if (request.status === 'pending' || request.status === 'assigned') {
               claimedQuantities[request.productId] += request.quantity;
             }
@@ -137,7 +153,6 @@ const ClaimProductPage = () => {
         }
       }
 
-      // Process purchases with claims
       const purchasesWithClaims = purchasesData.purchases.map((purchase: any) => {
         const claimedQuantity = claimedQuantities[purchase.productId] || 0;
         const remainingQuantity = Math.max(0, purchase.quantity - claimedQuantity);
@@ -147,7 +162,7 @@ const ClaimProductPage = () => {
           claimedQuantity: claimedQuantity,
           remainingQuantity: remainingQuantity
         };
-      }).filter((purchase: Purchase) => purchase.remainingQuantity > 0); // Only show purchases with available quantity
+      }).filter((purchase: Purchase) => purchase.remainingQuantity > 0);
       
       setPurchases(purchasesWithClaims);
       
@@ -192,7 +207,7 @@ const ClaimProductPage = () => {
         setSelectedPurchase(null);
         setAddress('');
         setNotes('');
-        fetchPurchasesWithClaims(); // Refresh the list
+        fetchPurchasesWithClaims();
       } else {
         alert(data.error || 'Failed to submit request');
       }
@@ -303,7 +318,7 @@ const ClaimProductPage = () => {
                               <span>Purchased: {purchase.quantity}</span>
                               <span>Claimed: {purchase.claimedQuantity}</span>
                               <span>Available: {purchase.remainingQuantity}</span>
-                              <span>Price: ₦{purchase.product.price.toLocaleString()}</span>
+                              <span>Price: {processProductPrice(purchase.product.price)}</span>
                             </div>
                             <div className="mt-2 text-xs text-gray-400">
                               Purchase ID: {purchase.id.substring(0, 8)}...
@@ -319,7 +334,7 @@ const ClaimProductPage = () => {
                             </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            Total: ₦{purchase.totalAmount.toLocaleString()}
+                            Total: {processTotalAmount(purchase.totalAmount)}
                           </div>
                         </div>
                       </div>
@@ -443,6 +458,9 @@ const ClaimProductPage = () => {
                           <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{selectedPurchase.product.name}</h4>
                           <p className="text-xs sm:text-sm text-gray-600">
                             Available: {selectedPurchase.remainingQuantity} / {selectedPurchase.quantity}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            Price: {processProductPrice(selectedPurchase.product.price)}
                           </p>
                         </div>
                       </div>

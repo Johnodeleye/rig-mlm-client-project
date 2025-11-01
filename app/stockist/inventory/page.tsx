@@ -7,6 +7,7 @@ import Header from '@/app/components/Header';
 import DesktopSidebar from '@/app/components/DesktopSidebar';
 import MobileSidebar from '@/app/components/MobileBar';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface InventoryItem {
   id: string;
@@ -27,6 +28,7 @@ const StockistInventoryPage = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { getStoredToken, userProfile } = useAuth();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
   useEffect(() => {
     if (userProfile?.isStockist) {
@@ -50,6 +52,10 @@ const StockistInventoryPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const processAmount = (amount: number): string => {
+    return convertAmount(amount);
   };
 
   const getStockStatus = (quantity: number) => {
@@ -171,7 +177,7 @@ const StockistInventoryPage = () => {
                 </div>
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600">Inventory Value</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">₦{totalValue.toLocaleString()}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{processAmount(totalValue)}</p>
                 </div>
               </div>
             </motion.div>
@@ -236,7 +242,7 @@ const StockistInventoryPage = () => {
                           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
                             <div className="flex items-center gap-1">
                               <span className="font-medium text-gray-700">Price:</span>
-                              <span>₦{item.product.price.toLocaleString()}</span>
+                              <span>{processAmount(item.product.price)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <span className="font-medium text-gray-700">Stock:</span>
@@ -254,7 +260,7 @@ const StockistInventoryPage = () => {
                         <div className="bg-blue-50 rounded-lg p-3 text-center">
                           <div className="text-xs font-medium text-blue-800 mb-1">Total Value</div>
                           <div className="text-lg sm:text-xl font-bold text-blue-600">
-                            ₦{(item.quantity * item.product.price).toLocaleString()}
+                            {processAmount(item.quantity * item.product.price)}
                           </div>
                         </div>
                       </div>

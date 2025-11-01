@@ -10,6 +10,7 @@ import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import AuthRedirect from '../components/AuthRedirect';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface StockistPackage {
   id: string;
@@ -28,7 +29,6 @@ const BecomeStockistPage = () => {
   const [packages, setPackages] = useState<StockistPackage[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<string>('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [userCountry, setUserCountry] = useState<string>('');
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -45,12 +45,11 @@ const BecomeStockistPage = () => {
 
   const { userProfile, user } = useAuth();
   const router = useRouter();
+  const { currency, convertAmount, formatAmount, exchangeRate, detectedCountry, isDetecting } = useCurrency();
 
   useEffect(() => {
     console.log('User Profile in Become Stockist:', userProfile);
     console.log('User Data in Become Stockist:', user);
-    
-    detectUserLocation();
     
     if (userProfile) {
       const firstName = userProfile.name?.split(' ')[0] || '';
@@ -79,22 +78,12 @@ const BecomeStockistPage = () => {
     }
   }, [userProfile, user]);
 
-  const detectUserLocation = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/detect-location`);
-      const data = await response.json();
-      
-      if (data.country) {
-        setUserCountry(data.country);
-        setFormData(prev => ({ ...prev, country: data.country }));
-        fetchPackages(data.country);
-      }
-    } catch (error) {
-      console.error('Location detection error:', error);
-      setUserCountry('Nigeria');
-      fetchPackages('Nigeria');
+  useEffect(() => {
+    if (detectedCountry && !isDetecting) {
+      setFormData(prev => ({ ...prev, country: detectedCountry }));
+      fetchPackages(detectedCountry);
     }
-  };
+  }, [detectedCountry, isDetecting]);
 
   const fetchPackages = async (country: string) => {
     try {
@@ -115,6 +104,24 @@ const BecomeStockistPage = () => {
     } catch (error) {
       console.error('Error fetching packages:', error);
       toast.error('Failed to load packages');
+    }
+  };
+
+  const processAmount = (amount: number): string => {
+    if (currency === 'NGN') {
+      return `₦${amount.toLocaleString()}`;
+    } else {
+      const usdAmount = amount / exchangeRate;
+      return `$${usdAmount.toFixed(2)}`;
+    }
+  };
+
+  const processWalletBalance = (balance: number): string => {
+    if (currency === 'NGN') {
+      return `₦${balance.toLocaleString()}`;
+    } else {
+      const usdAmount = balance / exchangeRate;
+      return `$${usdAmount.toFixed(2)}`;
     }
   };
 
@@ -163,11 +170,14 @@ const BecomeStockistPage = () => {
       console.log('Registration response:', data);
 
       if (data.success) {
-        toast.success(`Congratulations — you are now a Stockist! Finder fee of ₦${data.referrer?.finderFee?.toLocaleString()} has been credited to ${data.referrer?.name}.`);
+        const finderFeeAmount = processAmount(data.referrer?.finderFee || 0);
+        toast.success(`Congratulations — you are now a Stockist! Finder fee of ${finderFeeAmount} has been credited to ${data.referrer?.name}.`);
         router.push('/home');
       } else {
         if (data.error === 'INSUFFICIENT_FUNDS') {
-          toast.error(`Insufficient funds — your balance is ₦${data.balance?.toLocaleString()}. You need ₦${data.difference?.toLocaleString()} more to purchase this package.`);
+          const balance = processWalletBalance(data.balance || 0);
+          const difference = processAmount(data.difference || 0);
+          toast.error(`Insufficient funds — your balance is ${balance}. You need ${difference} more to purchase this package.`);
         } else if (data.error === 'User is already a stockist') {
           toast.error('You are already a registered stockist');
           router.push('/home');
@@ -226,9 +236,9 @@ const BecomeStockistPage = () => {
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Become a Stockist</h1>
               </motion.div>
               <p className="text-gray-600">Join our network of stockists and grow your business</p>
-              {userCountry && (
+              {detectedCountry && (
                 <div className="mt-2 text-sm text-blue-600">
-                  Detected Country: {userCountry}
+                  Detected Country: {detectedCountry}
                 </div>
               )}
             </div>
@@ -433,13 +443,13 @@ const BecomeStockistPage = () => {
                               <div className="flex justify-between">
                                 <span className="text-sm text-gray-600">Investment:</span>
                                 <span className="font-semibold text-gray-900">
-                                  ₦{pkg.investment.toLocaleString()}
+                                  {processAmount(pkg.investment)}
                                 </span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-sm text-gray-600">Finder Fee:</span>
                                 <span className="font-semibold text-green-600">
-                                  ₦{pkg.finderFeeAmount.toLocaleString()}
+                                  {processAmount(pkg.finderFeeAmount)}
                                 </span>
                               </div>
                             </div>
@@ -485,13 +495,13 @@ const BecomeStockistPage = () => {
                           <div className="flex justify-between">
                             <span className="text-gray-600">Investment:</span>
                             <span className="font-bold text-lg text-gray-900">
-                              ₦{selectedPackageData.investment.toLocaleString()}
+                              {processAmount(selectedPackageData.investment)}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Finder Fee:</span>
                             <span className="font-semibold text-green-600">
-                              ₦{selectedPackageData.finderFeeAmount.toLocaleString()}
+                              {processAmount(selectedPackageData.finderFeeAmount)}
                             </span>
                           </div>
                         </div>
@@ -503,7 +513,7 @@ const BecomeStockistPage = () => {
                           <span className="text-sm font-medium text-gray-700">Your Balance</span>
                         </div>
                         <p className="text-2xl font-bold text-gray-900">
-                          ₦{userProfile?.walletBalance?.toLocaleString() || '0'}
+                          {processWalletBalance(userProfile?.walletBalance || 0)}
                         </p>
                       </div>
 
@@ -514,7 +524,7 @@ const BecomeStockistPage = () => {
                             <span className="text-sm font-medium text-red-700">Insufficient Balance</span>
                           </div>
                           <p className="text-sm text-red-600">
-                            You need ₦{(selectedPackageData.investment - userProfile.walletBalance).toLocaleString()} more
+                            You need {processAmount(selectedPackageData.investment - userProfile.walletBalance)} more
                           </p>
                         </div>
                       )}
@@ -543,7 +553,7 @@ const BecomeStockistPage = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Payment</h3>
               <p className="text-gray-600">You are about to pay:</p>
               <p className="text-2xl font-bold text-gray-900 my-3">
-                ₦{selectedPackageData.investment.toLocaleString()}
+                {processAmount(selectedPackageData.investment)}
               </p>
               <p className="text-sm text-gray-600">
                 for {selectedPackageData.name}
@@ -554,13 +564,13 @@ const BecomeStockistPage = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Finder Fee:</span>
                 <span className="font-semibold text-green-600">
-                  ₦{selectedPackageData.finderFeeAmount.toLocaleString()}
+                  {processAmount(selectedPackageData.finderFeeAmount)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Your Balance:</span>
                 <span className="font-semibold">
-                  ₦{userProfile?.walletBalance?.toLocaleString() || '0'}
+                  {processWalletBalance(userProfile?.walletBalance || 0)}
                 </span>
               </div>
             </div>
