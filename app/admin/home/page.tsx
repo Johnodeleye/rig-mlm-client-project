@@ -1,4 +1,3 @@
-// app/admin/home/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,9 +22,30 @@ const AdminDashboard = () => {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [greeting, setGreeting] = useState('Good Morning');
   
   const router = useRouter();
   const { user, accountType, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    const updateGreeting = () => {
+      const currentHour = new Date().getHours();
+      
+      if (currentHour < 12) {
+        setGreeting('Good Morning');
+      } else if (currentHour < 18) {
+        setGreeting('Good Afternoon');
+      } else {
+        setGreeting('Good Evening');
+      }
+    };
+
+    updateGreeting();
+    
+    const interval = setInterval(updateGreeting, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchAdminStats = async () => {
@@ -107,7 +127,7 @@ const AdminDashboard = () => {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
-                  Good Morning, Admin {user?.username}!
+                  {greeting}, Admin {user?.username}!
                 </h1>
                 <p className="text-gray-600">Here's what's happening with your platform today.</p>
               </div>
