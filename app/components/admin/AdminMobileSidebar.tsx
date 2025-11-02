@@ -1,4 +1,3 @@
-// components/admin/AdminMobileSidebar.tsx
 import { AnimatePresence, motion } from "framer-motion"
 import { 
   Home, 
@@ -18,7 +17,8 @@ import {
   LogOut,
   Bell,
   Store,
-  FileText
+  FileText,
+  UserPlus
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext";
 
@@ -35,6 +35,7 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/admin/dashboard' },
     { id: 'users', label: 'Users', icon: Users, href: '/admin/users' },
+    { id: 'admins', label: 'Register New Admin', icon: UserPlus, href: '/admin/admins' },
     { id: 'products', label: 'Products', icon: Package, href: '/admin/products' },
     { id: 'packages', label: 'Packages', icon: Gift, href: '/admin/packages' },
     { id: 'wallet', label: 'Wallet', icon: Wallet, href: '/admin/wallet' },
@@ -90,7 +91,6 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
                 </button>
               </div>
 
-              {/* Admin Info */}
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-white" />
@@ -123,7 +123,6 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
               })}
             </nav>
 
-            {/* Logout Button */}
             <div className="p-4 border-t border-gray-200 sticky bottom-0 bg-white">
               <button
                 onClick={handleLogout}

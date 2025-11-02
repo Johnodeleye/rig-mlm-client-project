@@ -1,4 +1,3 @@
-// app/components/admin/AdminDesktopSidebar.tsx
 'use client';
 
 import { motion } from 'framer-motion';
@@ -15,7 +14,8 @@ import {
   Bell,
   Store,
   FileText,
-  DollarSign
+  DollarSign,
+  UserPlus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -32,6 +32,7 @@ const AdminDesktopSidebar = ({ activeMenu, setActiveMenu }: AdminDesktopSidebarP
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home, path: '/admin/home' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
+    { id: 'admins', label: 'Register New Admin', icon: UserPlus, path: '/admin/admins' },
     { id: 'products', label: 'Products', icon: Package, path: '/admin/products' },
     { id: 'packages', label: 'Packages', icon: Gift, path: '/admin/packages' },
     { id: 'wallet', label: 'Wallet', icon: Wallet, path: '/admin/wallet' },
@@ -80,7 +81,6 @@ const AdminDesktopSidebar = ({ activeMenu, setActiveMenu }: AdminDesktopSidebarP
         </nav>
       </div>
 
-      {/* Logout Button */}
       <div className="p-3 border-t border-gray-200">
         <motion.button
           whileHover={{ scale: 1.02 }}
