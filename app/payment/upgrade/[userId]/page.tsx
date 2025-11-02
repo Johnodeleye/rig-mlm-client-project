@@ -1,4 +1,3 @@
-// app/payment/upgrade/[userId]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -130,10 +129,27 @@ const UpgradePaymentPage = () => {
     }
   };
 
+  const getUpgradePrice = (): number => {
+    if (!currentPackage || !newPackage) return newPackage?.priceNGN || 0;
+    return newPackage.priceNGN - currentPackage.priceNGN;
+  };
+
+  const getUpgradePV = (): number => {
+    if (!currentPackage || !newPackage) return newPackage?.pv || 0;
+    return newPackage.pv - currentPackage.pv;
+  };
+
+  const getUpgradeTP = (): number => {
+    if (!currentPackage || !newPackage) return newPackage?.tp || 0;
+    return newPackage.tp - currentPackage.tp;
+  };
+
   const handlePayment = async () => {
     if (!userData || !newPackage || !walletData) return;
 
-    if (walletData.availableBalance < newPackage.priceNGN) {
+    const upgradePrice = getUpgradePrice();
+
+    if (walletData.availableBalance < upgradePrice) {
       setError('Insufficient funds in your wallet');
       return;
     }
@@ -153,7 +169,7 @@ const UpgradePaymentPage = () => {
           },
           body: JSON.stringify({
             packageId: newPackage.packageId,
-            amount: newPackage.priceNGN
+            amount: upgradePrice
           })
         }
       );
@@ -234,6 +250,10 @@ const UpgradePaymentPage = () => {
     );
   }
 
+  const upgradePrice = getUpgradePrice();
+  const upgradePV = getUpgradePV();
+  const upgradeTP = getUpgradeTP();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
       <motion.div
@@ -289,14 +309,14 @@ const UpgradePaymentPage = () => {
               <span className="font-semibold">Level {newPackage?.level}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">PV/TP:</span>
-              <span className="font-semibold">+{newPackage?.pv}PV +{newPackage?.tp}TP</span>
+              <span className="text-gray-600">PV/TP Gain:</span>
+              <span className="font-semibold">+{upgradePV}PV +{upgradeTP}TP</span>
             </div>
             <div className="border-t pt-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total Amount:</span>
+                <span className="text-gray-600">Upgrade Amount:</span>
                 <span className="text-xl font-bold text-blue-600">
-                  ₦{newPackage?.priceNGN.toLocaleString()}
+                  ₦{upgradePrice.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -322,11 +342,11 @@ const UpgradePaymentPage = () => {
             </div>
           </div>
 
-          {walletData && newPackage && walletData.availableBalance < newPackage.priceNGN && (
+          {walletData && walletData.availableBalance < upgradePrice && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
               <p className="text-red-700 text-sm">
-                Insufficient balance. You need ₦{(newPackage.priceNGN - walletData.availableBalance).toLocaleString()} more.
+                Insufficient balance. You need ₦{(upgradePrice - walletData.availableBalance).toLocaleString()} more.
               </p>
             </div>
           )}
@@ -347,7 +367,7 @@ const UpgradePaymentPage = () => {
 
           <button
             onClick={handlePayment}
-            disabled={isProcessing || !walletData || !newPackage || walletData.availableBalance < newPackage.priceNGN}
+            disabled={isProcessing || !walletData || !newPackage || walletData.availableBalance < upgradePrice}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isProcessing ? (

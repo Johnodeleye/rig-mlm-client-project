@@ -18,7 +18,16 @@ interface Product {
   image?: string;
   stock: number;
   isActive: boolean;
+  pv: number;
+  tp: number;
+  uplinePv: number;
+  uplineTp: number;
+  levelPercentages: Record<number, number>;
   createdAt: string;
+}
+
+interface LevelPercentages {
+  [key: number]: string;
 }
 
 const AdminProductsPage = () => {
@@ -44,7 +53,28 @@ const AdminProductsPage = () => {
     commissionPercentage: '',
     image: '',
     stock: '',
-    isActive: true
+    pv: '',
+    tp: '',
+    uplinePv: '',
+    uplineTp: '',
+    isActive: true,
+    levelPercentages: {
+      1: '',
+      2: '',
+      3: '',
+      4: '',
+      5: '',
+      6: '',
+      7: '',
+      8: '',
+      9: '',
+      10: '',
+      11: '',
+      12: '',
+      13: '',
+      14: '',
+      15: ''
+    } as LevelPercentages
   });
 
   useEffect(() => {
@@ -98,6 +128,16 @@ const AdminProductsPage = () => {
     }));
   };
 
+  const handleLevelPercentageChange = (level: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      levelPercentages: {
+        ...prev.levelPercentages,
+        [level]: value
+      }
+    }));
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -137,6 +177,14 @@ const AdminProductsPage = () => {
       
       const method = editingProduct ? 'PUT' : 'POST';
       
+      const levelPercentages: Record<number, number> = {};
+      for (let i = 1; i <= 15; i++) {
+        const value = formData.levelPercentages[i];
+        if (value && !isNaN(parseFloat(value))) {
+          levelPercentages[i] = parseFloat(value);
+        }
+      }
+
       const productData = {
         name: formData.name,
         description: formData.description,
@@ -144,7 +192,12 @@ const AdminProductsPage = () => {
         commissionPercentage: parseFloat(formData.commissionPercentage),
         image: productImage || null,
         stock: parseInt(formData.stock) || 0,
-        isActive: formData.isActive
+        pv: parseInt(formData.pv) || 0,
+        tp: parseInt(formData.tp) || 0,
+        uplinePv: parseInt(formData.uplinePv) || 0,
+        uplineTp: parseInt(formData.uplineTp) || 0,
+        isActive: formData.isActive,
+        levelPercentages: levelPercentages
       };
 
       const response = await fetch(url, {
@@ -180,7 +233,15 @@ const AdminProductsPage = () => {
       commissionPercentage: '',
       image: '',
       stock: '',
-      isActive: true
+      pv: '',
+      tp: '',
+      uplinePv: '',
+      uplineTp: '',
+      isActive: true,
+      levelPercentages: {
+        1: '', 2: '', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '', 9: '', 10: '',
+        11: '', 12: '', 13: '', 14: '', 15: ''
+      }
     });
     setProductImage('');
     setImageFile(null);
@@ -189,6 +250,12 @@ const AdminProductsPage = () => {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
+    
+    const levelPercentages: LevelPercentages = {};
+    for (let i = 1; i <= 15; i++) {
+      levelPercentages[i] = product.levelPercentages?.[i]?.toString() || '';
+    }
+
     setFormData({
       name: product.name,
       description: product.description,
@@ -196,8 +263,14 @@ const AdminProductsPage = () => {
       commissionPercentage: product.commissionPercentage.toString(),
       image: product.image || '',
       stock: product.stock.toString(),
-      isActive: product.isActive
+      pv: product.pv.toString(),
+      tp: product.tp.toString(),
+      uplinePv: product.uplinePv.toString(),
+      uplineTp: product.uplineTp.toString(),
+      isActive: product.isActive,
+      levelPercentages: levelPercentages
     });
+    
     if (product.image) {
       setProductImage(product.image);
     }
@@ -417,6 +490,14 @@ const AdminProductsPage = () => {
                       <span className="text-sm text-gray-600">Stock:</span>
                       <span className="font-semibold text-gray-900">{product.stock}</span>
                     </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">PV:</span>
+                      <span className="font-semibold text-blue-600">{product.pv}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">TP:</span>
+                      <span className="font-semibold text-purple-600">{product.tp}</span>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
@@ -456,7 +537,7 @@ const AdminProductsPage = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-red-500 shadow-lg border border-gray-200"
+                className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-red-500 shadow-lg border border-gray-200"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-900">
@@ -545,10 +626,7 @@ const AdminProductsPage = () => {
                         value={formData.commissionPercentage}
                         onChange={handleInputChange}
                         required
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        placeholder="e.g., 2"
+                        placeholder="e.g., 10"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                       />
                     </div>
@@ -568,6 +646,66 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        PV (For Buyer)
+                      </label>
+                      <input
+                        type="number"
+                        name="pv"
+                        value={formData.pv}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 100"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        TP (For Buyer)
+                      </label>
+                      <input
+                        type="number"
+                        name="tp"
+                        value={formData.tp}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 50"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        PV (For Uplines)
+                      </label>
+                      <input
+                        type="number"
+                        name="uplinePv"
+                        value={formData.uplinePv}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 10"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        TP (For Uplines)
+                      </label>
+                      <input
+                        type="number"
+                        name="uplineTp"
+                        value={formData.uplineTp}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 5"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Description *
@@ -579,39 +717,60 @@ const AdminProductsPage = () => {
                       required
                       placeholder="Enter product description"
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200 resize-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                     />
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Upline Commission Levels (%)</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {Array.from({ length: 15 }, (_, i) => i + 1).map(level => (
+                        <div key={level}>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Level {level} %
+                          </label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={formData.levelPercentages[level]}
+                            onChange={(e) => handleLevelPercentageChange(level, e.target.value)}
+                            placeholder="0"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-4">
                     <input
                       type="checkbox"
                       name="isActive"
                       checked={formData.isActive}
                       onChange={handleInputChange}
-                      className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                      className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-600"
                     />
                     <label className="text-sm font-medium text-gray-700">
-                      Product is active
+                      Product is active and available for purchase
                     </label>
                   </div>
 
                   <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors font-medium"
+                    >
+                      {editingProduct ? 'Update Product' : 'Create Product'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
                         setShowAddProduct(false);
                         resetForm();
                       }}
-                      className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-300 transition-colors font-medium"
                     >
                       Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      {editingProduct ? 'Update Product' : 'Add Product'}
                     </button>
                   </div>
                 </form>

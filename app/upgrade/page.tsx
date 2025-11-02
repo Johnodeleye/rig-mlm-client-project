@@ -1,4 +1,3 @@
-// app/upgrade/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -79,12 +78,53 @@ const UpgradePage = () => {
     }
   };
 
-  const getCurrentPlanName = () => {
+  const getCurrentPlan = () => {
     if (userData?.membershipPackage === 'No Plan') {
-      return 'No Plan';
+      return null;
     }
-    const currentPackage = packages.find(pkg => pkg.packageId === userData?.membershipPackage);
-    return currentPackage?.name || userData?.membershipPackage || 'No Plan';
+    return packages.find(pkg => pkg.packageId === userData?.membershipPackage);
+  };
+
+  const getUpgradePrice = (newPackage: Package): number => {
+    const currentPackage = getCurrentPlan();
+    
+    if (!currentPackage) {
+      return newPackage.priceNGN;
+    }
+    
+    if (newPackage.level <= currentPackage.level) {
+      return 0;
+    }
+    
+    return newPackage.priceNGN - currentPackage.priceNGN;
+  };
+
+  const getUpgradePV = (newPackage: Package): number => {
+    const currentPackage = getCurrentPlan();
+    
+    if (!currentPackage) {
+      return newPackage.pv;
+    }
+    
+    if (newPackage.level <= currentPackage.level) {
+      return 0;
+    }
+    
+    return newPackage.pv - currentPackage.pv;
+  };
+
+  const getUpgradeTP = (newPackage: Package): number => {
+    const currentPackage = getCurrentPlan();
+    
+    if (!currentPackage) {
+      return newPackage.tp;
+    }
+    
+    if (newPackage.level <= currentPackage.level) {
+      return 0;
+    }
+    
+    return newPackage.tp - currentPackage.tp;
   };
 
   const formatProductContents = (contents: string): string[] => {
@@ -92,18 +132,13 @@ const UpgradePage = () => {
   };
 
   const formatPackagePrice = (pkg: Package): string => {
+    const upgradePrice = getUpgradePrice(pkg);
+    
     if (currency === 'NGN') {
-      return `₦${pkg.priceNGN.toLocaleString()}`;
+      return `₦${upgradePrice.toLocaleString()}`;
     } else {
-      return `$${pkg.priceUSD.toLocaleString()}`;
-    }
-  };
-
-  const getPackagePrice = (pkg: Package): number => {
-    if (currency === 'NGN') {
-      return pkg.priceNGN;
-    } else {
-      return pkg.priceUSD;
+      const upgradePriceUSD = upgradePrice / exchangeRate;
+      return `$${upgradePriceUSD.toLocaleString()}`;
     }
   };
 
@@ -164,7 +199,6 @@ const UpgradePage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -180,11 +214,10 @@ const UpgradePage = () => {
               
               <div className="mt-3 lg:mt-0 px-4 lg:px-6 py-2 bg-green-100 text-green-800 rounded-lg font-semibold text-sm lg:text-base flex items-center gap-2">
                 <Star className="w-4 h-4" />
-                Current: {getCurrentPlanName()}
+                Current: {getCurrentPlan()?.name || 'No Plan'}
               </div>
             </div>
 
-            {/* Wallet Balance */}
             {userData && (
               <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center justify-between">
@@ -206,12 +239,14 @@ const UpgradePage = () => {
             </div>
           )}
 
-          {/* Products Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             {packages.map((pkg, index) => {
-              const isCurrent = userData?.membershipPackage !== 'No Plan' && pkg.packageId === userData?.membershipPackage;
-              const currentPackageLevel = packages.find(p => p.packageId === userData?.membershipPackage)?.level || 0;
-              const canUpgrade = userData && pkg.level > currentPackageLevel;
+              const currentPackage = getCurrentPlan();
+              const isCurrent = currentPackage?.packageId === pkg.packageId;
+              const canUpgrade = !currentPackage || pkg.level > currentPackage.level;
+              const upgradePrice = getUpgradePrice(pkg);
+              const upgradePV = getUpgradePV(pkg);
+              const upgradeTP = getUpgradeTP(pkg);
               
               return (
                 <motion.div
@@ -223,7 +258,6 @@ const UpgradePage = () => {
                     isCurrent ? 'border-[#0660D3] ring-2 ring-[#0660D3] ring-opacity-20' : 'border-gray-200'
                   }`}
                 >
-                  {/* Plan Header */}
                   <div className="text-center mb-4">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Package className="w-5 h-5 text-[#0660D3]" />
@@ -245,19 +279,25 @@ const UpgradePage = () => {
                     )}
                   </div>
 
-                  {/* Price */}
                   <div className="text-center mb-4">
                     <p className="text-2xl font-bold text-gray-900">
                       {formatPackagePrice(pkg)}
                     </p>
+                    <p className="text-sm text-gray-600">
+                      Upgrade Price
+                    </p>
+                    {upgradePV > 0 && upgradeTP > 0 && (
+                      <p className="text-sm text-green-600 mt-1">
+                        +{upgradePV} PV +{upgradeTP} TP
+                      </p>
+                    )}
                     {currency === 'USD' && (
-                      <p className="text-sm text-gray-600">
-                        ₦{pkg.priceNGN.toLocaleString()}
+                      <p className="text-xs text-gray-500">
+                        ₦{upgradePrice.toLocaleString()}
                       </p>
                     )}
                   </div>
 
-                  {/* Product Contents */}
                   <div className="mb-6">
                     <h4 className="text-sm font-semibold text-gray-900 mb-3">Includes:</h4>
                     <ul className="space-y-2">
@@ -270,7 +310,6 @@ const UpgradePage = () => {
                     </ul>
                   </div>
 
-                  {/* Action Button */}
                   <a
                     href={!isCurrent && canUpgrade ? `/payment/upgrade/${user?.id}?package=${pkg.packageId}` : '#'}
                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
