@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import AdminHeader from '@/app/components/admin/AdminHeader';
 import AdminDesktopSidebar from '@/app/components/admin/AdminDesktopSidebar';
 import AdminMobileSidebar from '@/app/components/admin/AdminMobileSidebar';
+import { useAuth } from '@/context/AuthContext';
 
 interface Withdrawal {
   id: string;
@@ -38,14 +39,17 @@ const AdminWithdrawalsPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth');
-    if (!isAuthenticated) {
-      router.push('/login');
-    } else {
-      fetchWithdrawals();
-    }
-  }, [router]);
+     const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+  
+    useEffect(() => {
+      if (!authLoading) {
+        if (!isAuthenticated || accountType !== 'admin') {
+          router.push('/login');
+        } else{
+          fetchWithdrawals();
+        }
+      }
+    }, [isAuthenticated, accountType, authLoading, router]);
 
   const fetchWithdrawals = async () => {
     try {
@@ -145,6 +149,21 @@ const AdminWithdrawalsPage = () => {
   };
 
   const pendingCount = withdrawals.filter(w => w.status === 'pending').length;
+
+    if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Working...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || accountType !== 'admin') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

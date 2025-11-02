@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import AdminHeader from '@/app/components/admin/AdminHeader';
 import AdminDesktopSidebar from '@/app/components/admin/AdminDesktopSidebar';
 import AdminMobileSidebar from '@/app/components/admin/AdminMobileSidebar';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminPointsPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -24,12 +25,17 @@ const AdminPointsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+
+
+   const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth');
-    if (!isAuthenticated) {
-      router.push('/login');
+    if (!authLoading) {
+      if (!isAuthenticated || accountType !== 'admin') {
+        router.push('/login');
+      }
     }
-  }, [router]);
+  }, [isAuthenticated, accountType, authLoading, router]);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {

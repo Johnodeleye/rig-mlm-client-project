@@ -8,6 +8,8 @@ import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
 import MobileSidebar from '../components/MobileBar';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface WalletData {
   totalEarnings: number;
@@ -88,6 +90,8 @@ const WalletPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
+   const router = useRouter();
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -262,34 +266,17 @@ const WalletPage = () => {
     );
   };
 
-  if (isLoading) {
+    if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header 
-          setIsSidebarOpen={setIsSidebarOpen}
-          isProfileDropdownOpen={isProfileDropdownOpen}
-          setIsProfileDropdownOpen={setIsProfileDropdownOpen}
-        />
-        <div className="flex pt-16">
-          <DesktopSidebar 
-            activeMenu={activeMenu}
-            setActiveMenu={setActiveMenu}
-          />
-          <main className="flex-1 w-full lg:ml-64 p-3 lg:p-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-                <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                </div>
-              </div>
-            </div>
-          </main>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Working...</p>
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50">

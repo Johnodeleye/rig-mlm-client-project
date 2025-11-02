@@ -8,6 +8,7 @@ import AdminHeader from '@/app/components/admin/AdminHeader';
 import AdminDesktopSidebar from '@/app/components/admin/AdminDesktopSidebar';
 import AdminMobileSidebar from '@/app/components/admin/AdminMobileSidebar';
 import Header from '@/app/components/Header';
+import { useAuth } from '@/context/AuthContext';
 
 interface AdminNotification {
   id: string;
@@ -25,14 +26,19 @@ const AdminNotificationsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('adminAuth');
-    if (!isAuthenticated) {
-      router.push('/login');
-    } else {
-      fetchAdminNotifications();
-    }
-  }, [router]);
+
+  
+     const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+  
+    useEffect(() => {
+      if (!authLoading) {
+        if (!isAuthenticated || accountType !== 'admin') {
+          router.push('/login');
+        } else{
+          fetchAdminNotifications();
+        }
+      }
+    }, [isAuthenticated, accountType, authLoading, router]);
 
   const fetchAdminNotifications = async () => {
     try {
