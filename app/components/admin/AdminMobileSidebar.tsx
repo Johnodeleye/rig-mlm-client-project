@@ -41,7 +41,7 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
     { id: 'points', label: 'Points', icon: Wallet, href: '/admin/points' },
     { id: 'withdrawals', label: 'Withdrawals', icon: BarChart3, href: '/admin/withdrawals' },
     { id: 'notifications', label: 'Notifications', icon: Bell, href: '/admin/notifications' },
-        { id: 'stockists', label: 'Stockists', icon: Store, href: '/admin/stockists' },
+    { id: 'stockists', label: 'Stockists', icon: Store, href: '/admin/stockists' },
     { id: 'stockist-reports', label: 'Stockist Reports', icon: FileText, href: '/admin/stockists/reports' },
     { id: 'rates', label: 'Rates', icon: DollarSign, href: '/admin/rates' }
   ];
@@ -68,11 +68,11 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
             onClick={() => setIsSidebarOpen(false)}
           />
           <motion.aside
-            initial={{ x: -300 }}
+            initial={{ x: -100 }}
             animate={{ x: 0 }}
-            exit={{ x: -300 }}
+            exit={{ x: -100 }}
             transition={{ type: 'spring', damping: 10 }}
-            className="fixed left-0 top-0 h-full w-80 bg-white z-50 lg:hidden"
+            className="fixed left-0 top-0 h-full w-[85vw] max-w-xs bg-white z-50 lg:hidden overflow-y-auto"
           >
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-6">
@@ -80,7 +80,7 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
                   <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
                     <Shield className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-xl font-bold text-gray-900">RIG Global Admin</span>
+                  <span className="text-lg font-bold text-gray-900 truncate">RIG Global Admin</span>
                 </div>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
@@ -92,17 +92,17 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
 
               {/* Admin Info */}
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">{user?.username || 'Admin'}</p>
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{user?.username || 'Admin'}</p>
                   <p className="text-sm text-gray-500">Super Admin</p>
                 </div>
               </div>
             </div>
 
-            <nav className="p-4 space-y-2">
+            <nav className="p-4 space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -116,21 +116,21 @@ const AdminMobileSidebar = ({ isSidebarOpen, setIsSidebarOpen, activeMenu, setAc
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    {item.label}
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
                   </a>
                 );
               })}
             </nav>
 
             {/* Logout Button */}
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-gray-200 sticky bottom-0 bg-white">
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium">Logout</span>
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+                <span className="font-medium truncate">Logout</span>
               </button>
             </div>
           </motion.aside>

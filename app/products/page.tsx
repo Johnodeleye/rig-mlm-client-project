@@ -32,7 +32,7 @@ const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState('1');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   
@@ -92,7 +92,7 @@ const ProductsPage = () => {
         },
         body: JSON.stringify({
           productId: selectedProduct.id,
-          quantity: quantity
+          quantity: parseInt(quantity) || 1
         })
       });
 
@@ -102,7 +102,7 @@ const ProductsPage = () => {
           alert('Product purchased successfully!');
           setShowPurchaseModal(false);
           setSelectedProduct(null);
-          setQuantity(1);
+          setQuantity('1');
           await fetchProducts();
         }
       } else {
@@ -114,6 +114,22 @@ const ProductsPage = () => {
       alert('Error processing purchase');
     } finally {
       setIsPurchasing(false);
+    }
+  };
+
+  const handleQuantityChange = (value: string) => {
+    if (value === '') {
+      setQuantity('');
+      return;
+    }
+    
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 1) {
+      if (selectedProduct && numValue > selectedProduct.stock) {
+        setQuantity(selectedProduct.stock.toString());
+      } else {
+        setQuantity(numValue.toString());
+      }
     }
   };
 
@@ -131,6 +147,11 @@ const ProductsPage = () => {
   if (!isAuthenticated || accountType !== 'user') {
     return null;
   }
+
+  const numericQuantity = parseInt(quantity) || 1;
+  const totalPrice = selectedProduct ? selectedProduct.price * numericQuantity : 0;
+  const totalPv = selectedProduct ? selectedProduct.pv * numericQuantity : 0;
+  const totalTp = selectedProduct ? selectedProduct.tp * numericQuantity : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -240,7 +261,7 @@ const ProductsPage = () => {
                   <button
                     onClick={() => {
                       setSelectedProduct(product);
-                      setQuantity(1);
+                      setQuantity('1');
                       setShowPurchaseModal(true);
                     }}
                     disabled={product.stock === 0}
@@ -302,7 +323,7 @@ const ProductsPage = () => {
                       min="1"
                       max={selectedProduct.stock}
                       value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) => handleQuantityChange(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                     />
                     <p className="text-sm text-gray-500 mt-1">
@@ -317,20 +338,20 @@ const ProductsPage = () => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Quantity:</span>
-                      <span>{quantity}</span>
+                      <span>{numericQuantity}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">PV Earned:</span>
-                      <span className="text-blue-600">{selectedProduct.pv * quantity}</span>
+                      <span className="text-blue-600">{totalPv}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">TP Earned:</span>
-                      <span className="text-purple-600">{selectedProduct.tp * quantity}</span>
+                      <span className="text-purple-600">{totalTp}</span>
                     </div>
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold">
                         <span>Total Amount:</span>
-                        <span className="text-red-600">₦{(selectedProduct.price * quantity).toLocaleString()}</span>
+                        <span className="text-red-600">₦{totalPrice.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -339,7 +360,7 @@ const ProductsPage = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={handlePurchase}
-                    disabled={isPurchasing}
+                    disabled={isPurchasing || numericQuantity < 1 || numericQuantity > selectedProduct.stock}
                     className="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 disabled:bg-gray-300 transition-colors font-medium"
                   >
                     {isPurchasing ? 'Processing...' : 'Confirm Purchase'}
