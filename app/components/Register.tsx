@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, User, Mail, Phone, MapPin, Shield, ArrowRight, UserPlus, Lock, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -16,7 +16,7 @@ interface MembershipPackage {
   price: string;
   usdPrice: string;
   pv: number;
-  tp: number; // Added TP field
+  tp: number;
   productContents: string;
 }
 
@@ -30,14 +30,13 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isValidatingReferral, setIsValidatingReferral] = useState(false);
   const [referralUser, setReferralUser] = useState<ReferralUser | null>(null);
 
   const searchParams = useSearchParams();
   const referralParam = searchParams.get('ref');
-  const { currency, detectedCountry, isDetecting, convertAmount } = useCurrency();
+  const { currency, detectedCountry, isDetecting } = useCurrency();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -65,13 +64,12 @@ const Register = () => {
             price: currency === 'NGN' ? `₦${pkg.priceNGN.toLocaleString()}` : `$${pkg.priceUSD.toFixed(2)}`,
             usdPrice: `$${pkg.priceUSD.toFixed(2)}`,
             pv: pkg.pv,
-            tp: pkg.tp, // Added TP field
+            tp: pkg.tp,
             productContents: pkg.productContents
           }));
           setMembershipPackages(transformedPackages);
         }
       } catch (error) {
-        console.error('Error fetching packages:', error);
         toast.error('Failed to load membership packages');
       }
     };
@@ -107,7 +105,6 @@ const Register = () => {
           });
         }
       } catch (error) {
-        console.error('Error validating referral:', error);
         setReferralUser({
           fullName: 'Error validating referral',
           username: '',
@@ -122,38 +119,6 @@ const Register = () => {
       validateReferralId(formData.referralId);
     }
   }, [formData.referralId]);
-
-  const generateUsername = useCallback(async (fullName: string) => {
-    if (fullName.trim().length < 2) return;
-
-    try {
-      setIsGeneratingUsername(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/users/generate-username?fullName=${encodeURIComponent(fullName)}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setFormData(prev => ({
-          ...prev,
-          username: data.username
-        }));
-      }
-    } catch (error) {
-      console.error('Error generating username:', error);
-      toast.error('Failed to generate username');
-    } finally {
-      setIsGeneratingUsername(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (formData.fullName.trim()) {
-        generateUsername(formData.fullName);
-      }
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [formData.fullName, generateUsername]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,7 +166,6 @@ const Register = () => {
         toast.error(data.error || 'Registration failed');
       }
     } catch (error) {
-      console.error('Registration error:', error);
       toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -391,17 +355,10 @@ const Register = () => {
                       required
                       value={formData.username}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
-                      placeholder="Generating username..."
-                      readOnly={isGeneratingUsername}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0660D3] focus:border-[#0660D3] transition-all duration-200"
+                      placeholder="Choose your username"
                     />
-                    {isGeneratingUsername && (
-                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
-                    )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Username is automatically generated from your full name
-                  </p>
                 </div>
 
                 <div>
@@ -516,7 +473,6 @@ const Register = () => {
                     ))}
                   </select>
                   
-                  {/* Package details display when a package is selected */}
                   {formData.membershipPackage && (
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       {membershipPackages

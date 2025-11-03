@@ -165,15 +165,6 @@ const Dashboard = () => {
     }
   };
 
-  const commissionData = [
-    { level: 1, totalMembers: 1, commission: '48%', commissionableAmount: convertAmount(2500) },
-    { level: 3, totalMembers: 3, commission: '48%', commissionableAmount: convertAmount(5000) },
-    { level: 5, totalMembers: 5, commission: '48%', commissionableAmount: convertAmount(10000) },
-    { level: 7, totalMembers: 7, commission: '48%', commissionableAmount: convertAmount(15000) },
-    { level: 10, totalMembers: 10, commission: '48%', commissionableAmount: convertAmount(30000) },
-    { level: 12, totalMembers: 12, commission: '48%', commissionableAmount: convertAmount(60000) },
-    { level: 15, totalMembers: 15, commission: '48%', commissionableAmount: convertAmount(150000) }
-  ];
 
   const copyReferralLink = () => {
     if (referralData?.referralLink) {
@@ -388,35 +379,6 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            {/* <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
-            >
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Commission Breakdown</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[280px]">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Level</th>
-                      <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Members</th>
-                      <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Your earning</th>
-                      <th className="text-left py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-600">Comm.Amt</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {commissionData.map((row, index) => (
-                      <tr key={index} className="border-b border-gray-100 last:border-0">
-                        <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-900">Level {row.level}</td>
-                        <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">{row.totalMembers}</td>
-                        <td className="py-2 lg:py-3 text-xs lg:text-sm text-gray-600">{row.commission}</td>
-                        <td className="py-2 lg:py-3 text-xs lg:text-sm font-medium text-gray-900">{row.commissionableAmount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div> */}
           </div>
 
           <motion.div
