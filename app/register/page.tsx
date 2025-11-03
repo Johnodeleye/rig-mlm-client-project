@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import Register from "./components/Register";
+import Register from "../components/Register";
 import { Shield } from "lucide-react";
-import Login from "./components/Login";
+
 
 const Page = () => {
   return (
@@ -14,8 +14,8 @@ const Page = () => {
           <div className="mt-4 w-8 h-8 border-4 border-[#0660D3] border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>}>
-      <Login />
-      {/* <Register /> */}
+ 
+      <Register />
     </Suspense>
   );
 };
