@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Plus, Minus, DollarSign, CreditCard, TrendingUp, Users, Plane, Zap } from 'lucide-react';
+import { Search, Filter, Plus, Minus, DollarSign, CreditCard, TrendingUp, Users, Plane, Zap, Calendar, Target, Users as UsersIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AdminHeader from '@/app/components/admin/AdminHeader';
 import AdminDesktopSidebar from '@/app/components/admin/AdminDesktopSidebar';
@@ -19,9 +19,12 @@ const AdminWalletPage = () => {
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [userPoints, setUserPoints] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [pointsType, setPointsType] = useState<'PERSONAL' | 'TEAM'>('PERSONAL');
+  const [pointsPeriod, setPointsPeriod] = useState<'MONTHLY' | 'CUMULATIVE'>('MONTHLY');
   const router = useRouter();
-    const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading) {
@@ -70,6 +73,7 @@ const AdminWalletPage = () => {
         if (data.success) {
           setSelectedUser(data.user);
           fetchUserTransactions(data.user.id);
+          fetchUserPoints(data.user.id);
         }
       }
     } catch (error) {
@@ -99,12 +103,31 @@ const AdminWalletPage = () => {
     }
   };
 
+  const fetchUserPoints = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/points/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUserPoints(data.points);
+        }
+      }
+    } catch (error) {
+      console.error('Fetch points error:', error);
+    }
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setShowUserDropdown(true);
     if (e.target.value === '') {
       setSelectedUser(null);
       setTransactions([]);
+      setUserPoints([]);
     }
   };
 
@@ -228,6 +251,8 @@ const AdminWalletPage = () => {
           userId: selectedUser.id,
           pvAmount,
           tpAmount,
+          pointsType,
+          pointsPeriod,
           description
         })
       });
@@ -241,6 +266,7 @@ const AdminWalletPage = () => {
             pv: data.newPV,
             tp: data.newTP
           });
+          fetchUserPoints(selectedUser.id);
         }
       } else {
         alert('Error adding points');
@@ -262,11 +288,6 @@ const AdminWalletPage = () => {
       return;
     }
 
-    if ((pvAmount > 0 && pvAmount > selectedUser.pv) || (tpAmount > 0 && tpAmount > selectedUser.tp)) {
-      alert('Deduction amount exceeds available points');
-      return;
-    }
-
     const description = prompt('Enter description (optional):') || `Admin deducted points`;
 
     try {
@@ -281,6 +302,8 @@ const AdminWalletPage = () => {
           userId: selectedUser.id,
           pvAmount,
           tpAmount,
+          pointsType,
+          pointsPeriod,
           description
         })
       });
@@ -294,6 +317,7 @@ const AdminWalletPage = () => {
             pv: data.newPV,
             tp: data.newTP
           });
+          fetchUserPoints(selectedUser.id);
         }
       } else {
         alert('Error deducting points');
@@ -313,6 +337,16 @@ const AdminWalletPage = () => {
     if (!selectedUser) return;
     alert(`View history for user: ${selectedUser.fullName}`);
   };
+
+  const getTotalPoints = (type: 'PERSONAL' | 'TEAM', period: 'MONTHLY' | 'CUMULATIVE') => {
+    const points = userPoints.find(p => p.type === type && p.period === period);
+    return points ? { pv: points.pv, tp: points.tp } : { pv: 0, tp: 0 };
+  };
+
+  const personalMonthly = getTotalPoints('PERSONAL', 'MONTHLY');
+  const personalCumulative = getTotalPoints('PERSONAL', 'CUMULATIVE');
+  const teamMonthly = getTotalPoints('TEAM', 'MONTHLY');
+  const teamCumulative = getTotalPoints('TEAM', 'CUMULATIVE');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -406,6 +440,7 @@ const AdminWalletPage = () => {
                         setSelectedUser(null);
                         setSearchTerm('');
                         setTransactions([]);
+                        setUserPoints([]);
                       }}
                       className="text-red-600 hover:text-red-700 text-sm font-medium"
                     >
@@ -418,179 +453,285 @@ const AdminWalletPage = () => {
           </motion.div>
 
           {selectedUser && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-4 lg:mb-6"
-            >
-              <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Wallet Balance</h3>
-                  <DollarSign className="w-8 h-8 text-green-600 bg-green-100 p-2 rounded-lg" />
+            <>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-4 lg:mb-6"
+              >
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Wallet Balance</h3>
+                    <DollarSign className="w-8 h-8 text-green-600 bg-green-100 p-2 rounded-lg" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900 mb-2">₦{selectedUser.walletBalance?.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600">Available balance</p>
                 </div>
-                <p className="text-3xl font-bold text-gray-900 mb-2">₦{selectedUser.walletBalance?.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Available balance</p>
-              </div>
 
-              <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">PV Balance</h3>
-                  <TrendingUp className="w-8 h-8 text-blue-600 bg-blue-100 p-2 rounded-lg" />
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Current PV</h3>
+                    <TrendingUp className="w-8 h-8 text-blue-600 bg-blue-100 p-2 rounded-lg" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.pv?.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600">Latest Point Value</p>
                 </div>
-                <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.pv?.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Point Value</p>
-              </div>
 
-              <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Travel Points</h3>
-                  <Plane className="w-8 h-8 text-purple-600 bg-purple-100 p-2 rounded-lg" />
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Current TP</h3>
+                    <Plane className="w-8 h-8 text-purple-600 bg-purple-100 p-2 rounded-lg" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.tp?.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600">Latest Travel Points</p>
                 </div>
-                <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.tp?.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Travel Points Balance</p>
-              </div>
 
-              <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Total Transactions</h3>
-                  <CreditCard className="w-8 h-8 text-orange-600 bg-orange-100 p-2 rounded-lg" />
+                <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Total Transactions</h3>
+                    <CreditCard className="w-8 h-8 text-orange-600 bg-orange-100 p-2 rounded-lg" />
+                  </div>
+                  <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.totalTransactions}</p>
+                  <p className="text-sm text-gray-600">All-time transactions</p>
                 </div>
-                <p className="text-3xl font-bold text-gray-900 mb-2">{selectedUser.totalTransactions}</p>
-                <p className="text-sm text-gray-600">All-time transactions</p>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
 
-          {selectedUser && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mb-4 lg:mb-6"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="flex flex-wrap gap-3">
-                <button 
-                  onClick={handleAddFunds}
-                  className="flex items-center gap-2 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Add Funds
-                </button>
-                <button 
-                  onClick={handleDeductFunds}
-                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  <Minus className="w-5 h-5" />
-                  Deduct Funds
-                </button>
-                <button 
-                  onClick={handleAddPoints}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Add Points
-                </button>
-                <button 
-                  onClick={handleDeductPoints}
-                  className="flex items-center gap-2 bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition-colors"
-                >
-                  <Minus className="w-5 h-5" />
-                  Deduct Points
-                </button>
-                <button 
-                  onClick={handleViewTransactions}
-                  className="flex items-center gap-2 bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  View Transactions
-                </button>
-                <button 
-                  onClick={handleUserHistory}
-                  className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  <Users className="w-5 h-5" />
-                  User History
-                </button>
-              </div>
-            </motion.div>
-          )}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mb-4 lg:mb-6"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Points Configuration</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Points Type</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPointsType('PERSONAL')}
+                        className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+                          pointsType === 'PERSONAL'
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Target className="w-4 h-4 inline mr-2" />
+                        Personal
+                      </button>
+                      <button
+                        onClick={() => setPointsType('TEAM')}
+                        className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+                          pointsType === 'TEAM'
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <UsersIcon className="w-4 h-4 inline mr-2" />
+                        Team
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Points Period</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPointsPeriod('MONTHLY')}
+                        className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+                          pointsPeriod === 'MONTHLY'
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Calendar className="w-4 h-4 inline mr-2" />
+                        Monthly
+                      </button>
+                      <button
+                        onClick={() => setPointsPeriod('CUMULATIVE')}
+                        className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+                          pointsPeriod === 'CUMULATIVE'
+                            ? 'bg-orange-600 text-white border-orange-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <TrendingUp className="w-4 h-4 inline mr-2" />
+                        Cumulative
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-          {selectedUser && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-                <Filter className="w-5 h-5 text-gray-400" />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Wallet Actions</h4>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleAddFunds}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Funds
+                      </button>
+                      <button
+                        onClick={handleDeductFunds}
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                      >
+                        <Minus className="w-4 h-4 mr-2" />
+                        Deduct Funds
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Points Actions</h4>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleAddPoints}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Points
+                      </button>
+                      <button
+                        onClick={handleDeductPoints}
+                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                      >
+                        <Minus className="w-4 h-4 mr-2" />
+                        Deduct Points
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Type</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Description</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Amount</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">PV</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">TP</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.length > 0 ? (
-                      transactions.map((transaction) => (
-                        <tr key={transaction.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4 text-sm text-gray-600">{transaction.date}</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{transaction.type}</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{transaction.description}</td>
-                          <td className={`py-3 px-4 text-sm font-medium ${
-                            transaction.type === 'Credit' ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {transaction.amount}
-                          </td>
-                          <td className="py-3 px-4 text-sm font-medium text-blue-600">{transaction.pv}</td>
-                          <td className="py-3 px-4 text-sm font-medium text-purple-600">{transaction.tp}</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              transaction.status === 'Completed' 
-                                ? 'bg-green-100 text-green-800'
-                                : transaction.status === 'Pending'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {transaction.status}
-                            </span>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6 mb-4 lg:mb-6"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Points Overview</h3>
+                  <button
+                    onClick={handleViewTransactions}
+                    className="text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
+                    Refresh Points
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-900 mb-2">Personal Monthly</h4>
+                    <div className="flex justify-between items-center">
+                      <span className="text-2xl font-bold text-blue-900">{personalMonthly.pv}</span>
+                      <span className="text-sm text-blue-700">PV</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-2xl font-bold text-blue-900">{personalMonthly.tp}</span>
+                      <span className="text-sm text-blue-700">TP</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-purple-900 mb-2">Personal Cumulative</h4>
+                    <div className="flex justify-between items-center">
+                      <span className="text-2xl font-bold text-purple-900">{personalCumulative.pv}</span>
+                      <span className="text-sm text-purple-700">PV</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-2xl font-bold text-purple-900">{personalCumulative.tp}</span>
+                      <span className="text-sm text-purple-700">TP</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-green-900 mb-2">Team Monthly</h4>
+                    <div className="flex justify-between items-center">
+                      <span className="text-2xl font-bold text-green-900">{teamMonthly.pv}</span>
+                      <span className="text-sm text-green-700">PV</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-2xl font-bold text-green-900">{teamMonthly.tp}</span>
+                      <span className="text-sm text-green-700">TP</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-orange-900 mb-2">Team Cumulative</h4>
+                    <div className="flex justify-between items-center">
+                      <span className="text-2xl font-bold text-orange-900">{teamCumulative.pv}</span>
+                      <span className="text-sm text-orange-700">PV</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-2xl font-bold text-orange-900">{teamCumulative.tp}</span>
+                      <span className="text-sm text-orange-700">TP</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                  <button
+                    onClick={handleViewTransactions}
+                    className="text-red-600 hover:text-red-700 text-sm font-medium"
+                  >
+                    Refresh Transactions
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Date</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Description</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Amount</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-900">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactions.length > 0 ? (
+                        transactions.map((transaction) => (
+                          <tr key={transaction.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4 text-sm text-gray-900">{transaction.date}</td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                transaction.type === 'Credit' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {transaction.type}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-900">{transaction.description}</td>
+                            <td className="py-3 px-4 text-sm text-gray-900">{transaction.amount}</td>
+                            <td className="py-3 px-4">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {transaction.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="py-8 px-4 text-center text-sm text-gray-500">
+                            No transactions found
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="py-4 text-center text-gray-500">
-                          No transactions found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          )}
-
-          {!selectedUser && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12 bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200"
-            >
-              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Select a user to view wallet and points information</p>
-            </motion.div>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            </>
           )}
         </main>
       </div>

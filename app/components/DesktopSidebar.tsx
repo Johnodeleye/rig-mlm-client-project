@@ -1,15 +1,13 @@
 'use client';
 
-import { 
-  Home, Users, DollarSign, CreditCard, TrendingUp, 
-  Package, MessageCircle, Settings, LogOut, 
+import {
+  Home, Users, DollarSign, CreditCard, TrendingUp,
+  Package, MessageCircle, Settings, LogOut,
   PersonStanding, Bell, User, Store, ShoppingCart,
-  Package2,
-  Clock10
+  Package2, Clock10, ChevronRight, Award
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import { useEffect } from 'react';
 
 interface DesktopSidebarProps {
   activeMenu: string;
@@ -18,11 +16,6 @@ interface DesktopSidebarProps {
 
 const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
   const { userProfile, logout } = useAuth();
-
-  // useEffect(() => {
-  //   console.log('DesktopSidebar - userProfile:', userProfile);
-  //   console.log('DesktopSidebar - isStockist:', userProfile?.isStockist);
-  // }, [userProfile]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, href: '/home' },
@@ -38,30 +31,13 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
     { id: 'claim-products', label: 'Claim Products', icon: Package, href: '/products/claim' }
   ];
 
-  
-
   if (userProfile?.isStockist === true) {
-   
-    menuItems.push({
-      id: 'orders',
-      label: 'See Orders',
-      icon: ShoppingCart,
-      href: '/stockist/orders'
-    });
-    menuItems.push({
-      id: 'inventory',
-      label: 'Inventory',
-      icon: Package2,
-      href: '/stockist/inventory'
-    });
-    menuItems.push({
-      id: 'requests',
-      label: 'Requests',
-      icon: Clock10,
-      href: '/stockist/requests'
-    });
+    menuItems.push(
+      { id: 'orders', label: 'See Orders', icon: ShoppingCart, href: '/stockist/orders' },
+      { id: 'inventory', label: 'Inventory', icon: Package2, href: '/stockist/inventory' },
+      { id: 'requests', label: 'Requests', icon: Clock10, href: '/stockist/requests' }
+    );
   } else {
-   
     menuItems.push({
       id: 'become-stockist',
       label: 'Become a Stockist',
@@ -70,60 +46,66 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
     });
   }
 
-
-
   const handleLogout = () => {
     logout();
   };
 
   return (
-    <div className="hidden lg:flex fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 flex-col z-30 pt-16">
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-            <Image 
-              src="/logo.png" 
-              alt="Logo" 
-              width={40} 
-              height={40}
-              className="rounded-lg"
-            />
-          </div>
-          <div>
-            <h2 className="font-bold text-gray-900 text-lg">RIG GLOBAL</h2>
-            <p className="text-xs text-gray-500">Business Platform</p>
-          </div>
-        </div>
+    <div className="hidden lg:flex fixed left-0 top-0 h-full w-68 bg-white shadow-xl border-r border-gray-200 flex-col z-30 pt-16">
+      {/* Profile Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 p-6 m-4 mt-6 rounded-2xl">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -ml-10 -mb-10"></div>
         
-        <div className="mt-4">
-          <h3 className="font-semibold text-gray-900 truncate">
-            {userProfile?.name || 'Loading...'}
-          </h3>
-          <p className="text-sm text-gray-500 truncate">
-            {userProfile?.plan ? `${userProfile.plan} Plan` : 'Loading Plan'}
-          </p>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-              PV: {userProfile?.pv || 0}
-            </span>
-            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-              TP: {userProfile?.tp || 0}
-            </span>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 shadow-lg">
+              <Image 
+                src="/logo.png" 
+                alt="Logo" 
+                width={28} 
+                height={28} 
+                className="rounded-lg object-contain brightness-0 invert" 
+              />
+            </div>
+            <div>
+              <h2 className="font-bold text-white text-lg">RIG GLOBAL</h2>
+              <p className="text-xs text-blue-100">Business Platform</p>
+            </div>
           </div>
-          <div className="mt-2">
-            <span className={`text-xs px-2 py-1 rounded ${
+
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+            <h3 className="font-bold text-white truncate text-base mb-1">
+              {userProfile?.name || 'Loading...'}
+            </h3>
+            <p className="text-sm text-blue-100 truncate mb-3">
+              {userProfile?.plan ? `${userProfile.plan} Plan` : 'Loading Plan'}
+            </p>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex-1 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30">
+                <p className="text-xs text-blue-100">PV</p>
+                <p className="text-sm font-bold text-white">{userProfile?.pv || 0}</p>
+              </div>
+              <div className="flex-1 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30">
+                <p className="text-xs text-blue-100">TP</p>
+                <p className="text-sm font-bold text-white">{userProfile?.tp || 0}</p>
+              </div>
+            </div>
+            <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold ${
               userProfile?.isStockist 
-                ? 'bg-purple-100 text-purple-800' 
-                : 'bg-gray-100 text-gray-800'
+                ? 'bg-purple-500/20 text-purple-100 border border-purple-400/30' 
+                : 'bg-white/20 text-white border border-white/30'
             }`}>
-              {userProfile?.isStockist ? 'Stockist' : 'Member'}
+              <Award className="w-3.5 h-3.5" />
+              {userProfile?.isStockist ? 'Stockist Member' : 'Member'}
             </span>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 p-4 overflow-y-auto">
-        <ul className="space-y-3">
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-2 overflow-y-auto">
+        <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeMenu === item.id;
@@ -133,14 +115,27 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
                 <a href={item.href}>
                   <button
                     onClick={() => setActiveMenu(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                    className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 group ${
                       isActive
-                        ? 'bg-[#0660D3] text-white shadow-sm transform scale-[1.02]'
-                        : 'text-gray-700 hover:bg-gray-100 hover:shadow-sm'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transform scale-[1.02]'
+                        : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                     }`}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="font-medium">{item.label}</span>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg transition-all ${
+                        isActive 
+                          ? 'bg-white/20 backdrop-blur-sm' 
+                          : 'bg-gray-100 group-hover:bg-gray-200'
+                      }`}>
+                        <Icon className={`w-5 h-5 ${
+                          isActive ? 'text-white' : 'text-gray-600'
+                        }`} />
+                      </div>
+                      <span className="font-semibold text-sm">{item.label}</span>
+                    </div>
+                    {isActive && (
+                      <ChevronRight className="w-5 h-5 text-white" />
+                    )}
                   </button>
                 </a>
               </li>
@@ -149,13 +144,16 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
+      {/* Logout Button */}
+      <div className="p-4 border-t-2 border-gray-100 bg-gray-50">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 hover:shadow-sm"
+          className="w-full flex items-center justify-center gap-3 px-4 py-3.5 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 font-semibold group hover:shadow-md"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          <span className="font-medium">Logout</span>
+          <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+          </div>
+          <span>Logout</span>
         </button>
       </div>
     </div>

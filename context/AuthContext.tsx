@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isActive: boolean;
     profilePicture?: string;
     referralId?: string;
-    isStockist?:boolean;
+    isStockist?: boolean;
   } | null>(null);
   
   const router = useRouter();
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (response.ok) {
         const data = await response.json();
-        console.log('AuthContext - API Response:', data);
+        console.log('AuthContext - fetchUserProfile API Response:', data);
         if (data.success && data.account) {
           const userData = data.account;
           const profileData = {
@@ -123,11 +123,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             totalEarnings: userData.totalEarnings || 0,
             totalReferrals: userData.totalReferrals || 0,
             isActive: userData.isActive || false,
-            profilePicture: userData.profilePicture || null,
+            profilePicture: userData.profilePicture,
             isStockist: userData.isStockist || false
           };
-          console.log('AuthContext - Setting userProfile:', profileData);
+          console.log('AuthContext - fetchUserProfile setting userProfile:', profileData);
           setUserProfile(profileData);
+          setUser(userData);
         }
       }
     } catch (error) {
@@ -199,7 +200,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               totalEarnings: userData.totalEarnings || 0,
               totalReferrals: userData.totalReferrals || 0,
               isActive: userData.isActive || false,
-              profilePicture: userData.profilePicture || null,
+              profilePicture: userData.profilePicture,
               isStockist: userData.isStockist || false
             };
             console.log('AuthContext - checkAuth setting profile:', profileData);
@@ -274,22 +275,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAccountType(accountType);
         setToken(authToken);
         
-        if (account && accountType === 'user') {
+        // Immediately fetch the full user profile with points data
+        if (accountType === 'user') {
+          await fetchUserProfile();
+        } else {
+          // For admin, just set basic profile
           const profileData = {
-            name: account.fullName || account.username,
-            email: account.email || 'user@example.com',
+            name: account.username,
+            email: account.email || 'admin@example.com',
             username: account.username,
-            plan: account.membershipPackage || 'No Plan',
-            pv: account.pv || 0,
-            tp: account.tp || 0,
-            walletBalance: account.walletBalance || 0,
-            totalEarnings: account.totalEarnings || 0,
-            totalReferrals: account.totalReferrals || 0,
+            plan: 'Admin',
+            pv: 0,
+            tp: 0,
+            walletBalance: 0,
+            totalEarnings: 0,
+            totalReferrals: 0,
             isActive: account.isActive || false,
-            profilePicture: account.profilePicture || null,
-            isStockist: account.isStockist || false
+            profilePicture: undefined,
+            isStockist: false
           };
-          console.log('AuthContext - Login setting profile:', profileData);
+          console.log('AuthContext - Login setting admin profile:', profileData);
           setUserProfile(profileData);
         }
         

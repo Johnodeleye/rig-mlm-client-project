@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Search, Users, Plus, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Search, Users, Plus, Minus, Target, Calendar, Users as UsersIcon, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AdminHeader from '@/app/components/admin/AdminHeader';
 import AdminDesktopSidebar from '@/app/components/admin/AdminDesktopSidebar';
@@ -18,16 +18,17 @@ const AdminPointsPage = () => {
   const [tpAmount, setTpAmount] = useState('');
   const [pvAmount, setPvAmount] = useState('');
   const [pointsType, setPointsType] = useState('add');
+  const [pointsCategory, setPointsCategory] = useState<'PERSONAL' | 'TEAM'>('PERSONAL');
+  const [pointsPeriod, setPointsPeriod] = useState<'MONTHLY' | 'CUMULATIVE'>('MONTHLY');
   const [description, setDescription] = useState('');
   const [users, setUsers] = useState<any[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userPoints, setUserPoints] = useState<any[]>([]);
   const router = useRouter();
 
-
-
-   const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, accountType, isLoading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading) {
@@ -63,10 +64,29 @@ const AdminPointsPage = () => {
     }
   };
 
-  const handleUserSelect = (user: any) => {
+  const handleUserSelect = async (user: any) => {
     setSelectedUser(user);
     setShowUserDropdown(false);
     setSearchTerm(user.fullName);
+    await fetchUserPoints(user.id);
+  };
+
+  const fetchUserPoints = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/admin/wallet/points/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUserPoints(data.points);
+        }
+      }
+    } catch (error) {
+      console.error('Fetch points error:', error);
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,6 +94,7 @@ const AdminPointsPage = () => {
     setShowUserDropdown(true);
     if (e.target.value === '') {
       setSelectedUser(null);
+      setUserPoints([]);
     }
   };
 
@@ -94,7 +115,8 @@ const AdminPointsPage = () => {
     }
 
     if (pointsType === 'deduct') {
-      if ((pvValue > 0 && pvValue > selectedUser.pv) || (tpValue > 0 && tpValue > selectedUser.tp)) {
+      const currentPoints = getCurrentPoints();
+      if ((pvValue > 0 && pvValue > currentPoints.pv) || (tpValue > 0 && tpValue > currentPoints.tp)) {
         alert('Deduction amount exceeds available points');
         return;
       }
@@ -118,7 +140,9 @@ const AdminPointsPage = () => {
           userId: selectedUser.id,
           pvAmount: pvValue,
           tpAmount: tpValue,
-          description: description || `Admin ${pointsType === 'add' ? 'added' : 'deducted'} points`
+          pointsType: pointsCategory,
+          pointsPeriod: pointsPeriod,
+          description: description || `Admin ${pointsType === 'add' ? 'added' : 'deducted'} ${pointsCategory.toLowerCase()} ${pointsPeriod.toLowerCase()} points`
         })
       });
 
@@ -134,9 +158,11 @@ const AdminPointsPage = () => {
           setTpAmount('');
           setPvAmount('');
           setDescription('');
+          await fetchUserPoints(selectedUser.id);
         }
       } else {
-        alert(`Error ${pointsType === 'add' ? 'adding' : 'deducting'} points`);
+        const errorData = await response.json();
+        alert(errorData.error || `Error ${pointsType === 'add' ? 'adding' : 'deducting'} points`);
       }
     } catch (error) {
       console.error('Points update error:', error);
@@ -145,6 +171,21 @@ const AdminPointsPage = () => {
       setIsLoading(false);
     }
   };
+
+  const getCurrentPoints = () => {
+    const points = userPoints.find(p => p.type === pointsCategory && p.period === pointsPeriod);
+    return points ? { pv: points.pv, tp: points.tp } : { pv: 0, tp: 0 };
+  };
+
+  const getTotalPoints = (type: 'PERSONAL' | 'TEAM', period: 'MONTHLY' | 'CUMULATIVE') => {
+    const points = userPoints.find(p => p.type === type && p.period === period);
+    return points ? { pv: points.pv, tp: points.tp } : { pv: 0, tp: 0 };
+  };
+
+  const personalMonthly = getTotalPoints('PERSONAL', 'MONTHLY');
+  const personalCumulative = getTotalPoints('PERSONAL', 'CUMULATIVE');
+  const teamMonthly = getTotalPoints('TEAM', 'MONTHLY');
+  const teamCumulative = getTotalPoints('TEAM', 'CUMULATIVE');
 
   const allUsers = searchTerm ? filteredUsers : users;
 
@@ -230,6 +271,70 @@ const AdminPointsPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Points Category
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPointsCategory('PERSONAL')}
+                      className={`p-3 border rounded-lg text-center transition-all duration-200 ${
+                        pointsCategory === 'PERSONAL'
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      <Target className="w-5 h-5 mx-auto mb-1" />
+                      Personal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPointsCategory('TEAM')}
+                      className={`p-3 border rounded-lg text-center transition-all duration-200 ${
+                        pointsCategory === 'TEAM'
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      <UsersIcon className="w-5 h-5 mx-auto mb-1" />
+                      Team
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Points Period
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPointsPeriod('MONTHLY')}
+                      className={`p-3 border rounded-lg text-center transition-all duration-200 ${
+                        pointsPeriod === 'MONTHLY'
+                          ? 'border-purple-500 bg-purple-50 text-purple-700'
+                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      <Calendar className="w-5 h-5 mx-auto mb-1" />
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPointsPeriod('CUMULATIVE')}
+                      className={`p-3 border rounded-lg text-center transition-all duration-200 ${
+                        pointsPeriod === 'CUMULATIVE'
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                      }`}
+                    >
+                      <Zap className="w-5 h-5 mx-auto mb-1" />
+                      Cumulative
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Select User
                   </label>
                   <div className="relative">
@@ -269,13 +374,16 @@ const AdminPointsPage = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-green-900">Selected: {selectedUser.fullName}</p>
-                          <p className="text-sm text-green-700">PV: {selectedUser.pv} | TP: {selectedUser.tp}</p>
+                          <p className="text-sm text-green-700">
+                            Current {pointsCategory} {pointsPeriod}: PV: {getCurrentPoints().pv} | TP: {getCurrentPoints().tp}
+                          </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => {
                             setSelectedUser(null);
                             setSearchTerm('');
+                            setUserPoints([]);
                           }}
                           className="text-red-600 hover:text-red-700 text-sm font-medium"
                         >
@@ -346,7 +454,9 @@ const AdminPointsPage = () => {
               className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-200 p-4 lg:p-6"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Users Points</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {selectedUser ? `${selectedUser.fullName}'s Points` : 'Users Points'}
+                </h2>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
@@ -359,50 +469,129 @@ const AdminPointsPage = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {allUsers.map((user, index) => (
-                  <motion.div
-                    key={user.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                          <Users className="w-5 h-5 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{user.fullName}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
-                        </div>
+              {selectedUser && userPoints.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-blue-900 mb-2">Personal Monthly</h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xl font-bold text-blue-900">{personalMonthly.pv}</span>
+                        <span className="text-sm text-blue-700">PV</span>
                       </div>
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                        {user.membershipPackage}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-                        <p className="text-lg font-bold text-blue-600">{user.tp}</p>
-                        <p className="text-xs text-blue-600">TP Points</p>
-                      </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <TrendingDown className="w-6 h-6 text-green-600 mx-auto mb-1" />
-                        <p className="text-lg font-bold text-green-600">{user.pv}</p>
-                        <p className="text-xs text-green-600">PV Points</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xl font-bold text-blue-900">{personalMonthly.tp}</span>
+                        <span className="text-sm text-blue-700">TP</span>
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </div>
 
-              {allUsers.length === 0 && (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No users found</p>
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-purple-900 mb-2">Personal Cumulative</h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xl font-bold text-purple-900">{personalCumulative.pv}</span>
+                        <span className="text-sm text-purple-700">PV</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xl font-bold text-purple-900">{personalCumulative.tp}</span>
+                        <span className="text-sm text-purple-700">TP</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-green-900 mb-2">Team Monthly</h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xl font-bold text-green-900">{teamMonthly.pv}</span>
+                        <span className="text-sm text-green-700">PV</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xl font-bold text-green-900">{teamMonthly.tp}</span>
+                        <span className="text-sm text-green-700">TP</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-orange-900 mb-2">Team Cumulative</h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xl font-bold text-orange-900">{teamCumulative.pv}</span>
+                        <span className="text-sm text-orange-700">PV</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xl font-bold text-orange-900">{teamCumulative.tp}</span>
+                        <span className="text-sm text-orange-700">TP</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Points History</h3>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {userPoints.map((point, index) => (
+                        <div key={point.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className={`text-sm font-medium ${
+                              point.type === 'PERSONAL' ? 'text-blue-600' : 'text-green-600'
+                            }`}>
+                              {point.type} {point.period}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(point.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>PV: {point.pv}</span>
+                            <span>TP: {point.tp}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {allUsers.map((user, index) => (
+                    <motion.div
+                      key={user.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                      onClick={() => handleUserSelect(user)}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <Users className="w-5 h-5 text-red-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{user.fullName}</p>
+                            <p className="text-sm text-gray-500">{user.email}</p>
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                          {user.membershipPackage}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                          <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                          <p className="text-lg font-bold text-blue-600">{user.tp}</p>
+                          <p className="text-xs text-blue-600">TP Points</p>
+                        </div>
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <TrendingDown className="w-6 h-6 text-green-600 mx-auto mb-1" />
+                          <p className="text-lg font-bold text-green-600">{user.pv}</p>
+                          <p className="text-xs text-green-600">PV Points</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {allUsers.length === 0 && (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500">No users found</p>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
