@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye, EyeOff, User, Mail, Phone, MapPin, Shield, ArrowRight, 
   UserPlus, Lock, Loader2, CheckCircle, XCircle, Sparkles, 
-  Package, TrendingUp, Award, Star, Gift, Globe, Check
+  Package, TrendingUp, Award, Star, Gift, Globe, Check,
+  Wallet, LogIn
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
@@ -38,6 +39,13 @@ const Register = () => {
   const [success, setSuccess] = useState(false);
   const [isValidatingReferral, setIsValidatingReferral] = useState(false);
   const [referralUser, setReferralUser] = useState<ReferralUser | null>(null);
+  const [showWalletPayment, setShowWalletPayment] = useState(false);
+  const [walletLoginData, setWalletLoginData] = useState({
+    username: '',
+    password: ''
+  });
+  const [isWalletLoggingIn, setIsWalletLoggingIn] = useState(false);
+  const [registeredUserId, setRegisteredUserId] = useState('');
 
   const searchParams = useSearchParams();
   const referralParam = searchParams.get('ref');
@@ -50,7 +58,7 @@ const Register = () => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    referralId: referralParam || 'REF123456',
+    referralId: referralParam || '',
     membershipPackage: ''
   });
 
@@ -165,6 +173,7 @@ const Register = () => {
       const data = await response.json();
 
       if (data.success) {
+        setRegisteredUserId(data.user.id);
         setSuccess(true);
         toast.success('Registration successful!');
       } else {
@@ -185,10 +194,48 @@ const Register = () => {
     }));
   };
 
+  const handleWalletLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!walletLoginData.username || !walletLoginData.password) {
+      toast.error('Please enter both username and password');
+      return;
+    }
+
+    setIsWalletLoggingIn(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: walletLoginData.username,
+          password: walletLoginData.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Login successful! Redirecting to payment...');
+        setTimeout(() => {
+          window.location.href = `/payment/${registeredUserId}`;
+        }, 1500);
+      } else {
+        toast.error(data.error || 'Login failed');
+      }
+    } catch (error) {
+      toast.error('Login failed. Please try again.');
+    } finally {
+      setIsWalletLoggingIn(false);
+    }
+  };
+
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
@@ -246,13 +293,86 @@ const Register = () => {
               </ul>
             </div>
 
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-            >
-              Proceed to Login
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            {!showWalletPayment ? (
+              <div className="space-y-4">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center gap-2 w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                >
+                  Proceed to Login
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowWalletPayment(true)}
+                  className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-blue-600 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all duration-300 group"
+                >
+                  <Wallet className="w-5 h-5" />
+                  Or Pay with Wallet
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200"
+              >
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <Wallet className="w-6 h-6 text-purple-600" />
+                  <h3 className="font-bold text-gray-900">Pay with Wallet</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-4 text-center">
+                  Enter login details of the account you want to pay with
+                </p>
+
+                <form onSubmit={handleWalletLogin} className="space-y-4">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Username or Email"
+                      value={walletLoginData.username}
+                      onChange={(e) => setWalletLoginData(prev => ({ ...prev, username: e.target.value }))}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white font-medium"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={walletLoginData.password}
+                      onChange={(e) => setWalletLoginData(prev => ({ ...prev, password: e.target.value }))}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white font-medium"
+                      required
+                    />
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isWalletLoggingIn}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isWalletLoggingIn ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <LogIn className="w-5 h-5" />
+                    )}
+                    {isWalletLoggingIn ? 'Logging In...' : 'Login & Pay Now'}
+                  </motion.button>
+                </form>
+
+                <button
+                  onClick={() => setShowWalletPayment(false)}
+                  className="w-full mt-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors py-2"
+                >
+                  ← Back to options
+                </button>
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
       </div>
@@ -263,7 +383,6 @@ const Register = () => {
     <>
       <AuthRedirect requireAuth={false} />
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 py-12 relative overflow-hidden">
-        {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
@@ -276,7 +395,6 @@ const Register = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-4xl relative z-10"
         >
-          {/* Header */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -332,7 +450,6 @@ const Register = () => {
             </AnimatePresence>
           </motion.div>
 
-          {/* Main Form Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -340,9 +457,7 @@ const Register = () => {
             className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-10"
           >
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Location & Referral Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Detected Location */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                     <Globe className="w-4 h-4 text-blue-600" />
@@ -366,7 +481,6 @@ const Register = () => {
                   </div>
                 </div>
 
-                {/* Referral ID */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                     <Award className="w-4 h-4 text-purple-600" />
@@ -419,22 +533,20 @@ const Register = () => {
                     )}
                   </AnimatePresence>
                   
-                  {formData.referralId === 'REF123456' && (
+                  {formData.referralId === '' && (
                     <p className="text-xs text-gray-500 mt-2 italic">
-                      💡 Leave as REF123456 if you don't have a referral ID
+                      💡 No referral ID
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Personal Information */}
               <div className="border-t-2 border-gray-100 pt-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <User className="w-5 h-5 text-blue-600" />
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Full Name */}
                   <div className="lg:col-span-2">
                     <label htmlFor="fullName" className="block text-sm font-bold text-gray-700 mb-2">
                       Full Name
@@ -454,7 +566,6 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Username */}
                   <div>
                     <label htmlFor="username" className="block text-sm font-bold text-gray-700 mb-2">
                       Username
@@ -474,7 +585,6 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Email */}
                   <div>
                     <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
                       Email Address
@@ -494,7 +604,6 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Phone */}
                   <div className="lg:col-span-2">
                     <label htmlFor="phoneNumber" className="block text-sm font-bold text-gray-700 mb-2">
                       Phone Number
@@ -516,14 +625,12 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Security */}
               <div className="border-t-2 border-gray-100 pt-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-green-600" />
                   Security
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Password */}
                   <div>
                     <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2">
                       Password
@@ -551,7 +658,6 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Confirm Password */}
                   <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-bold text-gray-700 mb-2">
                       Confirm Password
@@ -581,7 +687,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Membership Package */}
               <div className="border-t-2 border-gray-100 pt-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Package className="w-5 h-5 text-purple-600" />
@@ -657,7 +762,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="pt-6">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -699,7 +803,6 @@ const Register = () => {
             </form>
           </motion.div>
 
-          {/* Footer */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
