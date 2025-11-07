@@ -219,10 +219,17 @@ const Register = () => {
       const data = await response.json();
 
       if (data.success) {
+        const { token } = data;
+        
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('fromRegister', 'true');
+        localStorage.setItem('registeredUserId', registeredUserId);
+        
         toast.success('Login successful! Redirecting to payment...');
+        
         setTimeout(() => {
           window.location.href = `/payment/${registeredUserId}`;
-        }, 1500);
+        }, 1000);
       } else {
         toast.error(data.error || 'Login failed');
       }

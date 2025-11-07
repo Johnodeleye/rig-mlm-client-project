@@ -42,7 +42,7 @@ const PaymentPage = () => {
   
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userId = params.userId as string;
 
   useEffect(() => {
@@ -142,8 +142,18 @@ const PaymentPage = () => {
 
       setPaymentSuccess(true);
 
+      const fromRegister = localStorage.getItem('fromRegister');
+      
       setTimeout(() => {
-        router.push('/referrals');
+        if (fromRegister === 'true') {
+          localStorage.removeItem('fromRegister');
+          localStorage.removeItem('registeredUserId');
+          localStorage.removeItem('authToken');
+          sessionStorage.removeItem('authToken');
+          window.location.href = '/login';
+        } else {
+          router.push('/referrals');
+        }
       }, 3000);
 
     } catch (error: any) {
@@ -154,11 +164,23 @@ const PaymentPage = () => {
     }
   };
 
-  // Loading State
+  const handleCancel = () => {
+    const fromRegister = localStorage.getItem('fromRegister');
+    
+    if (fromRegister === 'true') {
+      localStorage.removeItem('fromRegister');
+      localStorage.removeItem('registeredUserId');
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+      window.location.href = '/login';
+    } else {
+      router.push('/referrals');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
@@ -182,11 +204,9 @@ const PaymentPage = () => {
     );
   }
 
-  // Error State
   if (error && !paymentSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-600 via-orange-600 to-pink-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
@@ -238,22 +258,20 @@ const PaymentPage = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => router.push('/referrals')}
+            onClick={handleCancel}
             className="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 group"
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            Back to Referrals
+            {localStorage.getItem('fromRegister') === 'true' ? 'Back to Login' : 'Back to Referrals'}
           </motion.button>
         </motion.div>
       </div>
     );
   }
 
-  // Success State
   if (paymentSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-600 via-emerald-600 to-teal-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
@@ -276,7 +294,6 @@ const PaymentPage = () => {
             <div className="absolute inset-3 bg-white rounded-full flex items-center justify-center">
               <CheckCircle className="w-14 h-14 text-green-600" />
             </div>
-            {/* Confetti Effect */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: [0, 1.5, 0] }}
@@ -330,16 +347,21 @@ const PaymentPage = () => {
 
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Redirecting to referrals in a moment...</span>
+              <span>
+                {localStorage.getItem('fromRegister') === 'true' 
+                  ? 'Redirecting to login...' 
+                  : 'Redirecting to referrals...'
+                }
+              </span>
             </div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => router.push('/referrals')}
+              onClick={handleCancel}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 group"
             >
-              Go to Referrals Now
+              {localStorage.getItem('fromRegister') === 'true' ? 'Go to Login Now' : 'Go to Referrals Now'}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </motion.button>
           </motion.div>
@@ -348,12 +370,10 @@ const PaymentPage = () => {
     );
   }
 
-  // Main Payment Interface
   const hasInsufficientBalance = walletData && packageData ? walletData.availableBalance < packageData.priceNGN : false;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 py-12 relative overflow-hidden">
-      {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
@@ -366,7 +386,6 @@ const PaymentPage = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-2xl relative z-10"
       >
-        {/* Header */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -399,7 +418,6 @@ const PaymentPage = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* User Details Card */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -440,7 +458,6 @@ const PaymentPage = () => {
             </div>
           </motion.div>
 
-          {/* Package Details Card */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -494,7 +511,6 @@ const PaymentPage = () => {
           </motion.div>
         </div>
 
-        {/* Wallet Balance Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -558,7 +574,6 @@ const PaymentPage = () => {
           </AnimatePresence>
         </motion.div>
 
-        {/* Payment Button Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -621,11 +636,11 @@ const PaymentPage = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => router.push('/referrals')}
+            onClick={handleCancel}
             className="w-full py-3 px-6 border-2 border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-2 group"
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            Cancel & Go Back
+            {localStorage.getItem('fromRegister') === 'true' ? 'Cancel & Logout' : 'Cancel & Go Back'}
           </motion.button>
         </motion.div>
       </motion.div>
