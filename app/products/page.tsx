@@ -22,6 +22,7 @@ interface Product {
   uplinePv: number;
   uplineTp: number;
   levelPercentages: any;
+  
 }
 
 const ProductsPage = () => {
