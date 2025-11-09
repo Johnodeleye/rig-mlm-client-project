@@ -67,7 +67,6 @@ const Dashboard = () => {
   const { userProfile, user, token } = useAuth();
   const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
 
-  // Get current month name
   const getCurrentMonth = () => {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 
                     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -254,7 +253,6 @@ const Dashboard = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-4 lg:p-8">
-          {/* Welcome Card - Redesigned */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -328,7 +326,6 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* Points System with Month Name & Total */}
           {pointsData && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -347,7 +344,6 @@ const Dashboard = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Monthly PV */}
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
                   className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
@@ -370,10 +366,18 @@ const Dashboard = () => {
                       <span className="text-white/70 text-xs">Team</span>
                       <span className="text-white text-xl font-bold">{pointsData.monthlyPV.team}</span>
                     </div>
+                    <div className="border-t border-white/20 pt-2 mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/90 text-xs font-semibold flex items-center gap-1">
+                          <Plus className="w-3 h-3" />
+                          Total
+                        </span>
+                        <span className="text-white text-2xl font-bold">{pointsData.monthlyPV.personal + pointsData.monthlyPV.team}</span>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
 
-                {/* Cumulative PV with Total */}
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
                   className="group bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
@@ -408,7 +412,6 @@ const Dashboard = () => {
                   </div>
                 </motion.div>
 
-                {/* Monthly TP */}
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
                   className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
@@ -431,10 +434,18 @@ const Dashboard = () => {
                       <span className="text-white/70 text-xs">Team</span>
                       <span className="text-white text-xl font-bold">{pointsData.monthlyTP.team}</span>
                     </div>
+                    <div className="border-t border-white/20 pt-2 mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/90 text-xs font-semibold flex items-center gap-1">
+                          <Plus className="w-3 h-3" />
+                          Total
+                        </span>
+                        <span className="text-white text-2xl font-bold">{pointsData.monthlyTP.personal + pointsData.monthlyTP.team}</span>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
 
-                {/* Cumulative TP with Total */}
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
                   className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
@@ -472,7 +483,6 @@ const Dashboard = () => {
             </motion.div>
           )}
 
-          {/* Earnings Cards - Redesigned */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -529,9 +539,7 @@ const Dashboard = () => {
             </motion.div>
           </div>
 
-          {/* Referral & Transactions Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Referral Program - Redesigned */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -597,7 +605,6 @@ const Dashboard = () => {
               </div>
             </motion.div>
 
-            {/* Quick Stats - New */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -672,7 +679,6 @@ const Dashboard = () => {
             </motion.div>
           </div>
 
-          {/* Transactions Table - Redesigned */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -771,7 +777,6 @@ const Dashboard = () => {
             )}
           </motion.div>
 
-          {/* Notifications - Redesigned */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
