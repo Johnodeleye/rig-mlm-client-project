@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import { 
   Shield, ArrowRight, UserX, LogOut, AlertCircle, 
-  Loader2, Lock, User, Crown, Info, CheckCircle,
+  Lock, User, Crown, Info, CheckCircle,
   XCircle, Sparkles
 } from "lucide-react";
 import Image from "next/image";
@@ -30,6 +30,8 @@ export default function AuthRedirect({
     if (!isLoading) {
       setIsChecking(false);
       
+      const currentPath = pathname || '';
+
       if (requireAuth) {
         if (!isAuthenticated) {
           router.push(redirectTo);
@@ -37,12 +39,12 @@ export default function AuthRedirect({
         }
 
         if (isAuthenticated && accountType) {
-          if (accountType === 'admin' && !pathname.includes('/admin')) {
+          if (accountType === 'admin' && !currentPath.includes('/admin')) {
             router.push('/admin/home');
             return;
           }
 
-          if (accountType === 'user' && pathname.includes('/admin')) {
+          if (accountType === 'user' && currentPath.includes('/admin')) {
             router.push('/home');
             return;
           }
@@ -52,7 +54,7 @@ export default function AuthRedirect({
           return;
         }
 
-        if ((pathname === '/login' || pathname === '/register' || pathname === '/') && isAuthenticated) {
+        if ((currentPath === '/login' || currentPath === '/register' || currentPath === '/') && isAuthenticated) {
           if (accountType === 'admin') {
             router.push('/admin/home');
           } else if (accountType === 'user' && user?.isActive) {
@@ -61,7 +63,7 @@ export default function AuthRedirect({
         }
       } else {
         if (isAuthenticated && accountType) {
-          if (pathname === '/login' || pathname === '/register' || pathname === '/') {
+          if (currentPath === '/login' || currentPath === '/register' || currentPath === '/') {
             if (accountType === 'admin') {
               router.push('/admin/home');
             } else if (accountType === 'user' && user?.isActive) {
@@ -143,7 +145,9 @@ export default function AuthRedirect({
     );
   }
 
-  if (requireAuth && requireActive && accountType === 'user' && user && !user.isActive && pathname !== '/login') {
+  const currentPath = pathname || '';
+
+  if (requireAuth && requireActive && accountType === 'user' && user && !user.isActive && currentPath !== '/login') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0">
@@ -228,7 +232,7 @@ export default function AuthRedirect({
     );
   }
 
-  if (isAuthenticated && accountType === 'user' && pathname.includes('/admin')) {
+  if (isAuthenticated && accountType === 'user' && currentPath.includes('/admin')) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-600 via-rose-600 to-pink-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0">
@@ -314,7 +318,7 @@ export default function AuthRedirect({
     );
   }
 
-  if (isAuthenticated && accountType === 'admin' && !pathname.includes('/admin') && pathname !== '/login') {
+  if (isAuthenticated && accountType === 'admin' && !currentPath.includes('/admin') && currentPath !== '/login') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-600 via-red-600 to-orange-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0">
