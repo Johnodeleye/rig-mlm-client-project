@@ -78,6 +78,17 @@ interface Transaction {
   type: string;
 }
 
+interface TeamMemberPV {
+  id: string;
+  pv: number;
+}
+
+interface BonusProgress {
+  currentPV: number;
+  targetPV: number;
+  progress: number;
+}
+
 const WalletPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -87,11 +98,11 @@ const WalletPage = () => {
   const [pointsData, setPointsData] = useState<PointsData | null>(null);
   const [commissionData, setCommissionData] = useState<CommissionSummary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [teamMembersPV, setTeamMembersPV] = useState<TeamMemberPV[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
    const router = useRouter();
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,7 +110,7 @@ const WalletPage = () => {
         setIsLoading(true);
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         
-        const [walletRes, pointsRes, commissionRes, transactionsRes] = await Promise.all([
+        const [walletRes, pointsRes, commissionRes, transactionsRes, teamRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/wallet/my-wallet`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
@@ -110,6 +121,9 @@ const WalletPage = () => {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/transactions/my-transactions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/teams/my-teams-enhanced`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ]);
@@ -135,6 +149,24 @@ const WalletPage = () => {
           setTransactions(transactionsData.transactions || []);
         }
 
+        if (teamRes.ok) {
+          const teamData = await teamRes.json();
+          if (teamData.success && teamData.teamData) {
+            const allMembers: TeamMemberPV[] = [];
+            
+            teamData.teamData.network.forEach((level: any) => {
+              level.members.forEach((member: any) => {
+                allMembers.push({
+                  id: member.id,
+                  pv: member.pv || 0
+                });
+              });
+            });
+            
+            setTeamMembersPV(allMembers);
+          }
+        }
+
       } catch (error) {
         console.error('Error fetching wallet data:', error);
       } finally {
@@ -144,6 +176,30 @@ const WalletPage = () => {
 
     fetchData();
   }, []);
+
+  const calculateBonusProgress = (requiredPV: number, maxCappedPV: number): BonusProgress => {
+    let remainingPV = requiredPV;
+    let totalUsedPV = 0;
+    
+    const sortedMembers = [...teamMembersPV].sort((a, b) => b.pv - a.pv);
+    
+    for (const member of sortedMembers) {
+      if (remainingPV <= 0) break;
+      
+      const usablePV = Math.min(member.pv, maxCappedPV, remainingPV);
+      totalUsedPV += usablePV;
+      remainingPV -= usablePV;
+    }
+    
+    const currentPV = Math.min(totalUsedPV, requiredPV);
+    const progress = (currentPV / requiredPV) * 100;
+    
+    return {
+      currentPV,
+      targetPV: requiredPV,
+      progress: Math.min(progress, 100)
+    };
+  };
 
   const processTransactionAmount = (amount: string, type: string): string => {
     if (currency === 'NGN') {
@@ -198,21 +254,24 @@ const WalletPage = () => {
   };
 
   const getRewardsData = () => {
+    const sb1Progress = calculateBonusProgress(600, 270);
+    const sapphireProgress = calculateBonusProgress(3500, 1575);
+    
     if (!pointsData) {
       return {
-        monthlyPV: { current: 0, target: 600 },
-        cumulativePV: { current: 0, target: 3500 },
+        monthlyPV: { current: sb1Progress.currentPV, target: 600 },
+        cumulativePV: { current: sapphireProgress.currentPV, target: 3500 },
         cumulativeTP: { current: 0, target: 30000 }
       };
     }
 
     return {
       monthlyPV: { 
-        current: pointsData.monthlyPV.personal + pointsData.monthlyPV.team, 
+        current: sb1Progress.currentPV, 
         target: 600 
       },
       cumulativePV: { 
-        current: pointsData.cumulativePV.personal + pointsData.cumulativePV.team, 
+        current: sapphireProgress.currentPV, 
         target: 3500 
       },
       cumulativeTP: { 
@@ -276,7 +335,6 @@ const WalletPage = () => {
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -599,7 +657,7 @@ const WalletPage = () => {
                   </thead>
                   <tbody>
                     {monthlySalaryBonuses.map((bonus, index) => {
-                      const progress = calculateProgress(rewardsData.monthlyPV.current, bonus.requiredPV);
+                      const bonusProgress = calculateBonusProgress(bonus.requiredPV, bonus.maxCappedPV);
                       return (
                         <tr key={index} className="border-b border-gray-100 last:border-0">
                           <td className="py-3 text-sm font-medium text-gray-900">{bonus.level}</td>
@@ -611,10 +669,12 @@ const WalletPage = () => {
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-[#0660D3] h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${progress}%` }}
+                                style={{ width: `${bonusProgress.progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</span>
+                            <span className="text-xs text-gray-500 mt-1">
+                              {bonusProgress.currentPV.toLocaleString()} / {bonus.requiredPV.toLocaleString()} PV ({Math.round(bonusProgress.progress)}%)
+                            </span>
                           </td>
                         </tr>
                       );
@@ -640,7 +700,7 @@ const WalletPage = () => {
                   </thead>
                   <tbody>
                     {rankAwards.map((rank, index) => {
-                      const progress = calculateProgress(rewardsData.cumulativePV.current, rank.cumulativePV);
+                      const rankProgress = calculateBonusProgress(rank.cumulativePV, rank.maxCappedPV);
                       return (
                         <tr key={index} className="border-b border-gray-100 last:border-0">
                           <td className="py-3 text-sm font-medium text-gray-900">{rank.rank}</td>
@@ -652,10 +712,12 @@ const WalletPage = () => {
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-[#0660D3] h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${progress}%` }}
+                                style={{ width: `${rankProgress.progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</span>
+                            <span className="text-xs text-gray-500 mt-1">
+                              {rankProgress.currentPV.toLocaleString()} / {rank.cumulativePV.toLocaleString()} PV ({Math.round(rankProgress.progress)}%)
+                            </span>
                           </td>
                         </tr>
                       );
