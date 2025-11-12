@@ -24,7 +24,8 @@ export default function AuthRedirect({
   const { user, accountType, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(true); 
+  // test
 
   useEffect(() => {
     if (!isLoading) {
