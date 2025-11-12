@@ -78,6 +78,36 @@ interface Transaction {
   type: string;
 }
 
+interface BonusProgress {
+  achieved: boolean;
+  progress: number;
+  usedPV: number;
+  requiredPV: number;
+  membersUsed: Array<{
+    userId: string;
+    pvUsed: number;
+    originalPV: number;
+  }>;
+  remainingRequired: number;
+}
+
+interface BonusData {
+  monthlySalaryBonuses: Array<{
+    level: string;
+    requiredPV: number;
+    maxCapPerMember: number;
+    progress: BonusProgress;
+  }>;
+  rankAwards: Array<{
+    rank: string;
+    requiredPV: number;
+    maxCapPerMember: number;
+    progress: BonusProgress;
+  }>;
+  teamMembersCount: number;
+  totalTeamPV: number;
+}
+
 const WalletPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -87,11 +117,11 @@ const WalletPage = () => {
   const [pointsData, setPointsData] = useState<PointsData | null>(null);
   const [commissionData, setCommissionData] = useState<CommissionSummary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [bonusData, setBonusData] = useState<BonusData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
    const router = useRouter();
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,7 +129,7 @@ const WalletPage = () => {
         setIsLoading(true);
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         
-        const [walletRes, pointsRes, commissionRes, transactionsRes] = await Promise.all([
+        const [walletRes, pointsRes, commissionRes, transactionsRes, bonusRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/wallet/my-wallet`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
@@ -110,6 +140,9 @@ const WalletPage = () => {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/transactions/my-transactions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/bonus/my-bonus-progress`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ]);
@@ -133,6 +166,11 @@ const WalletPage = () => {
         if (transactionsRes.ok) {
           const transactionsData = await transactionsRes.json();
           setTransactions(transactionsData.transactions || []);
+        }
+
+        if (bonusRes.ok) {
+          const bonusData = await bonusRes.json();
+          setBonusData(bonusData.bonusData);
         }
 
       } catch (error) {
@@ -276,7 +314,6 @@ const WalletPage = () => {
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -598,27 +635,38 @@ const WalletPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {monthlySalaryBonuses.map((bonus, index) => {
-                      const progress = calculateProgress(rewardsData.monthlyPV.current, bonus.requiredPV);
-                      return (
-                        <tr key={index} className="border-b border-gray-100 last:border-0">
-                          <td className="py-3 text-sm font-medium text-gray-900">{bonus.level}</td>
-                          <td className="py-3 text-sm text-gray-600">{bonus.requiredPV.toLocaleString()} PV</td>
-                          <td className="py-3 text-sm text-gray-600">{bonus.salaryNGN}</td>
-                          <td className="py-3 text-sm text-gray-600">{bonus.salaryUSD}</td>
-                          <td className="py-3 text-sm text-gray-600">{bonus.maxCappedPV.toLocaleString()} PV</td>
-                          <td className="py-3">
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-[#0660D3] h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${progress}%` }}
-                              ></div>
+                    {bonusData?.monthlySalaryBonuses.map((bonus, index) => (
+                      <tr key={index} className="border-b border-gray-100 last:border-0">
+                        <td className="py-3 text-sm font-medium text-gray-900">{bonus.level}</td>
+                        <td className="py-3 text-sm text-gray-600">{bonus.requiredPV.toLocaleString()} PV</td>
+                        <td className="py-3 text-sm text-gray-600">
+                          {monthlySalaryBonuses.find(b => b.level === bonus.level)?.salaryNGN}
+                        </td>
+                        <td className="py-3 text-sm text-gray-600">
+                          {monthlySalaryBonuses.find(b => b.level === bonus.level)?.salaryUSD}
+                        </td>
+                        <td className="py-3 text-sm text-gray-600">{bonus.maxCapPerMember.toLocaleString()} PV</td>
+                        <td className="py-3">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                bonus.progress.achieved ? 'bg-green-500' : 'bg-[#0660D3]'
+                              }`}
+                              style={{ width: `${bonus.progress.progress}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>{Math.round(bonus.progress.progress)}%</span>
+                            <span>{bonus.progress.usedPV.toLocaleString()} / {bonus.requiredPV.toLocaleString()} PV</span>
+                          </div>
+                          {bonus.progress.achieved && (
+                            <div className="text-xs text-green-600 font-medium mt-1">
+                              ✓ Bonus Achieved
                             </div>
-                            <span className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -639,27 +687,38 @@ const WalletPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {rankAwards.map((rank, index) => {
-                      const progress = calculateProgress(rewardsData.cumulativePV.current, rank.cumulativePV);
-                      return (
-                        <tr key={index} className="border-b border-gray-100 last:border-0">
-                          <td className="py-3 text-sm font-medium text-gray-900">{rank.rank}</td>
-                          <td className="py-3 text-sm text-gray-600">{rank.cumulativePV.toLocaleString()} PV</td>
-                          <td className="py-3 text-sm text-gray-600">{rank.awardNGN}</td>
-                          <td className="py-3 text-sm text-gray-600">{rank.awardUSD}</td>
-                          <td className="py-3 text-sm text-gray-600">{rank.maxCappedPV.toLocaleString()} PV</td>
-                          <td className="py-3">
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-[#0660D3] h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${progress}%` }}
-                              ></div>
+                    {bonusData?.rankAwards.map((rank, index) => (
+                      <tr key={index} className="border-b border-gray-100 last:border-0">
+                        <td className="py-3 text-sm font-medium text-gray-900">{rank.rank}</td>
+                        <td className="py-3 text-sm text-gray-600">{rank.requiredPV.toLocaleString()} PV</td>
+                        <td className="py-3 text-sm text-gray-600">
+                          {rankAwards.find(r => r.rank === rank.rank)?.awardNGN}
+                        </td>
+                        <td className="py-3 text-sm text-gray-600">
+                          {rankAwards.find(r => r.rank === rank.rank)?.awardUSD}
+                        </td>
+                        <td className="py-3 text-sm text-gray-600">{rank.maxCapPerMember.toLocaleString()} PV</td>
+                        <td className="py-3">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                rank.progress.achieved ? 'bg-green-500' : 'bg-[#0660D3]'
+                              }`}
+                              style={{ width: `${rank.progress.progress}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>{Math.round(rank.progress.progress)}%</span>
+                            <span>{rank.progress.usedPV.toLocaleString()} / {rank.requiredPV.toLocaleString()} PV</span>
+                          </div>
+                          {rank.progress.achieved && (
+                            <div className="text-xs text-green-600 font-medium mt-1">
+                              ✓ Award Achieved
                             </div>
-                            <span className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
