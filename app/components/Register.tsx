@@ -48,7 +48,7 @@ const Register = () => {
   const [registeredUserId, setRegisteredUserId] = useState('');
 
   const searchParams = useSearchParams();
-  const referralParam = searchParams.get('ref');
+  const referralParam = searchParams?.get('ref') || '';
   const { currency, detectedCountry, isDetecting } = useCurrency();
 
   const [formData, setFormData] = useState({
