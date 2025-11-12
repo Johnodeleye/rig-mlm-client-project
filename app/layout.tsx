@@ -60,14 +60,14 @@ export default function RootLayout({
               position="top-center"
               toastOptions={{
                 style: {
-                  background: '#0660D3',
+                  background: '#722f37',
                   color: '#fff',
                   borderRadius: '8px',
                   fontWeight: 500,
                 },
                 success: {
                   duration: 3000,
-                  style: { background: '#0660D3', color: '#fff' },
+                  style: { background: '#722f37', color: '#fff' },
                 },
                 error: {
                   duration: 4000,
@@ -77,7 +77,7 @@ export default function RootLayout({
             />
 
             {children}
-            <TopLoader color="#0660D3" height={4} />
+            <TopLoader color="#722f37" height={4} />
             <ClientComponents />
 
             <div className="mx-auto md:pb-0 pb-26">

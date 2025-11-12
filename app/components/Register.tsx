@@ -243,144 +243,128 @@ const Register = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-72 h-72 bg-rose-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
         </div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, type: "spring" }}
-          className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-10 max-w-lg w-full text-center"
+          transition={{ duration: 0.4 }}
+          className="relative z-10 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8 max-w-md w-full"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="relative w-24 h-24 mx-auto mb-6"
+            transition={{ delay: 0.2, type: "spring" }}
+            className="relative w-20 h-20 mx-auto mb-4"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full animate-pulse"></div>
             <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-emerald-600" />
+              <CheckCircle className="w-10 h-10 text-emerald-600" />
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-600 bg-clip-text text-transparent mb-3">
-              Registration Successful!
-            </h2>
-            <p className="text-gray-600 mb-8 text-lg">
-              Welcome to RIG Global! Please contact your upline to activate your account.
-            </p>
+          <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-emerald-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+            Registration Successful!
+          </h2>
+          <p className="text-gray-600 text-center mb-6">
+            Welcome to RIG Global! Please contact your upline to activate your account.
+          </p>
 
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 mb-8 border border-orange-200">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-orange-600" />
-                <h3 className="font-bold text-gray-900">Next Steps</h3>
-              </div>
-              <ul className="text-sm text-gray-700 space-y-2 text-left">
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full"></div>
-                  Contact your upline for account activation
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full"></div>
-                  Check your email for registration details
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full"></div>
-                  Login once your account is activated
-                </li>
-              </ul>
+          <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 mb-6 border border-orange-200">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-orange-600" />
+              <h3 className="font-bold text-gray-900 text-sm">Next Steps</h3>
             </div>
+            <ul className="text-xs text-gray-700 space-y-1.5">
+              <li className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <span>Contact your upline for account activation</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <span>Check your email for registration details</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <span>Login once your account is activated</span>
+              </li>
+            </ul>
+          </div>
 
-            {!showWalletPayment ? (
-              <div className="space-y-4">
-                <Link
-                  href="/login"
-                  className="inline-flex items-center justify-center gap-2 w-full px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-                >
-                  Proceed to Login
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowWalletPayment(true)}
-                  className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-orange-600 text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-all duration-300 group"
-                >
-                  <Wallet className="w-5 h-5" />
-                  Or Pay with Wallet
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </motion.button>
-              </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-6 border border-rose-200"
+          {!showWalletPayment ? (
+            <div className="space-y-3">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-300 group"
               >
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <Wallet className="w-6 h-6 text-rose-600" />
-                  <h3 className="font-bold text-gray-900">Pay with Wallet</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4 text-center">
-                  Enter login details of the account you want to pay with
-                </p>
+                Proceed to Login
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
 
-                <form onSubmit={handleWalletLogin} className="space-y-4">
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Username or Email"
-                      value={walletLoginData.username}
-                      onChange={(e) => setWalletLoginData(prev => ({ ...prev, username: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 bg-white font-medium"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={walletLoginData.password}
-                      onChange={(e) => setWalletLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 bg-white font-medium"
-                      required
-                    />
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={isWalletLoggingIn}
-                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isWalletLoggingIn ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <LogIn className="w-5 h-5" />
-                    )}
-                    {isWalletLoggingIn ? 'Logging In...' : 'Login & Pay Now'}
-                  </motion.button>
-                </form>
+              <button
+                onClick={() => setShowWalletPayment(true)}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-orange-600 text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-all duration-300 group"
+              >
+                <Wallet className="w-4 h-4" />
+                Pay with Wallet
+              </button>
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-4 border border-rose-200"
+            >
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Wallet className="w-5 h-5 text-rose-600" />
+                <h3 className="font-bold text-gray-900">Pay with Wallet</h3>
+              </div>
+              <p className="text-xs text-gray-600 mb-3 text-center">
+                Enter login details of the account you want to pay with
+              </p>
 
+              <form onSubmit={handleWalletLogin} className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Username or Email"
+                  value={walletLoginData.username}
+                  onChange={(e) => setWalletLoginData(prev => ({ ...prev, username: e.target.value }))}
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all bg-white text-sm"
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={walletLoginData.password}
+                  onChange={(e) => setWalletLoginData(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all bg-white text-sm"
+                  required
+                />
                 <button
-                  onClick={() => setShowWalletPayment(false)}
-                  className="w-full mt-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors py-2"
+                  type="submit"
+                  disabled={isWalletLoggingIn}
+                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 px-6 rounded-xl font-bold hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  ← Back to options
+                  {isWalletLoggingIn ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <LogIn className="w-4 h-4" />
+                  )}
+                  {isWalletLoggingIn ? 'Logging In...' : 'Login & Pay Now'}
                 </button>
-              </motion.div>
-            )}
-          </motion.div>
+              </form>
+
+              <button
+                onClick={() => setShowWalletPayment(false)}
+                className="w-full mt-2 text-gray-600 hover:text-gray-800 font-semibold transition-colors py-2 text-sm"
+              >
+                ← Back
+              </button>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     );
@@ -389,108 +373,97 @@ const Register = () => {
   return (
     <>
       <AuthRedirect requireAuth={false} />
-      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 py-12 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 py-8 relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-pulse"></div>
         </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-4xl relative z-10"
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-3xl relative z-10"
         >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-center mb-8"
-          >
-<div className="flex items-center justify-center gap-4 mb-4">
-  <motion.div 
-    whileHover={{ rotate: 360, scale: 1.1 }}
-    transition={{ duration: 0.6 }}
-    className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30 shadow-2xl"
-  >
-    <Image 
-      src="/logo.png" 
-      alt="RIG Global" 
-      width={40} 
-      height={40}
-      className="object-contain brightness-0 invert"
-    />
-  </motion.div>
+          {/* Header */}
+          <div className="text-center mb-6">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="flex items-center justify-center gap-3 mb-3"
+            >
+              <motion.div 
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-xl flex items-center justify-center border border-white/30 shadow-xl"
+              >
+                <Image 
+                  src="/logo.png" 
+                  alt="RIG Global" 
+                  width={28} 
+                  height={28}
+                  className="object-contain brightness-0 invert"
+                />
+              </motion.div>
+              <div>
+                <h1 className="text-3xl font-bold text-white leading-none">
+                  Join RIG Global
+                </h1>
+                <p className="text-orange-100 text-xs flex items-center justify-center gap-1 mt-1">
+                  <Sparkles className="w-3 h-3" />
+                  Start your success journey
+                </p>
+              </div>
+            </motion.div>
 
-  <div className="flex flex-col justify-center">
-    <h1 className="text-4xl font-bold text-white mb-1 leading-none whitespace-nowrap">
-      Join RIG Global
-    </h1>
-    <p className="text-orange-100 text-sm flex items-center gap-1">
-      <Sparkles className="w-4 h-4" />
-      Start your journey to success today
-    </p>
-  </div>
-</div>
-
-            
-            <AnimatePresence>
-              {referralParam && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-4 p-4 bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-xl"
-                >
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Gift className="w-5 h-5 text-yellow-300" />
-                    <p className="text-sm font-bold text-white">
-                      Special Invitation!
-                    </p>
-                  </div>
-                  <p className="text-sm text-orange-100">
-                    You were referred by someone! Their referral ID has been auto-filled below.
+            {referralParam && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-3 p-3 bg-white/20 backdrop-blur-xl border border-white/30 rounded-xl shadow-lg inline-block"
+              >
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-yellow-300" />
+                  <p className="text-xs font-bold text-white">
+                    You have a special invitation!
                   </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </div>
 
+          {/* Form Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-10"
+            transition={{ delay: 0.1 }}
+            className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-6 lg:p-8"
           >
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Location & Referral */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-orange-600" />
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-orange-600" />
                     Detected Location
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
-                      value={
-                        isDetecting 
-                          ? 'Detecting location...' 
-                          : `${detectedCountry} ${currency === 'NGN' ? '🇳🇬' : '🇺🇸'}`
-                      }
+                      value={isDetecting ? 'Detecting...' : `${detectedCountry} ${currency === 'NGN' ? '🇳🇬' : '🇺🇸'}`}
                       disabled
-                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 cursor-not-allowed font-medium"
+                      className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-600 text-sm"
                     />
                     {isDetecting && (
-                      <Loader2 className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 animate-spin text-orange-600" />
+                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-orange-600" />
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Award className="w-4 h-4 text-rose-600" />
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                    <Award className="w-3.5 h-3.5 text-rose-600" />
                     Referral ID
                   </label>
                   <input
@@ -498,133 +471,105 @@ const Register = () => {
                     name="referralId"
                     value={formData.referralId}
                     onChange={handleChange}
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium"
+                    className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm"
                     placeholder="Enter referral ID"
                   />
                   
                   {isValidatingReferral && (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-2 mt-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-lg"
-                    >
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Validating referral ID...
-                    </motion.div>
+                    <div className="flex items-center gap-1.5 mt-1.5 text-xs text-orange-600">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Validating...
+                    </div>
                   )}
                   
-                  <AnimatePresence>
-                    {referralUser && !isValidatingReferral && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className={`flex items-center gap-2 mt-2 text-sm px-3 py-2 rounded-lg ${
-                          referralUser.isValid 
-                            ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' 
-                            : 'text-red-700 bg-red-50 border border-red-200'
-                        }`}
-                      >
-                        {referralUser.isValid ? (
-                          <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                        ) : (
-                          <XCircle className="w-4 h-4 flex-shrink-0" />
-                        )}
-                        <span className="font-medium">
-                          {referralUser.isValid 
-                            ? `✨ Referred by: ${referralUser.fullName} (@${referralUser.username})`
-                            : referralUser.fullName
-                          }
-                        </span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  
-                  {formData.referralId === '' && (
-                    <p className="text-xs text-gray-500 mt-2 italic">
-                      💡 No referral ID
-                    </p>
+                  {referralUser && !isValidatingReferral && (
+                    <div className={`flex items-center gap-1.5 mt-1.5 text-xs px-2 py-1 rounded ${
+                      referralUser.isValid 
+                        ? 'text-emerald-700 bg-emerald-50' 
+                        : 'text-red-700 bg-red-50'
+                    }`}>
+                      {referralUser.isValid ? (
+                        <CheckCircle className="w-3 h-3" />
+                      ) : (
+                        <XCircle className="w-3 h-3" />
+                      )}
+                      <span>
+                        {referralUser.isValid 
+                          ? `${referralUser.fullName}`
+                          : referralUser.fullName
+                        }
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="border-t-2 border-gray-100 pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-orange-600" />
+              {/* Personal Information */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-orange-600" />
                   Personal Information
                 </h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="lg:col-span-2">
-                    <label htmlFor="fullName" className="block text-sm font-bold text-gray-700 mb-2">
-                      Full Name
-                    </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Full Name</label>
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
-                        id="fullName"
                         name="fullName"
                         type="text"
                         required
                         value={formData.fullName}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm"
                         placeholder="Enter your full name"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="username" className="block text-sm font-bold text-gray-700 mb-2">
-                      Username
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Username</label>
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
-                        id="username"
                         name="username"
                         type="text"
                         required
                         value={formData.username}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
-                        placeholder="Choose a username"
+                        className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm"
+                        placeholder="Choose username"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
-                      Email Address
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email Address</label>
                     <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
-                        id="email"
                         name="email"
                         type="email"
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm"
                         placeholder="your@email.com"
                       />
                     </div>
                   </div>
 
-                  <div className="lg:col-span-2">
-                    <label htmlFor="phoneNumber" className="block text-sm font-bold text-gray-700 mb-2">
-                      Phone Number
-                    </label>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Phone Number</label>
                     <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
-                        id="phoneNumber"
                         name="phoneNumber"
                         type="tel"
                         required
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm"
                         placeholder="+234 000 000 0000"
                       />
                     </div>
@@ -632,89 +577,82 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="border-t-2 border-gray-100 pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-emerald-600" />
+              {/* Security */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-emerald-600" />
                   Security
                 </h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2">
-                      Password
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
-                        id="password"
                         name="password"
                         type={showPassword ? 'text' : 'password'}
                         required
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm"
                         placeholder="Min. 6 characters"
                         minLength={6}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-bold text-gray-700 mb-2">
-                      Confirm Password
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Confirm Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
-                        id="confirmPassword"
                         name="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
                         required
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm"
                         placeholder="Re-enter password"
                         minLength={6}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t-2 border-gray-100 pt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-rose-600" />
+              {/* Membership Package */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
+                  <Package className="w-4 h-4 text-rose-600" />
                   Membership Package
                 </h3>
                 <div>
-                  <label htmlFor="membershipPackage" className="block text-sm font-bold text-gray-700 mb-2">
-                    Select Your Package
-                  </label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Select Package</label>
                   <select
-                    id="membershipPackage"
                     name="membershipPackage"
                     required
                     value={formData.membershipPackage}
                     onChange={handleChange}
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300 cursor-pointer"
+                    className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all bg-white text-sm cursor-pointer"
                   >
-                    <option value="">Choose a membership package</option>
+                    <option value="">Choose a package</option>
                     {membershipPackages.map((pkg) => (
                       <option key={pkg.id} value={pkg.id}>
-                        {pkg.name} - {pkg.price} ({pkg.usdPrice}) • PV: {pkg.pv} | TP: {pkg.tp}
+                        {pkg.name} - {pkg.price} • PV: {pkg.pv} | TP: {pkg.tp}
                       </option>
                     ))}
                   </select>
@@ -725,41 +663,38 @@ const Register = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 overflow-hidden"
+                        className="mt-3"
                       >
                         {membershipPackages
                           .filter(pkg => pkg.id === formData.membershipPackage)
-                          .map(selectedPkg => (
-                            <div 
-                              key={selectedPkg.id} 
-                              className="bg-gradient-to-br from-rose-50 via-orange-50 to-red-50 border-2 border-rose-200 rounded-2xl p-6"
-                            >
-                              <div className="flex items-center gap-2 mb-4">
-                                <Star className="w-5 h-5 text-rose-600" />
-                                <h4 className="font-bold text-gray-900">Package Details</h4>
+                          .map(pkg => (
+                            <div key={pkg.id} className="bg-gradient-to-br from-rose-50 to-orange-50 border-2 border-rose-200 rounded-xl p-4">
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <Star className="w-4 h-4 text-rose-600" />
+                                <h4 className="font-bold text-gray-900 text-sm">Package Details</h4>
                               </div>
-                              <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-orange-200">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <TrendingUp className="w-4 h-4 text-orange-600" />
+                              <div className="grid grid-cols-2 gap-3 mb-3">
+                                <div className="bg-white/80 rounded-lg p-3 border border-orange-200">
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                    <TrendingUp className="w-3.5 h-3.5 text-orange-600" />
                                     <span className="text-xs text-gray-600 font-semibold">PV Points</span>
                                   </div>
-                                  <p className="text-2xl font-bold text-orange-700">{selectedPkg.pv}</p>
+                                  <p className="text-xl font-bold text-orange-700">{pkg.pv}</p>
                                 </div>
-                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-emerald-200">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Award className="w-4 h-4 text-emerald-600" />
+                                <div className="bg-white/80 rounded-lg p-3 border border-emerald-200">
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                    <Award className="w-3.5 h-3.5 text-emerald-600" />
                                     <span className="text-xs text-gray-600 font-semibold">TP Points</span>
                                   </div>
-                                  <p className="text-2xl font-bold text-emerald-700">{selectedPkg.tp}</p>
+                                  <p className="text-xl font-bold text-emerald-700">{pkg.tp}</p>
                                 </div>
                               </div>
-                              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-rose-200">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Gift className="w-4 h-4 text-rose-600" />
-                                  <span className="text-sm font-bold text-gray-900">Package Contents</span>
+                              <div className="bg-white/80 rounded-lg p-3 border border-rose-200">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                  <Gift className="w-3.5 h-3.5 text-rose-600" />
+                                  <span className="text-xs font-bold text-gray-900">Package Contents</span>
                                 </div>
-                                <p className="text-sm text-gray-700 leading-relaxed">{selectedPkg.productContents}</p>
+                                <p className="text-xs text-gray-700 leading-relaxed">{pkg.productContents}</p>
                               </div>
                             </div>
                           ))}
@@ -769,55 +704,46 @@ const Register = () => {
                 </div>
               </div>
 
-              <div className="pt-6">
+              {/* Submit Button */}
+              <div className="pt-2">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-orange-600 via-red-600 to-rose-600 text-white py-5 px-6 rounded-xl font-bold text-lg hover:shadow-2xl focus:ring-4 focus:ring-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group"
+                  className="w-full bg-gradient-to-r from-orange-600 via-red-600 to-rose-600 text-white py-3.5 px-6 rounded-xl font-bold hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 group"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-rose-600 via-pink-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <span className="relative z-10 flex items-center gap-3">
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                        Creating Your Account...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-6 h-6" />
-                        Create Account
-                        <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </span>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-5 h-5" />
+                      Create Account
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
                 </motion.button>
 
-                <div className="text-center mt-6">
-                  <p className="text-gray-600">
-                    Already have an account?{' '}
-                    <Link 
-                      href="/login" 
-                      className="text-orange-600 hover:text-orange-700 font-bold transition-colors inline-flex items-center gap-1 group"
-                    >
-                      Sign in here
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </p>
-                </div>
+                <p className="text-center mt-4 text-sm text-gray-600">
+                  Already have an account?{' '}
+                  <Link 
+                    href="/login" 
+                    className="text-orange-600 hover:text-orange-700 font-bold transition-colors inline-flex items-center gap-1"
+                  >
+                    Sign in
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </p>
               </div>
             </form>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-center mt-8 text-white/80 text-sm"
-          >
-            <p>© 2025 RIG Global. All rights reserved.</p>
-          </motion.div>
+          <p className="text-center mt-6 text-white/70 text-xs">
+            © 2025 RIG Global. All rights reserved.
+          </p>
         </motion.div>
       </div>
     </>

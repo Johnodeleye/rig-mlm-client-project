@@ -512,7 +512,7 @@ const AdminWalletPage = () => {
                         onClick={() => setPointsType('PERSONAL')}
                         className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
                           pointsType === 'PERSONAL'
-                            ? 'bg-blue-600 text-white border-blue-600'
+                            ? 'bg-blue-600 text-white border-orange-600'
                             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                         }`}
                       >
