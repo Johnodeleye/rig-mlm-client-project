@@ -93,16 +93,28 @@ const WalletPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('earnings');
-  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [walletData, setWalletData] = useState<WalletData>({
+    totalEarnings: 0,
+    availableBalance: 0,
+    pendingWithdrawals: 0
+  });
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [pointsData, setPointsData] = useState<PointsData | null>(null);
-  const [commissionData, setCommissionData] = useState<CommissionSummary | null>(null);
+  const [pointsData, setPointsData] = useState<PointsData>({
+    monthlyPV: { personal: 0, team: 0 },
+    cumulativePV: { personal: 0, team: 0 },
+    monthlyTP: { personal: 0, team: 0 },
+    cumulativeTP: { personal: 0, team: 0 }
+  });
+  const [commissionData, setCommissionData] = useState<CommissionSummary>({
+    totalCommissions: 0,
+    recentCommissions: []
+  });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [teamMembersPV, setTeamMembersPV] = useState<TeamMemberPV[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
-   const router = useRouter();
+  const { currency, convertAmount, exchangeRate } = useCurrency();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -110,58 +122,81 @@ const WalletPage = () => {
         setIsLoading(true);
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         
-        const [walletRes, pointsRes, commissionRes, transactionsRes, teamRes] = await Promise.all([
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        const requests = [
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/wallet/my-wallet`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }),
+          }).catch(() => null),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/points/my-points`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }),
+          }).catch(() => null),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/commissions/my-commissions`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }),
+          }).catch(() => null),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/transactions/my-transactions`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }),
+          }).catch(() => null),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/teams/my-teams-enhanced`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          })
-        ]);
+          }).catch(() => null)
+        ];
 
-        if (walletRes.ok) {
+        const [walletRes, pointsRes, commissionRes, transactionsRes, teamRes] = await Promise.all(requests);
+
+        if (walletRes?.ok) {
           const walletData = await walletRes.json();
-          setWalletData(walletData.walletData);
-          setUserData(walletData.userData);
+          setWalletData(walletData.walletData || {
+            totalEarnings: 0,
+            availableBalance: 0,
+            pendingWithdrawals: 0
+          });
+          setUserData(walletData.userData || null);
         }
 
-        if (pointsRes.ok) {
+        if (pointsRes?.ok) {
           const pointsData = await pointsRes.json();
-          setPointsData(pointsData.pointsData);
+          setPointsData(pointsData.pointsData || {
+            monthlyPV: { personal: 0, team: 0 },
+            cumulativePV: { personal: 0, team: 0 },
+            monthlyTP: { personal: 0, team: 0 },
+            cumulativeTP: { personal: 0, team: 0 }
+          });
         }
 
-        if (commissionRes.ok) {
+        if (commissionRes?.ok) {
           const commissionData = await commissionRes.json();
-          setCommissionData(commissionData);
+          setCommissionData(commissionData || {
+            totalCommissions: 0,
+            recentCommissions: []
+          });
         }
 
-        if (transactionsRes.ok) {
+        if (transactionsRes?.ok) {
           const transactionsData = await transactionsRes.json();
           setTransactions(transactionsData.transactions || []);
         }
 
-        if (teamRes.ok) {
+        if (teamRes?.ok) {
           const teamData = await teamRes.json();
           if (teamData.success && teamData.teamData) {
             const allMembers: TeamMemberPV[] = [];
             
-            teamData.teamData.network.forEach((level: any) => {
-              level.members.forEach((member: any) => {
-                allMembers.push({
-                  id: member.id,
-                  pv: member.pv || 0
-                });
+            if (teamData.teamData.network && Array.isArray(teamData.teamData.network)) {
+              teamData.teamData.network.forEach((level: any) => {
+                if (level.members && Array.isArray(level.members)) {
+                  level.members.forEach((member: any) => {
+                    allMembers.push({
+                      id: member.id || '',
+                      pv: member.pv || 0
+                    });
+                  });
+                }
               });
-            });
+            }
             
             setTeamMembersPV(allMembers);
           }
@@ -175,7 +210,7 @@ const WalletPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [router]);
 
   const calculateBonusProgress = (requiredPV: number, maxCappedPV: number): BonusProgress => {
     let remainingPV = requiredPV;
@@ -192,7 +227,7 @@ const WalletPage = () => {
     }
     
     const currentPV = Math.min(totalUsedPV, requiredPV);
-    const progress = (currentPV / requiredPV) * 100;
+    const progress = requiredPV > 0 ? (currentPV / requiredPV) * 100 : 0;
     
     return {
       currentPV,
@@ -257,23 +292,9 @@ const WalletPage = () => {
     const sb1Progress = calculateBonusProgress(600, 270);
     const sapphireProgress = calculateBonusProgress(3500, 1575);
     
-    if (!pointsData) {
-      return {
-        monthlyPV: { current: sb1Progress.currentPV, target: 600 },
-        cumulativePV: { current: sapphireProgress.currentPV, target: 3500 },
-        cumulativeTP: { current: 0, target: 30000 }
-      };
-    }
-
     return {
-      monthlyPV: { 
-        current: sb1Progress.currentPV, 
-        target: 600 
-      },
-      cumulativePV: { 
-        current: sapphireProgress.currentPV, 
-        target: 3500 
-      },
+      monthlyPV: { current: sb1Progress.currentPV, target: 600 },
+      cumulativePV: { current: sapphireProgress.currentPV, target: 3500 },
       cumulativeTP: { 
         current: pointsData.cumulativeTP.personal + pointsData.cumulativeTP.team, 
         target: 30000 
@@ -325,7 +346,7 @@ const WalletPage = () => {
     );
   };
 
-    if (isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -380,7 +401,7 @@ const WalletPage = () => {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Total Commissions</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {convertAmount(commissionData?.totalCommissions || 0)}
+                      {convertAmount(commissionData.totalCommissions)}
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -401,7 +422,7 @@ const WalletPage = () => {
                 Commission History
               </h2>
 
-              {commissionData?.recentCommissions && commissionData.recentCommissions.length > 0 ? (
+              {commissionData.recentCommissions && commissionData.recentCommissions.length > 0 ? (
                 <>
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
@@ -422,7 +443,7 @@ const WalletPage = () => {
                               {new Date(commission.createdAt).toLocaleDateString()}
                             </td>
                             <td className="py-3 px-2 text-sm text-gray-900">
-                              {commission.referredUser.username}
+                              {commission.referredUser?.username || 'Unknown'}
                             </td>
                             <td className="py-3 px-2 text-sm text-gray-600">
                               Level {commission.level}
@@ -488,7 +509,7 @@ const WalletPage = () => {
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">From:</span>
                             <span className="text-gray-900 font-medium">
-                              {commission.referredUser.username}
+                              {commission.referredUser?.username || 'Unknown'}
                             </span>
                           </div>
                           
@@ -527,7 +548,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {convertAmount(walletData?.totalEarnings || 0)}
+                    {convertAmount(walletData.totalEarnings)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -546,7 +567,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Available Balance</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {convertAmount(walletData?.availableBalance || 0)}
+                    {convertAmount(walletData.availableBalance)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -565,7 +586,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Pending Withdrawals</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {convertAmount(walletData?.pendingWithdrawals || 0)}
+                    {convertAmount(walletData.pendingWithdrawals)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-100 rounded-full flex items-center justify-center">

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Home, ArrowLeft, Shield, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import '@/app/globals.css';
 
 const Custom404 = () => {
   const router = useRouter();
