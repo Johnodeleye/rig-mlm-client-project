@@ -78,43 +78,20 @@ interface Transaction {
   type: string;
 }
 
-interface TeamMemberPV {
-  id: string;
-  pv: number;
-}
-
-interface BonusProgress {
-  currentPV: number;
-  targetPV: number;
-  progress: number;
-}
-
 const WalletPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState('earnings');
-  const [walletData, setWalletData] = useState<WalletData>({
-    totalEarnings: 0,
-    availableBalance: 0,
-    pendingWithdrawals: 0
-  });
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [pointsData, setPointsData] = useState<PointsData>({
-    monthlyPV: { personal: 0, team: 0 },
-    cumulativePV: { personal: 0, team: 0 },
-    monthlyTP: { personal: 0, team: 0 },
-    cumulativeTP: { personal: 0, team: 0 }
-  });
-  const [commissionData, setCommissionData] = useState<CommissionSummary>({
-    totalCommissions: 0,
-    recentCommissions: []
-  });
+  const [pointsData, setPointsData] = useState<PointsData | null>(null);
+  const [commissionData, setCommissionData] = useState<CommissionSummary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [teamMembersPV, setTeamMembersPV] = useState<TeamMemberPV[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { currency, convertAmount, exchangeRate } = useCurrency();
-  const router = useRouter();
+  const { currency, convertAmount, formatAmount, exchangeRate } = useCurrency();
+   const router = useRouter();
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,84 +99,40 @@ const WalletPage = () => {
         setIsLoading(true);
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         
-        if (!token) {
-          router.push('/login');
-          return;
-        }
-
-        const requests = [
+        const [walletRes, pointsRes, commissionRes, transactionsRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/wallet/my-wallet`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }).catch(() => null),
+          }),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/points/my-points`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }).catch(() => null),
+          }),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/commissions/my-commissions`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }).catch(() => null),
+          }),
           fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/transactions/my-transactions`, {
             headers: { 'Authorization': `Bearer ${token}` }
-          }).catch(() => null),
-          fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/teams/my-teams-enhanced`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          }).catch(() => null)
-        ];
+          })
+        ]);
 
-        const [walletRes, pointsRes, commissionRes, transactionsRes, teamRes] = await Promise.all(requests);
-
-        if (walletRes?.ok) {
+        if (walletRes.ok) {
           const walletData = await walletRes.json();
-          setWalletData(walletData.walletData || {
-            totalEarnings: 0,
-            availableBalance: 0,
-            pendingWithdrawals: 0
-          });
-          setUserData(walletData.userData || null);
+          setWalletData(walletData.walletData);
+          setUserData(walletData.userData);
         }
 
-        if (pointsRes?.ok) {
+        if (pointsRes.ok) {
           const pointsData = await pointsRes.json();
-          setPointsData(pointsData.pointsData || {
-            monthlyPV: { personal: 0, team: 0 },
-            cumulativePV: { personal: 0, team: 0 },
-            monthlyTP: { personal: 0, team: 0 },
-            cumulativeTP: { personal: 0, team: 0 }
-          });
+          setPointsData(pointsData.pointsData);
         }
 
-        if (commissionRes?.ok) {
+        if (commissionRes.ok) {
           const commissionData = await commissionRes.json();
-          setCommissionData(commissionData || {
-            totalCommissions: 0,
-            recentCommissions: []
-          });
+          setCommissionData(commissionData);
         }
 
-        if (transactionsRes?.ok) {
+        if (transactionsRes.ok) {
           const transactionsData = await transactionsRes.json();
           setTransactions(transactionsData.transactions || []);
-        }
-
-        if (teamRes?.ok) {
-          const teamData = await teamRes.json();
-          if (teamData.success && teamData.teamData) {
-            const allMembers: TeamMemberPV[] = [];
-            
-            if (teamData.teamData.network && Array.isArray(teamData.teamData.network)) {
-              teamData.teamData.network.forEach((level: any) => {
-                if (level.members && Array.isArray(level.members)) {
-                  level.members.forEach((member: any) => {
-                    allMembers.push({
-                      id: member.id || '',
-                      pv: member.pv || 0
-                    });
-                  });
-                }
-              });
-            }
-            
-            setTeamMembersPV(allMembers);
-          }
         }
 
       } catch (error) {
@@ -210,31 +143,7 @@ const WalletPage = () => {
     };
 
     fetchData();
-  }, [router]);
-
-  const calculateBonusProgress = (requiredPV: number, maxCappedPV: number): BonusProgress => {
-    let remainingPV = requiredPV;
-    let totalUsedPV = 0;
-    
-    const sortedMembers = [...teamMembersPV].sort((a, b) => b.pv - a.pv);
-    
-    for (const member of sortedMembers) {
-      if (remainingPV <= 0) break;
-      
-      const usablePV = Math.min(member.pv, maxCappedPV, remainingPV);
-      totalUsedPV += usablePV;
-      remainingPV -= usablePV;
-    }
-    
-    const currentPV = Math.min(totalUsedPV, requiredPV);
-    const progress = requiredPV > 0 ? (currentPV / requiredPV) * 100 : 0;
-    
-    return {
-      currentPV,
-      targetPV: requiredPV,
-      progress: Math.min(progress, 100)
-    };
-  };
+  }, []);
 
   const processTransactionAmount = (amount: string, type: string): string => {
     if (currency === 'NGN') {
@@ -289,12 +198,23 @@ const WalletPage = () => {
   };
 
   const getRewardsData = () => {
-    const sb1Progress = calculateBonusProgress(600, 270);
-    const sapphireProgress = calculateBonusProgress(3500, 1575);
-    
+    if (!pointsData) {
+      return {
+        monthlyPV: { current: 0, target: 600 },
+        cumulativePV: { current: 0, target: 3500 },
+        cumulativeTP: { current: 0, target: 30000 }
+      };
+    }
+
     return {
-      monthlyPV: { current: sb1Progress.currentPV, target: 600 },
-      cumulativePV: { current: sapphireProgress.currentPV, target: 3500 },
+      monthlyPV: { 
+        current: pointsData.monthlyPV.personal + pointsData.monthlyPV.team, 
+        target: 600 
+      },
+      cumulativePV: { 
+        current: pointsData.cumulativePV.personal + pointsData.cumulativePV.team, 
+        target: 3500 
+      },
       cumulativeTP: { 
         current: pointsData.cumulativeTP.personal + pointsData.cumulativeTP.team, 
         target: 30000 
@@ -346,16 +266,17 @@ const WalletPage = () => {
     );
   };
 
-  if (isLoading) {
+    if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Working...</p>
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -401,7 +322,7 @@ const WalletPage = () => {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Total Commissions</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {convertAmount(commissionData.totalCommissions)}
+                      {convertAmount(commissionData?.totalCommissions || 0)}
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -422,7 +343,7 @@ const WalletPage = () => {
                 Commission History
               </h2>
 
-              {commissionData.recentCommissions && commissionData.recentCommissions.length > 0 ? (
+              {commissionData?.recentCommissions && commissionData.recentCommissions.length > 0 ? (
                 <>
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
@@ -443,7 +364,7 @@ const WalletPage = () => {
                               {new Date(commission.createdAt).toLocaleDateString()}
                             </td>
                             <td className="py-3 px-2 text-sm text-gray-900">
-                              {commission.referredUser?.username || 'Unknown'}
+                              {commission.referredUser.username}
                             </td>
                             <td className="py-3 px-2 text-sm text-gray-600">
                               Level {commission.level}
@@ -509,7 +430,7 @@ const WalletPage = () => {
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">From:</span>
                             <span className="text-gray-900 font-medium">
-                              {commission.referredUser?.username || 'Unknown'}
+                              {commission.referredUser.username}
                             </span>
                           </div>
                           
@@ -548,7 +469,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {convertAmount(walletData.totalEarnings)}
+                    {convertAmount(walletData?.totalEarnings || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -567,7 +488,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Available Balance</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {convertAmount(walletData.availableBalance)}
+                    {convertAmount(walletData?.availableBalance || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -586,7 +507,7 @@ const WalletPage = () => {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Pending Withdrawals</p>
                   <p className="text-xl lg:text-2xl font-bold text-gray-900">
-                    {convertAmount(walletData.pendingWithdrawals)}
+                    {convertAmount(walletData?.pendingWithdrawals || 0)}
                   </p>
                 </div>
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -678,7 +599,7 @@ const WalletPage = () => {
                   </thead>
                   <tbody>
                     {monthlySalaryBonuses.map((bonus, index) => {
-                      const bonusProgress = calculateBonusProgress(bonus.requiredPV, bonus.maxCappedPV);
+                      const progress = calculateProgress(rewardsData.monthlyPV.current, bonus.requiredPV);
                       return (
                         <tr key={index} className="border-b border-gray-100 last:border-0">
                           <td className="py-3 text-sm font-medium text-gray-900">{bonus.level}</td>
@@ -690,12 +611,10 @@ const WalletPage = () => {
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-[#0660D3] h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${bonusProgress.progress}%` }}
+                                style={{ width: `${progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs text-gray-500 mt-1">
-                              {bonusProgress.currentPV.toLocaleString()} / {bonus.requiredPV.toLocaleString()} PV ({Math.round(bonusProgress.progress)}%)
-                            </span>
+                            <span className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</span>
                           </td>
                         </tr>
                       );
@@ -721,7 +640,7 @@ const WalletPage = () => {
                   </thead>
                   <tbody>
                     {rankAwards.map((rank, index) => {
-                      const rankProgress = calculateBonusProgress(rank.cumulativePV, rank.maxCappedPV);
+                      const progress = calculateProgress(rewardsData.cumulativePV.current, rank.cumulativePV);
                       return (
                         <tr key={index} className="border-b border-gray-100 last:border-0">
                           <td className="py-3 text-sm font-medium text-gray-900">{rank.rank}</td>
@@ -733,12 +652,10 @@ const WalletPage = () => {
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div 
                                 className="bg-[#0660D3] h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${rankProgress.progress}%` }}
+                                style={{ width: `${progress}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs text-gray-500 mt-1">
-                              {rankProgress.currentPV.toLocaleString()} / {rank.cumulativePV.toLocaleString()} PV ({Math.round(rankProgress.progress)}%)
-                            </span>
+                            <span className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</span>
                           </td>
                         </tr>
                       );
