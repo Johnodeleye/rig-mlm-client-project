@@ -43,10 +43,12 @@ const PaymentPage = () => {
   const params = useParams();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const userId = params.userId as string;
+  const userId = params?.userId as string;
 
   useEffect(() => {
-    fetchPaymentData();
+    if (userId) {
+      fetchPaymentData();
+    }
   }, [userId]);
 
   const fetchPaymentData = async () => {
@@ -541,8 +543,7 @@ const PaymentPage = () => {
                   <p className="text-green-100 text-sm">
                     {hasInsufficientBalance 
                       ? `Need ₦${(packageData.priceNGN - walletData.availableBalance).toLocaleString()} more`
-                      : `After payment: ₦${(walletData.availableBalance - packageData.priceNGN).toLocaleString()}`
-                    }
+                      : `After payment: ₦${(walletData.availableBalance - packageData.priceNGN).toLocaleString()}`}
                   </p>
                 )}
               </div>

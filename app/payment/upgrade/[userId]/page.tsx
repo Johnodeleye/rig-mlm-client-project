@@ -45,11 +45,13 @@ const UpgradePaymentPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
-  const userId = params.userId as string;
-  const packageId = searchParams.get('package');
+  const userId = params?.userId as string;
+  const packageId = searchParams?.get('package');
 
   useEffect(() => {
-    fetchPaymentData();
+    if (userId && packageId) {
+      fetchPaymentData();
+    }
   }, [userId, packageId]);
 
   const fetchPaymentData = async () => {
