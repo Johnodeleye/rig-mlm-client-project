@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Copy, Share2, UserCheck, UserX, Calendar, DollarSign, Loader2, Zap,
   TrendingUp, Award, Star, Gift, Link as LinkIcon, Sparkles, ArrowRight,
-  Target, Activity, CheckCircle, Clock, AlertCircle, ExternalLink
+  Target, Activity, CheckCircle, Clock, AlertCircle, ExternalLink,
+  Plus, BarChart3, Package, Shield
 } from 'lucide-react';
 import Header from '../components/Header';
 import DesktopSidebar from '../components/DesktopSidebar';
@@ -147,7 +148,7 @@ const ReferralsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-red-50">
         <Header 
           setIsSidebarOpen={setIsSidebarOpen}
           isProfileDropdownOpen={isProfileDropdownOpen}
@@ -180,7 +181,7 @@ const ReferralsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-red-50">
       <Header 
         setIsSidebarOpen={setIsSidebarOpen}
         isProfileDropdownOpen={isProfileDropdownOpen}
@@ -205,7 +206,7 @@ const ReferralsPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 rounded-3xl shadow-xl border border-blue-400/20 p-6 lg:p-8 mb-6"
+            className="relative overflow-hidden bg-gradient-to-r from-orange-600 via-red-700 to-rose-800 rounded-3xl shadow-xl border border-orange-400/20 p-6 lg:p-8 mb-6"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
@@ -221,7 +222,7 @@ const ReferralsPage = () => {
                       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
                         My Referrals Network
                       </h1>
-                      <p className="text-blue-100 flex items-center gap-2">
+                      <p className="text-orange-100 flex items-center gap-2">
                         <Target className="w-4 h-4" />
                         Build your team and earn commissions
                       </p>
@@ -255,11 +256,11 @@ const ReferralsPage = () => {
                     <Users className="w-4 h-4" />
                     Total Referrals
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                     {referralData?.totalReferrals || 0}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <Users className="w-7 h-7 text-white" />
                 </div>
               </div>
@@ -309,15 +310,15 @@ const ReferralsPage = () => {
                     <DollarSign className="w-4 h-4" />
                     Total Commission
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  <p className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                     {referralData?.totalCommission ? processTotalCommission(referralData.totalCommission) : currency === 'NGN' ? '₦0' : '$0'}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <DollarSign className="w-7 h-7 text-white" />
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-purple-600">
+              <div className="flex items-center gap-2 text-sm text-amber-600">
                 <TrendingUp className="w-4 h-4" />
                 <span>Total earnings</span>
               </div>
@@ -333,7 +334,7 @@ const ReferralsPage = () => {
               className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow"
             >
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
                   <LinkIcon className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -344,7 +345,7 @@ const ReferralsPage = () => {
               
               <div className="mb-6">
                 <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2">
-                  <Gift className="w-4 h-4 text-blue-600" />
+                  <Gift className="w-4 h-4 text-orange-600" />
                   Your unique referral URL
                 </label>
                 <div className="relative">
@@ -352,11 +353,11 @@ const ReferralsPage = () => {
                     type="text"
                     value={referralData?.referralLink || 'Loading...'}
                     readOnly
-                    className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl bg-gray-50 text-sm focus:border-blue-500 focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl bg-gray-50 text-sm focus:border-orange-500 focus:outline-none transition-colors"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <ExternalLink className="w-4 h-4 text-blue-600" />
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <ExternalLink className="w-4 h-4 text-orange-600" />
                     </div>
                   </div>
                 </div>
@@ -386,7 +387,7 @@ const ReferralsPage = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={shareReferralLink}
                     disabled={!referralData?.referralLink}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all duration-200 font-semibold group shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl transition-all duration-200 font-semibold group shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
                     Share
@@ -394,14 +395,14 @@ const ReferralsPage = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
+              <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-200">
                 <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  <Sparkles className="w-5 h-5 text-orange-600" />
                   <h3 className="font-bold text-gray-900">Quick Stats</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
-                    <Users className="w-5 h-5 text-blue-600 mb-2" />
+                  <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-orange-100">
+                    <Users className="w-5 h-5 text-orange-600 mb-2" />
                     <p className="text-2xl font-bold text-gray-900">{referralData?.totalReferrals || 0}</p>
                     <p className="text-xs text-gray-600">Total Referrals</p>
                   </div>
@@ -423,7 +424,7 @@ const ReferralsPage = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
                     <Users className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -442,11 +443,11 @@ const ReferralsPage = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="group bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
+                        className="group bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 hover:from-orange-50 hover:to-red-50 transition-all duration-200 border-2 border-gray-200 hover:border-orange-300 hover:shadow-md"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-start gap-3 flex-1">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
                               <span className="text-white font-bold text-sm">
                                 {referral.name.charAt(0).toUpperCase()}
                               </span>
@@ -544,7 +545,7 @@ const ReferralsPage = () => {
               ) : (
                 <div className="text-center py-16">
                   <div className="relative w-24 h-24 mx-auto mb-6">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-100 to-red-100 rounded-full"></div>
                     <div className="absolute inset-3 bg-white rounded-full flex items-center justify-center">
                       <Users className="w-12 h-12 text-gray-400" />
                     </div>
@@ -557,7 +558,7 @@ const ReferralsPage = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={shareReferralLink}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto font-bold"
+                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto font-bold"
                   >
                     <Share2 className="w-5 h-5" />
                     Share Referral Link Now
@@ -582,11 +583,11 @@ const ReferralsPage = () => {
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(to bottom, #3b82f6, #6366f1);
+          background: linear-gradient(to bottom, #f97316, #dc2626);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(to bottom, #2563eb, #4f46e5);
+          background: linear-gradient(to bottom, #ea580c, #b91c1c);
         }
       `}</style>
     </div>

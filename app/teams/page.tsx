@@ -103,54 +103,118 @@ const TeamsPage = () => {
     }
   }, [isAuthenticated, accountType, authLoading, router]);
 
-  useEffect(() => {
-    const fetchTeamData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/teams/my-teams-enhanced`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch team data');
+  const fetchTeamData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/teams/my-teams-enhanced`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
+      });
 
-        const data = await response.json();
-        
-        if (data.success) {
-          setTeamData(data.teamData);
-        } else {
-          throw new Error(data.error || 'Failed to load team data');
-        }
-      } catch (error) {
-        console.error('Error fetching team data:', error);
-        setError(error instanceof Error ? error.message : 'Failed to load team data');
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to fetch team data');
       }
-    };
 
+      const data = await response.json();
+      
+      if (data.success) {
+        setTeamData(data.teamData);
+      } else {
+        throw new Error(data.error || 'Failed to load team data');
+      }
+    } catch (error) {
+      console.error('Error fetching team data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load team data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchPaginatedTeamData = async (level: number, page: number = 1, limit: number = 50) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/teams/my-teams-paginated?level=${level}&page=${page}&limit=${limit}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch team data');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        const levelData = {
+          level: level,
+          members: data.teamData.members
+        };
+        
+        if (teamData) {
+          const updatedNetwork = [...teamData.network];
+          const existingLevelIndex = updatedNetwork.findIndex(l => l.level === level);
+          
+          if (existingLevelIndex >= 0) {
+            updatedNetwork[existingLevelIndex] = levelData;
+          } else {
+            updatedNetwork.push(levelData);
+          }
+          
+          setTeamData({
+            ...teamData,
+            network: updatedNetwork
+          });
+        } else {
+          setTeamData({
+            totalMembers: data.teamData.pagination.totalMembers,
+            activeMembers: data.teamData.members.filter((m: TeamMember) => m.status === 'Active').length,
+            totalEarnings: calculateLevelEarnings(data.teamData.members),
+            network: [levelData]
+          });
+        }
+      } else {
+        throw new Error(data.error || 'Failed to load team data');
+      }
+    } catch (error) {
+      console.error('Error fetching paginated team data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load team data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTeamData();
   }, []);
 
-  const toggleLevel = (level: number) => {
-    setExpandedLevels(prev =>
-      prev.includes(level)
-        ? prev.filter(l => l !== level)
-        : [...prev, level]
-    );
+  const toggleLevel = async (level: number) => {
+    if (expandedLevels.includes(level)) {
+      setExpandedLevels(prev => prev.filter(l => l !== level));
+    } else {
+      setExpandedLevels(prev => [...prev, level]);
+      
+      const levelData = teamData?.network?.find(l => l.level === level);
+      if (!levelData || levelData.members.length === 0) {
+        await fetchPaginatedTeamData(level);
+      }
+    }
   };
 
-  if (isLoading) {
+  if (isLoading && !teamData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-red-50">
         <Header 
           setIsSidebarOpen={setIsSidebarOpen}
           isProfileDropdownOpen={isProfileDropdownOpen}
@@ -179,7 +243,7 @@ const TeamsPage = () => {
     );
   }
 
-  if (error) {
+  if (error && !teamData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
         <Header 
@@ -207,8 +271,8 @@ const TeamsPage = () => {
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-bold flex items-center gap-2 mx-auto"
+                  onClick={fetchTeamData}
+                  className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-bold flex items-center gap-2 mx-auto"
                 >
                   <RefreshCw className="w-5 h-5" />
                   Try Again
@@ -224,7 +288,7 @@ const TeamsPage = () => {
   const inactiveMembers = (teamData?.totalMembers || 0) - (teamData?.activeMembers || 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-red-50">
       <Header 
         setIsSidebarOpen={setIsSidebarOpen}
         isProfileDropdownOpen={isProfileDropdownOpen}
@@ -245,11 +309,10 @@ const TeamsPage = () => {
         />
 
         <main className="flex-1 w-full lg:ml-64 p-4 lg:p-8">
-          {/* Header Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-700 rounded-3xl shadow-xl border border-purple-400/20 p-6 lg:p-8 mb-6"
+            className="relative overflow-hidden bg-gradient-to-r from-orange-600 via-red-700 to-rose-800 rounded-3xl shadow-xl border border-orange-400/20 p-6 lg:p-8 mb-6"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
@@ -263,7 +326,7 @@ const TeamsPage = () => {
                   <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
                     My Team Network
                   </h1>
-                  <p className="text-purple-100 flex items-center gap-2">
+                  <p className="text-orange-100 flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     Build, manage and grow your network
                   </p>
@@ -272,7 +335,6 @@ const TeamsPage = () => {
             </div>
           </motion.div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -287,11 +349,11 @@ const TeamsPage = () => {
                     <Users className="w-4 h-4" />
                     Total Team Members
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                     {teamData?.totalMembers || 0}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <Users className="w-7 h-7 text-white" />
                 </div>
               </div>
@@ -341,15 +403,15 @@ const TeamsPage = () => {
                     <UserX className="w-4 h-4" />
                     Inactive Members
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  <p className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
                     {inactiveMembers}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <UserX className="w-7 h-7 text-white" />
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-orange-600">
+              <div className="flex items-center gap-2 text-sm text-amber-600">
                 <Target className="w-4 h-4" />
                 <span>Pending activation</span>
               </div>
@@ -368,22 +430,21 @@ const TeamsPage = () => {
                     <DollarSign className="w-4 h-4" />
                     Team Earnings
                   </p>
-                  <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  <p className="text-4xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
                     {teamData?.totalEarnings ? processTotalEarnings(teamData.totalEarnings) : currency === 'NGN' ? '₦0' : '$0'}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <DollarSign className="w-7 h-7 text-white" />
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-purple-600">
+              <div className="flex items-center gap-2 text-sm text-rose-600">
                 <Award className="w-4 h-4" />
                 <span>Total accumulated</span>
               </div>
             </motion.div>
           </div>
 
-          {/* Team Network Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -392,7 +453,7 @@ const TeamsPage = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
                   <Network className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -402,6 +463,15 @@ const TeamsPage = () => {
                   </p>
                 </div>
               </div>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchTeamData}
+                className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </motion.button>
             </div>
             
             <div className="space-y-4">
@@ -412,11 +482,11 @@ const TeamsPage = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="border-2 border-gray-200 rounded-2xl overflow-hidden hover:border-blue-300 transition-colors"
+                    className="border-2 border-gray-200 rounded-2xl overflow-hidden hover:border-orange-300 transition-colors"
                   >
                     <button
                       onClick={() => toggleLevel(levelData.level)}
-                      className="w-full flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group"
+                      className="w-full flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-orange-50 hover:to-red-50 transition-all duration-200 group"
                     >
                       <div className="flex items-center gap-4">
                         <motion.div
@@ -424,12 +494,12 @@ const TeamsPage = () => {
                           transition={{ duration: 0.3 }}
                           className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow"
                         >
-                          <ChevronRight className="w-5 h-5 text-indigo-600" />
+                          <ChevronRight className="w-5 h-5 text-orange-600" />
                         </motion.div>
                         <div className="text-left">
                           <div className="flex items-center gap-3">
                             <span className="text-lg font-bold text-gray-900">Level {levelData.level}</span>
-                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold">
                               {levelData.members.length} {levelData.members.length === 1 ? 'member' : 'members'}
                             </span>
                           </div>
@@ -438,7 +508,7 @@ const TeamsPage = () => {
                           </p>
                         </div>
                       </div>
-                      <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+                      <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
                     </button>
 
                     <AnimatePresence>
@@ -459,9 +529,9 @@ const TeamsPage = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: memberIndex * 0.05 }}
-                                    className="group flex items-center gap-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-indigo-50 rounded-xl border-2 border-gray-200 hover:border-blue-300 transition-all duration-200"
+                                    className="group flex items-center gap-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-orange-50 hover:to-red-50 rounded-xl border-2 border-gray-200 hover:border-orange-300 transition-all duration-200"
                                   >
-                                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
                                       <span className="text-white font-bold text-lg">
                                         {member.name.charAt(0).toUpperCase()}
                                       </span>
@@ -502,16 +572,16 @@ const TeamsPage = () => {
                                       </div>
 
                                       <div className="grid grid-cols-2 gap-2 mt-3">
-                                        <div className="bg-white rounded-lg px-3 py-2 border border-blue-200">
+                                        <div className="bg-white rounded-lg px-3 py-2 border border-orange-200">
                                           <div className="flex items-center gap-1 mb-1">
-                                            <TrendingUp className="w-3 h-3 text-blue-600" />
+                                            <TrendingUp className="w-3 h-3 text-orange-600" />
                                             <span className="text-xs text-gray-600">PV</span>
                                           </div>
                                           <span className="text-sm font-bold text-gray-900">{member.pv}</span>
                                         </div>
-                                        <div className="bg-white rounded-lg px-3 py-2 border border-purple-200">
+                                        <div className="bg-white rounded-lg px-3 py-2 border border-amber-200">
                                           <div className="flex items-center gap-1 mb-1">
-                                            <Zap className="w-3 h-3 text-purple-600" />
+                                            <Zap className="w-3 h-3 text-amber-600" />
                                             <span className="text-xs text-gray-600">TP</span>
                                           </div>
                                           <span className="text-sm font-bold text-gray-900">{member.tp}</span>
@@ -545,7 +615,7 @@ const TeamsPage = () => {
               ) : (
                 <div className="text-center py-16">
                   <div className="relative w-24 h-24 mx-auto mb-6">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-100 to-red-100 rounded-full"></div>
                     <div className="absolute inset-3 bg-white rounded-full flex items-center justify-center">
                       <Users className="w-12 h-12 text-gray-400" />
                     </div>
@@ -556,7 +626,7 @@ const TeamsPage = () => {
                   </p>
                   <a
                     href="/referrals"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-bold"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-bold"
                   >
                     <Sparkles className="w-5 h-5" />
                     Share Referral Link
