@@ -242,11 +242,11 @@ const Register = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-400/10 rounded-full blur-3xl"></div>
         </div>
 
         <motion.div
@@ -261,9 +261,9 @@ const Register = () => {
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="relative w-24 h-24 mx-auto mb-6"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full animate-pulse"></div>
             <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-green-600" />
+              <CheckCircle className="w-12 h-12 text-emerald-600" />
             </div>
           </motion.div>
 
@@ -272,29 +272,29 @@ const Register = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-3">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-600 bg-clip-text text-transparent mb-3">
               Registration Successful!
             </h2>
             <p className="text-gray-600 mb-8 text-lg">
               Welcome to RIG Global! Please contact your upline to activate your account.
             </p>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-blue-200">
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 mb-8 border border-orange-200">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <Sparkles className="w-5 h-5 text-blue-600" />
+                <Sparkles className="w-5 h-5 text-orange-600" />
                 <h3 className="font-bold text-gray-900">Next Steps</h3>
               </div>
               <ul className="text-sm text-gray-700 space-y-2 text-left">
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full"></div>
                   Contact your upline for account activation
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full"></div>
                   Check your email for registration details
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full"></div>
                   Login once your account is activated
                 </li>
               </ul>
@@ -304,7 +304,7 @@ const Register = () => {
               <div className="space-y-4">
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center gap-2 w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                  className="inline-flex items-center justify-center gap-2 w-full px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
                 >
                   Proceed to Login
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -314,7 +314,7 @@ const Register = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowWalletPayment(true)}
-                  className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-blue-600 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all duration-300 group"
+                  className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-orange-600 text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-all duration-300 group"
                 >
                   <Wallet className="w-5 h-5" />
                   Or Pay with Wallet
@@ -325,10 +325,10 @@ const Register = () => {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200"
+                className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-6 border border-rose-200"
               >
                 <div className="flex items-center justify-center gap-2 mb-4">
-                  <Wallet className="w-6 h-6 text-purple-600" />
+                  <Wallet className="w-6 h-6 text-rose-600" />
                   <h3 className="font-bold text-gray-900">Pay with Wallet</h3>
                 </div>
                 <p className="text-sm text-gray-600 mb-4 text-center">
@@ -342,7 +342,7 @@ const Register = () => {
                       placeholder="Username or Email"
                       value={walletLoginData.username}
                       onChange={(e) => setWalletLoginData(prev => ({ ...prev, username: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white font-medium"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 bg-white font-medium"
                       required
                     />
                   </div>
@@ -352,7 +352,7 @@ const Register = () => {
                       placeholder="Password"
                       value={walletLoginData.password}
                       onChange={(e) => setWalletLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white font-medium"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 bg-white font-medium"
                       required
                     />
                   </div>
@@ -361,7 +361,7 @@ const Register = () => {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isWalletLoggingIn}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isWalletLoggingIn ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -389,11 +389,11 @@ const Register = () => {
   return (
     <>
       <AuthRedirect requireAuth={false} />
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 py-12 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 py-12 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-blue-400/10 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
         </div>
 
         <motion.div
@@ -427,7 +427,7 @@ const Register = () => {
     <h1 className="text-4xl font-bold text-white mb-1 leading-none whitespace-nowrap">
       Join RIG Global
     </h1>
-    <p className="text-blue-100 text-sm flex items-center gap-1">
+    <p className="text-orange-100 text-sm flex items-center gap-1">
       <Sparkles className="w-4 h-4" />
       Start your journey to success today
     </p>
@@ -449,7 +449,7 @@ const Register = () => {
                       Special Invitation!
                     </p>
                   </div>
-                  <p className="text-sm text-blue-100">
+                  <p className="text-sm text-orange-100">
                     You were referred by someone! Their referral ID has been auto-filled below.
                   </p>
                 </motion.div>
@@ -467,7 +467,7 @@ const Register = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-blue-600" />
+                    <Globe className="w-4 h-4 text-orange-600" />
                     Detected Location
                   </label>
                   <div className="relative">
@@ -483,14 +483,14 @@ const Register = () => {
                       className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 cursor-not-allowed font-medium"
                     />
                     {isDetecting && (
-                      <Loader2 className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 animate-spin text-blue-600" />
+                      <Loader2 className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 animate-spin text-orange-600" />
                     )}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                    <Award className="w-4 h-4 text-purple-600" />
+                    <Award className="w-4 h-4 text-rose-600" />
                     Referral ID
                   </label>
                   <input
@@ -498,7 +498,7 @@ const Register = () => {
                     name="referralId"
                     value={formData.referralId}
                     onChange={handleChange}
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium"
+                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium"
                     placeholder="Enter referral ID"
                   />
                   
@@ -506,7 +506,7 @@ const Register = () => {
                     <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex items-center gap-2 mt-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg"
+                      className="flex items-center gap-2 mt-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-lg"
                     >
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Validating referral ID...
@@ -521,7 +521,7 @@ const Register = () => {
                         exit={{ opacity: 0 }}
                         className={`flex items-center gap-2 mt-2 text-sm px-3 py-2 rounded-lg ${
                           referralUser.isValid 
-                            ? 'text-green-700 bg-green-50 border border-green-200' 
+                            ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' 
                             : 'text-red-700 bg-red-50 border border-red-200'
                         }`}
                       >
@@ -550,7 +550,7 @@ const Register = () => {
 
               <div className="border-t-2 border-gray-100 pt-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600" />
+                  <User className="w-5 h-5 text-orange-600" />
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -567,7 +567,7 @@ const Register = () => {
                         required
                         value={formData.fullName}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
                         placeholder="Enter your full name"
                       />
                     </div>
@@ -586,7 +586,7 @@ const Register = () => {
                         required
                         value={formData.username}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
                         placeholder="Choose a username"
                       />
                     </div>
@@ -605,7 +605,7 @@ const Register = () => {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
                         placeholder="your@email.com"
                       />
                     </div>
@@ -624,7 +624,7 @@ const Register = () => {
                         required
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
                         placeholder="+234 000 000 0000"
                       />
                     </div>
@@ -634,7 +634,7 @@ const Register = () => {
 
               <div className="border-t-2 border-gray-100 pt-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-green-600" />
+                  <Shield className="w-5 h-5 text-emerald-600" />
                   Security
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -651,7 +651,7 @@ const Register = () => {
                         required
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
                         placeholder="Min. 6 characters"
                         minLength={6}
                       />
@@ -678,7 +678,7 @@ const Register = () => {
                         required
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
+                        className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300"
                         placeholder="Re-enter password"
                         minLength={6}
                       />
@@ -696,7 +696,7 @@ const Register = () => {
 
               <div className="border-t-2 border-gray-100 pt-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-purple-600" />
+                  <Package className="w-5 h-5 text-rose-600" />
                   Membership Package
                 </h3>
                 <div>
@@ -709,7 +709,7 @@ const Register = () => {
                     required
                     value={formData.membershipPackage}
                     onChange={handleChange}
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300 cursor-pointer"
+                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300 cursor-pointer"
                   >
                     <option value="">Choose a membership package</option>
                     {membershipPackages.map((pkg) => (
@@ -732,31 +732,31 @@ const Register = () => {
                           .map(selectedPkg => (
                             <div 
                               key={selectedPkg.id} 
-                              className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6"
+                              className="bg-gradient-to-br from-rose-50 via-orange-50 to-red-50 border-2 border-rose-200 rounded-2xl p-6"
                             >
                               <div className="flex items-center gap-2 mb-4">
-                                <Star className="w-5 h-5 text-purple-600" />
+                                <Star className="w-5 h-5 text-rose-600" />
                                 <h4 className="font-bold text-gray-900">Package Details</h4>
                               </div>
                               <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-blue-200">
+                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-orange-200">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                                    <TrendingUp className="w-4 h-4 text-orange-600" />
                                     <span className="text-xs text-gray-600 font-semibold">PV Points</span>
                                   </div>
-                                  <p className="text-2xl font-bold text-blue-700">{selectedPkg.pv}</p>
+                                  <p className="text-2xl font-bold text-orange-700">{selectedPkg.pv}</p>
                                 </div>
-                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-green-200">
+                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-emerald-200">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <Award className="w-4 h-4 text-green-600" />
+                                    <Award className="w-4 h-4 text-emerald-600" />
                                     <span className="text-xs text-gray-600 font-semibold">TP Points</span>
                                   </div>
-                                  <p className="text-2xl font-bold text-green-700">{selectedPkg.tp}</p>
+                                  <p className="text-2xl font-bold text-emerald-700">{selectedPkg.tp}</p>
                                 </div>
                               </div>
-                              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-purple-200">
+                              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-rose-200">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <Gift className="w-4 h-4 text-purple-600" />
+                                  <Gift className="w-4 h-4 text-rose-600" />
                                   <span className="text-sm font-bold text-gray-900">Package Contents</span>
                                 </div>
                                 <p className="text-sm text-gray-700 leading-relaxed">{selectedPkg.productContents}</p>
@@ -775,9 +775,9 @@ const Register = () => {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-5 px-6 rounded-xl font-bold text-lg hover:shadow-2xl focus:ring-4 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group"
+                  className="w-full bg-gradient-to-r from-orange-600 via-red-600 to-rose-600 text-white py-5 px-6 rounded-xl font-bold text-lg hover:shadow-2xl focus:ring-4 focus:ring-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden group"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-rose-600 via-pink-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <span className="relative z-10 flex items-center gap-3">
                     {isLoading ? (
                       <>
@@ -799,7 +799,7 @@ const Register = () => {
                     Already have an account?{' '}
                     <Link 
                       href="/login" 
-                      className="text-blue-600 hover:text-blue-700 font-bold transition-colors inline-flex items-center gap-1 group"
+                      className="text-orange-600 hover:text-orange-700 font-bold transition-colors inline-flex items-center gap-1 group"
                     >
                       Sign in here
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

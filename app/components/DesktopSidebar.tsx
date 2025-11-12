@@ -52,8 +52,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
 
   return (
     <div className="hidden lg:flex fixed left-0 top-0 h-full w-68 bg-white shadow-xl border-r border-gray-200 flex-col z-30 pt-16">
-      {/* Profile Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 p-6 m-4 mt-6 rounded-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-br from-orange-600 via-red-700 to-rose-800 p-6 m-4 mt-6 rounded-2xl">
         <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
         <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -ml-10 -mb-10"></div>
         
@@ -70,7 +69,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
             </div>
             <div>
               <h2 className="font-bold text-white text-lg">RIG GLOBAL</h2>
-              <p className="text-xs text-blue-100">Business Platform</p>
+              <p className="text-xs text-orange-100">Business Platform</p>
             </div>
           </div>
 
@@ -78,22 +77,22 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
             <h3 className="font-bold text-white truncate text-base mb-1">
               {userProfile?.name || 'Loading...'}
             </h3>
-            <p className="text-sm text-blue-100 truncate mb-3">
+            <p className="text-sm text-orange-100 truncate mb-3">
               {userProfile?.plan ? `${userProfile.plan} Plan` : 'Loading Plan'}
             </p>
             <div className="flex items-center gap-2 mb-3">
               <div className="flex-1 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30">
-                <p className="text-xs text-blue-100">PV</p>
+                <p className="text-xs text-orange-100">PV</p>
                 <p className="text-sm font-bold text-white">{userProfile?.pv || 0}</p>
               </div>
               <div className="flex-1 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30">
-                <p className="text-xs text-blue-100">TP</p>
+                <p className="text-xs text-orange-100">TP</p>
                 <p className="text-sm font-bold text-white">{userProfile?.tp || 0}</p>
               </div>
             </div>
             <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold ${
               userProfile?.isStockist 
-                ? 'bg-purple-500/20 text-purple-100 border border-purple-400/30' 
+                ? 'bg-rose-500/20 text-rose-100 border border-rose-400/30' 
                 : 'bg-white/20 text-white border border-white/30'
             }`}>
               <Award className="w-3.5 h-3.5" />
@@ -103,7 +102,6 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-4 py-2 overflow-y-auto">
         <ul className="space-y-1">
           {menuItems.map((item) => {
@@ -117,7 +115,7 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
                     onClick={() => setActiveMenu(item.id)}
                     className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 group ${
                       isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transform scale-[1.02]'
+                        ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg shadow-orange-500/30 transform scale-[1.02]'
                         : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                     }`}
                   >
@@ -144,7 +142,6 @@ const DesktopSidebar = ({ activeMenu, setActiveMenu }: DesktopSidebarProps) => {
         </ul>
       </nav>
 
-      {/* Logout Button */}
       <div className="p-4 border-t-2 border-gray-100 bg-gray-50">
         <button
           onClick={handleLogout}

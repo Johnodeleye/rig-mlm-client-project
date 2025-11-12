@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 button {
   cursor: pointer;
 }
@@ -17,10 +16,9 @@ body {
   transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 }
 
-
 * {
   scrollbar-width: thin;
-  scrollbar-color: #0660D3 #f1f1f1;
+  scrollbar-color: #C2410C #f1f1f1;
 }
 
 ::-webkit-scrollbar {
@@ -32,12 +30,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0660D3;
+  background: #C2410C;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0550b3;
+  background: #9A3412;
 }
 
 .dark ::-webkit-scrollbar-track {
@@ -45,10 +43,9 @@ body {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #3b82f6;
+  background: #EA580C;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
+  background: #C2410C;
 }
-

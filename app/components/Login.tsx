@@ -23,7 +23,6 @@ const Login = () => {
   const router = useRouter();
   const { login, user, accountType, isLoading, isAuthenticated } = useAuth();
 
-  // Redirect if user is already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       if (accountType === 'admin') {
@@ -47,14 +46,12 @@ const Login = () => {
     }));
   };
 
-  // Show activation message if user is authenticated but not active
   if (isAuthenticated && accountType === 'user' && user && !user.isActive) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-pink-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background Elements */}
+      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-400/10 rounded-full blur-3xl"></div>
         </div>
 
@@ -70,7 +67,7 @@ const Login = () => {
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="relative w-24 h-24 mx-auto mb-6"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full animate-pulse"></div>
             <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
               <AlertCircle className="w-12 h-12 text-orange-600" />
             </div>
@@ -136,12 +133,11 @@ const Login = () => {
     <>
       <AuthRedirect requireAuth={false} />
       
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background Elements */}
+      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-blue-400/10 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-orange-400/10 rounded-full blur-2xl"></div>
         </div>
 
         <motion.div
@@ -150,7 +146,6 @@ const Login = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md relative z-10"
         >
-          {/* Header */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -173,16 +168,15 @@ const Login = () => {
               </motion.div>
               <div className="text-left">
                 <h1 className="text-4xl font-bold text-white mb-1">RIG Global</h1>
-                <p className="text-blue-100 text-sm flex items-center gap-1">
+                <p className="text-orange-100 text-sm flex items-center gap-1">
                   <Sparkles className="w-4 h-4" />
                   Welcome back!
                 </p>
               </div>
             </div>
-            <p className="text-blue-100 text-lg">Sign in to continue your journey</p>
+            <p className="text-orange-100 text-lg">Sign in to continue your journey</p>
           </motion.div>
 
-          {/* Login Form Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -191,17 +185,16 @@ const Login = () => {
           >
             <div className="mb-8">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <LogIn className="w-6 h-6 text-blue-600" />
+                <LogIn className="w-6 h-6 text-orange-600" />
                 <h2 className="text-2xl font-bold text-gray-900">Sign In</h2>
               </div>
               <p className="text-center text-gray-600">Enter your credentials to access your account</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email/Username */}
               <div>
                 <label htmlFor="emailOrUsername" className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-blue-600" />
+                  <Mail className="w-4 h-4 text-orange-600" />
                   Email or Username
                 </label>
                 <div className="relative">
@@ -213,17 +206,16 @@ const Login = () => {
                     required
                     value={formData.emailOrUsername}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Enter your email or username"
                     disabled={isLoading}
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-green-600" />
+                  <Lock className="w-4 h-4 text-emerald-600" />
                   Password
                 </label>
                 <div className="relative">
@@ -235,7 +227,7 @@ const Login = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white font-medium hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white font-medium hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Enter your password"
                     disabled={isLoading}
                   />
@@ -250,7 +242,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
                 <label className="flex items-center cursor-pointer group">
                   <input
@@ -258,7 +249,7 @@ const Login = () => {
                     name="rememberMe"
                     checked={formData.rememberMe}
                     onChange={handleChange}
-                    className="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-5 h-5 text-orange-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-orange-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isLoading}
                   />
                   <span className="ml-2 text-sm text-gray-600 font-medium group-hover:text-gray-900 transition-colors">
@@ -268,22 +259,21 @@ const Login = () => {
                 
                 <Link 
                   href="/forgot-password" 
-                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors font-bold flex items-center gap-1 group"
+                  className="text-sm text-orange-600 hover:text-orange-700 transition-colors font-bold flex items-center gap-1 group"
                 >
                   Forgot Password?
                   <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
 
-              {/* Login Button */}
               <motion.button
                 whileHover={{ scale: isLoading ? 1 : 1.02 }}
                 whileTap={{ scale: isLoading ? 1 : 0.98 }}
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-5 px-6 rounded-xl font-bold text-lg hover:shadow-2xl focus:ring-4 focus:ring-blue-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 relative overflow-hidden group"
+                className="w-full bg-gradient-to-r from-orange-600 via-red-600 to-rose-600 text-white py-5 px-6 rounded-xl font-bold text-lg hover:shadow-2xl focus:ring-4 focus:ring-orange-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 relative overflow-hidden group"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-rose-600 via-pink-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <span className="relative z-10 flex items-center gap-3">
                   {isLoading ? (
                     <>
@@ -301,7 +291,6 @@ const Login = () => {
               </motion.button>
             </form>
 
-            {/* Divider */}
             <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t-2 border-gray-200"></div>
@@ -311,14 +300,13 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Register Link */}
             <div className="text-center">
               <p className="text-gray-600 mb-4">
                 Don&apos;t have an account?
               </p>
               <Link 
                 href="/register" 
-                className="inline-flex items-center justify-center gap-2 w-full py-4 px-6 border-2 border-blue-600 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all duration-300 group"
+                className="inline-flex items-center justify-center gap-2 w-full py-4 px-6 border-2 border-orange-600 text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-all duration-300 group"
               >
                 <UserCheck className="w-5 h-5" />
                 Create Account
@@ -326,15 +314,14 @@ const Login = () => {
               </Link>
             </div>
 
-            {/* Admin Login Note */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl"
+              className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 rounded-xl"
             >
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-4 h-4 text-blue-600" />
+                <Shield className="w-4 h-4 text-orange-600" />
                 <p className="text-xs font-bold text-gray-900">Note for Admins</p>
               </div>
               <p className="text-xs text-gray-600">
@@ -343,7 +330,6 @@ const Login = () => {
             </motion.div>
           </motion.div>
 
-          {/* Footer */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

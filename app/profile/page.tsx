@@ -85,7 +85,7 @@ const ProfilePage = () => {
             username: userProfile.username || '',
             phone: user?.phoneNumber || '',
             currentPlan: userProfile.plan || '',
-            joinDate: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '2024-01-01',
+            joinDate: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '2025-01-01',
             status: userProfile.isActive ? 'Active' : 'Inactive',
             referralId: user?.referralId || '',
             profilePicture: userProfile.profilePicture || ''

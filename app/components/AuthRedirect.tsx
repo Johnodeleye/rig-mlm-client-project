@@ -73,15 +73,13 @@ export default function AuthRedirect({
     }
   }, [isAuthenticated, isLoading, user, accountType, requireAuth, requireActive, router, redirectTo, pathname]);
 
-  // Loading State
   if (isLoading || isChecking) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 z-50 overflow-hidden">
-        {/* Animated Background */}
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 z-50 overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-rose-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-400/10 rounded-full blur-3xl"></div>
         </div>
 
         <motion.div
@@ -120,7 +118,7 @@ export default function AuthRedirect({
               <Shield className="w-6 h-6" />
               Verifying Access
             </h2>
-            <p className="text-blue-100 mb-6">Please wait while we check your credentials...</p>
+            <p className="text-orange-100 mb-6">Please wait while we check your credentials...</p>
             
             <div className="flex items-center justify-center gap-2">
               <motion.div
@@ -145,14 +143,12 @@ export default function AuthRedirect({
     );
   }
 
-  // Account Pending Activation
   if (requireAuth && requireActive && accountType === 'user' && user && !user.isActive && pathname !== '/login') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-pink-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background */}
+      <div className="min-h-screen bg-gradient-to-br from-orange-600 via-red-600 to-rose-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-yellow-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
         </div>
 
         <motion.div
@@ -167,7 +163,7 @@ export default function AuthRedirect({
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="relative w-24 h-24 mx-auto mb-6"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full animate-pulse"></div>
             <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
               <UserX className="w-12 h-12 text-orange-600" />
             </div>
@@ -232,11 +228,9 @@ export default function AuthRedirect({
     );
   }
 
-  // Access Denied - User trying to access Admin
   if (isAuthenticated && accountType === 'user' && pathname.includes('/admin')) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-600 via-rose-600 to-pink-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-pink-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
@@ -298,7 +292,7 @@ export default function AuthRedirect({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => router.push('/home')}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 group"
+                className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 group"
               >
                 <User className="w-5 h-5" />
                 Go to User Dashboard
@@ -320,15 +314,13 @@ export default function AuthRedirect({
     );
   }
 
-  // Admin Account Detected
   if (isAuthenticated && accountType === 'admin' && !pathname.includes('/admin') && pathname !== '/login') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated Background */}
+      <div className="min-h-screen bg-gradient-to-br from-rose-600 via-red-600 to-orange-700 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-rose-400/10 rounded-full blur-3xl"></div>
         </div>
 
         <motion.div
@@ -343,14 +335,14 @@ export default function AuthRedirect({
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="relative w-24 h-24 mx-auto mb-6"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-400 to-red-600 rounded-full animate-pulse"></div>
             <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-              <Crown className="w-12 h-12 text-purple-600" />
+              <Crown className="w-12 h-12 text-rose-600" />
             </div>
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-2 border-4 border-purple-400 border-t-transparent rounded-full"
+              className="absolute -inset-2 border-4 border-rose-400 border-t-transparent rounded-full"
             />
           </motion.div>
 
@@ -359,30 +351,30 @@ export default function AuthRedirect({
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3 flex items-center justify-center gap-2">
-              <Sparkles className="w-7 h-7 text-purple-600" />
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-red-600 bg-clip-text text-transparent mb-3 flex items-center justify-center gap-2">
+              <Sparkles className="w-7 h-7 text-rose-600" />
               Admin Access Detected
             </h2>
             <p className="text-gray-600 mb-8 text-lg">
               You are logged in as an administrator. Redirecting you to the admin dashboard for enhanced controls.
             </p>
 
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-purple-200">
+            <div className="bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl p-6 mb-8 border border-rose-200">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <Crown className="w-5 h-5 text-purple-600" />
+                <Crown className="w-5 h-5 text-rose-600" />
                 <h3 className="font-bold text-gray-900">Admin Privileges</h3>
               </div>
               <ul className="text-sm text-gray-700 space-y-2 text-left">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                   Full system management access
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                   User and transaction oversight
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                   Advanced analytics and reports
                 </li>
               </ul>
@@ -393,9 +385,9 @@ export default function AuthRedirect({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => router.push('/admin/home')}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden"
+                className="w-full bg-gradient-to-r from-rose-600 to-red-600 text-white py-4 px-6 rounded-xl font-bold hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <span className="relative z-10 flex items-center gap-2">
                   <Crown className="w-5 h-5" />
                   Go to Admin Dashboard

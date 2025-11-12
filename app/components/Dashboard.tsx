@@ -205,7 +205,7 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-red-50">
         <Header 
           setIsSidebarOpen={setIsSidebarOpen}
           isProfileDropdownOpen={isProfileDropdownOpen}
@@ -233,7 +233,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-red-50">
       <AuthRedirect requireAuth={true} requireActive={true} redirectTo="/login" />
       
       <Header 
@@ -256,7 +256,7 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl shadow-xl border border-blue-400/20 p-6 lg:p-8 mb-6"
+            className="relative overflow-hidden bg-gradient-to-r from-orange-600 via-red-700 to-rose-800 rounded-3xl shadow-xl border border-orange-400/20 p-6 lg:p-8 mb-6"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
@@ -270,25 +270,25 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
-                        Welcome back, {userProfile?.name || user?.username}! 👋
+                        Welcome back, { user?.username}! 👋
                       </h1>
-                      <p className="text-blue-100 text-sm">Here's what's happening with your account today</p>
+                      <p className="text-orange-100 text-sm">Here's what's happening with your account today</p>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-3 lg:gap-4 mt-6">
                     <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20">
                       <div className="flex items-center gap-2 mb-1">
-                        <Package className="w-4 h-4 text-blue-200" />
-                        <span className="text-xs text-blue-200">Plan</span>
+                        <Package className="w-4 h-4 text-orange-200" />
+                        <span className="text-xs text-orange-200">Plan</span>
                       </div>
                       <p className="text-white font-semibold">{userProfile?.plan || 'No Plan'}</p>
                     </div>
                     
                     <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20">
                       <div className="flex items-center gap-2 mb-1">
-                        <TrendingUp className="w-4 h-4 text-blue-200" />
-                        <span className="text-xs text-blue-200">PV</span>
+                        <TrendingUp className="w-4 h-4 text-orange-200" />
+                        <span className="text-xs text-orange-200">PV</span>
                       </div>
                       <p className="text-white font-semibold">{userProfile?.pv || 0}</p>
                     </div>
@@ -296,15 +296,15 @@ const Dashboard = () => {
                     <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20">
                       <div className="flex items-center gap-2 mb-1">
                         <Zap className="w-4 h-4 text-yellow-300" />
-                        <span className="text-xs text-blue-200">TP</span>
+                        <span className="text-xs text-orange-200">TP</span>
                       </div>
                       <p className="text-white font-semibold">{userProfile?.tp || 0}</p>
                     </div>
                     
                     <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20">
                       <div className="flex items-center gap-2 mb-1">
-                        <Shield className="w-4 h-4 text-blue-200" />
-                        <span className="text-xs text-blue-200">Status</span>
+                        <Shield className="w-4 h-4 text-orange-200" />
+                        <span className="text-xs text-orange-200">Status</span>
                       </div>
                       <p className={`font-semibold ${userProfile?.isActive ? 'text-green-300' : 'text-red-300'}`}>
                         {userProfile?.isActive ? 'Active' : 'Inactive'}
@@ -315,7 +315,7 @@ const Dashboard = () => {
                 
                 <a 
                   href='/upgrade' 
-                  className="group relative overflow-hidden bg-white hover:bg-blue-50 text-blue-600 px-8 py-4 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl text-center"
+                  className="group relative overflow-hidden bg-white hover:bg-orange-50 text-orange-600 px-8 py-4 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl text-center"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     Upgrade Plan
@@ -335,10 +335,10 @@ const Dashboard = () => {
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Activity className="w-6 h-6 text-blue-600" />
+                  <Activity className="w-6 h-6 text-orange-600" />
                   Points Overview
                 </h2>
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg">
+                <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg">
                   {getCurrentMonth()} {new Date().getFullYear()}
                 </div>
               </div>
@@ -346,7 +346,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
-                  className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+                  className="group bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -380,7 +380,7 @@ const Dashboard = () => {
 
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
-                  className="group bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+                  className="group bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -414,7 +414,7 @@ const Dashboard = () => {
 
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
-                  className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+                  className="group bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -448,7 +448,7 @@ const Dashboard = () => {
 
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
-                  className="group bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+                  className="group bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -489,17 +489,17 @@ const Dashboard = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
               whileHover={{ y: -4 }}
-              className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+              className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-green-100 text-sm font-medium mb-2">Total Earnings</p>
+                    <p className="text-emerald-100 text-sm font-medium mb-2">Total Earnings</p>
                     <p className="text-3xl lg:text-4xl font-bold text-white mb-1">
                       {convertAmount(userProfile?.totalEarnings || 0)}
                     </p>
-                    <div className="flex items-center gap-2 text-green-100 text-sm">
+                    <div className="flex items-center gap-2 text-emerald-100 text-sm">
                       <ArrowUpRight className="w-4 h-4" />
                       <span>All time earnings</span>
                     </div>
@@ -516,17 +516,17 @@ const Dashboard = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
               whileHover={{ y: -4 }}
-              className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+              className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-blue-100 text-sm font-medium mb-2">Available Balance</p>
+                    <p className="text-orange-100 text-sm font-medium mb-2">Available Balance</p>
                     <p className="text-3xl lg:text-4xl font-bold text-white mb-1">
                       {convertAmount(userProfile?.walletBalance || 0)}
                     </p>
-                    <div className="flex items-center gap-2 text-blue-100 text-sm">
+                    <div className="flex items-center gap-2 text-orange-100 text-sm">
                       <Wallet className="w-4 h-4" />
                       <span>Ready to withdraw</span>
                     </div>
@@ -547,7 +547,7 @@ const Dashboard = () => {
               className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow"
             >
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -563,11 +563,11 @@ const Dashboard = () => {
                     type="text"
                     value={referralData?.referralLink || ''}
                     readOnly
-                    className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl bg-gray-50 text-sm focus:border-blue-500 focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl bg-gray-50 text-sm focus:border-orange-500 focus:outline-none transition-colors"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Copy className="w-4 h-4 text-blue-600" />
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Copy className="w-4 h-4 text-orange-600" />
                     </div>
                   </div>
                 </div>
@@ -582,7 +582,7 @@ const Dashboard = () => {
                   </button>
                   <button
                     onClick={shareReferralLink}
-                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all duration-200 font-semibold group shadow-lg"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-xl transition-all duration-200 font-semibold group shadow-lg"
                   >
                     <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
                     Share
@@ -590,15 +590,15 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+              <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-100">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Total Referrals</p>
-                    <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                       {userProfile?.totalReferrals || 0}
                     </p>
                   </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
                     <Users className="w-8 h-8 text-white" />
                   </div>
                 </div>
@@ -612,7 +612,7 @@ const Dashboard = () => {
               className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow"
             >
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -622,9 +622,9 @@ const Dashboard = () => {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
                       <Package className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -632,12 +632,12 @@ const Dashboard = () => {
                       <p className="font-bold text-gray-900">{userProfile?.plan || 'No Plan'}</p>
                     </div>
                   </div>
-                  <ArrowUpRight className="w-5 h-5 text-blue-600" />
+                  <ArrowUpRight className="w-5 h-5 text-orange-600" />
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
                       <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -645,12 +645,12 @@ const Dashboard = () => {
                       <p className="font-bold text-gray-900">{userProfile?.pv || 0}</p>
                     </div>
                   </div>
-                  <div className="text-green-600 text-sm font-semibold">Active</div>
+                  <div className="text-emerald-600 text-sm font-semibold">Active</div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl border border-amber-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
                       <Zap className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -658,12 +658,12 @@ const Dashboard = () => {
                       <p className="font-bold text-gray-900">{userProfile?.tp || 0}</p>
                     </div>
                   </div>
-                  <div className="text-purple-600 text-sm font-semibold">Growing</div>
+                  <div className="text-amber-600 text-sm font-semibold">Growing</div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border border-red-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
                       <Shield className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -687,7 +687,7 @@ const Dashboard = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
                   <History className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -697,7 +697,7 @@ const Dashboard = () => {
               </div>
               <a 
                 href="/wallet" 
-                className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
+                className="text-sm text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
               >
                 View All
                 <ArrowUpRight className="w-4 h-4" />
@@ -785,7 +785,7 @@ const Dashboard = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
                   <Bell className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -795,7 +795,7 @@ const Dashboard = () => {
               </div>
               <a 
                 href="/notifications" 
-                className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
+                className="text-sm text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
               >
                 View All
                 <ArrowUpRight className="w-4 h-4" />
@@ -811,13 +811,13 @@ const Dashboard = () => {
                   transition={{ delay: index * 0.1 }}
                   className={`group flex items-start gap-4 p-4 rounded-xl transition-all duration-200 hover:shadow-md ${
                     !notification.read 
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200' 
+                      ? 'bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200' 
                       : 'bg-gray-50 border-2 border-transparent hover:border-gray-200'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                     !notification.read 
-                      ? 'bg-gradient-to-br from-blue-500 to-indigo-600' 
+                      ? 'bg-gradient-to-br from-orange-500 to-red-600' 
                       : 'bg-gray-300'
                   }`}>
                     <Bell className="w-5 h-5 text-white" />
@@ -830,7 +830,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                   {!notification.read && (
-                    <div className="w-2.5 h-2.5 bg-blue-600 rounded-full flex-shrink-0 mt-2 animate-pulse"></div>
+                    <div className="w-2.5 h-2.5 bg-orange-600 rounded-full flex-shrink-0 mt-2 animate-pulse"></div>
                   )}
                 </motion.div>
               ))}
