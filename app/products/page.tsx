@@ -246,10 +246,6 @@ const ProductsPage = () => {
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Stock:</span>
-                      <span className="font-medium">{product.stock} available</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">PV:</span>
                       <span className="font-medium text-blue-600">{product.pv}</span>
                     </div>

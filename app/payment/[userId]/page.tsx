@@ -80,7 +80,7 @@ const PaymentPage = () => {
 
         const foundUser = userData.users?.find((u: any) => u.id === userId);
         if (!foundUser) {
-          setError('User not found');
+          setError(' User not found');
           return;
         }
 
