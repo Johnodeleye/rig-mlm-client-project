@@ -323,9 +323,9 @@ const ProductsPage = () => {
                       onChange={(e) => handleQuantityChange(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-200"
                     />
-                    <p className="text-sm text-gray-500 mt-1">
+                    {/* <p className="text-sm text-gray-500 mt-1">
                       Available stock: {selectedProduct.stock}
-                    </p>
+                    </p> */}
                   </div>
 
                   <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
