@@ -79,44 +79,61 @@ const ProductsPage = () => {
     product.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handlePurchase = async () => {
-    if (!selectedProduct) return;
+const handlePurchase = async () => {
+  if (!selectedProduct) return;
 
-    setIsPurchasing(true);
-    try {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/products/products/purchase`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          productId: selectedProduct.id,
-          quantity: parseInt(quantity) || 1
-        })
-      });
+  setIsPurchasing(true);
+  try {
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/api/products/products/purchase`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        productId: selectedProduct.id,
+        quantity: parseInt(quantity) || 1
+      })
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          alert('Product purchased successfully!');
-          setShowPurchaseModal(false);
-          setSelectedProduct(null);
-          setQuantity('1');
-          await fetchProducts();
-        }
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Purchase failed');
-      }
-    } catch (error) {
-      console.error('Purchase error:', error);
-      alert('Error processing purchase');
-    } finally {
-      setIsPurchasing(false);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Purchase failed');
     }
-  };
+
+    if (data.success) {
+      alert('Product purchased successfully!');
+      setShowPurchaseModal(false);
+      setSelectedProduct(null);
+      setQuantity('1');
+      await fetchProducts();
+    } else {
+      throw new Error(data.error || 'Purchase failed');
+    }
+  } catch (error:any) {
+    console.error('Purchase error:', error);
+    
+    let errorMessage = 'Something went wrong. Please try again.';
+    
+    if (error.message.includes('timeout')) {
+      errorMessage = 'Transaction timeout. Please try again.';
+    } else if (error.message.includes('network') || error.message.includes('Network')) {
+      errorMessage = 'Network error. Please check your connection and try again.';
+    } else if (error.message.includes('Insufficient balance')) {
+      errorMessage = 'Insufficient balance to complete this purchase.';
+    } else if (error.message.includes('Insufficient stock')) {
+      errorMessage = 'Product is out of stock.';
+    } else {
+      errorMessage = error.message || 'Something went wrong. Please try again.';
+    }
+    
+    alert(errorMessage);
+  } finally {
+    setIsPurchasing(false);
+  }
+};
 
   const handleQuantityChange = (value: string) => {
     if (value === '') {
